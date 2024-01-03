@@ -2,7 +2,8 @@
 This hub is in development, with an intention of launching sometime in 2024. If you are interested in being involved or contributing, please contact Nick Reich at nick [at] umass dot edu.
 <!--Anyone interested in using these data for additional research or publications is requested to contact *[insert email]* for information regarding attribution of the source forecasts.-->
 
-<<!-- ## *[Insert title of forecasts]*
+<!-- 
+## *[Insert title of forecasts]*
 *[Describe forecasts ]*
 
 **Dates:** The Challenge Period will begin *[insert start date]* and will run until *[insert start date]*. Participants are currently asked to submit *[insert description of forecasts]*  by *[insert timing]* .(herein referred to as the Forecast Due Date). In the event that timelines of data availability change, *[insert name of hub]*  may change the day of week that forecasts are due. In this case, participants would be notified at least one week in advance. *[insert temporal period]*  submissions (including file names) will be specified in terms of the reference date, which is the Saturday following the Forecast Due Date. The reference date is the last day of the epidemiological week (EW) (Sunday to Saturday) containing the Forecast Due Date.
