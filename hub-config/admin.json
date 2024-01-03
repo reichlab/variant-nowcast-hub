@@ -1,12 +1,12 @@
 {
     "schema_version": "https://raw.githubusercontent.com/Infectious-Disease-Modeling-Hubs/schemas/main/v2.0.0/admin-schema.json",
-    "name": "Template Forecast Hub",
-    "maintainer": "Consortium of Infectious Disease Modeling Hubs",
+    "name": "COVID-19 Variant Nowcast Hub",
+    "maintainer": "Reich Lab",
     "contact": {
-        "name": "Joe Bloggs",
-        "email": "j.bloggs@cidmh.com"
+        "name": "Nick Reich",
+        "email": "nick@umass.edu"
     },
-    "repository_url": "https://github.com/Infectious-Disease-Modeling-Hubs/hubTemplate",
-    "file_format": ["csv", "parquet"],
+    "repository_url": "https://github.com/reichlab/variant-nowcast-hub",
+    "file_format": ["parquet"],
     "timezone": "US/Eastern"
 }
