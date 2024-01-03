@@ -3,11 +3,11 @@
     "rounds": [
         {
             "round_id_from_variable": true,
-            "round_id": "task_id_variable_that_defines_a_round",
+            "round_id": "origin_date",
             "model_tasks": [
                 {
                     "task_ids": {
-                        "task_id_variable_that_defines_a_round": {
+                        "origin_date": {
                             "required": [],
                             "optional": []
                         }
