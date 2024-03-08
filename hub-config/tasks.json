@@ -1,5 +1,5 @@
 {
-    "schema_version": "https://raw.githubusercontent.com/Infectious-Disease-Modeling-Hubs/schemas/main/v2.0.0/tasks-schema.json",
+    "schema_version": "https://raw.githubusercontent.com/Infectious-Disease-Modeling-Hubs/schemas/main/v2.0.1/tasks-schema.json",
     "rounds": [
         {
             "round_id_from_variable": true,
@@ -8,17 +8,149 @@
                 {
                     "task_ids": {
                         "origin_date": {
-                            "required": [],
-                            "optional": []
+                            "required": null,
+                            "optional": ["?? is this an array of expected submission dates or something else"]
+                        },
+                        "location": {
+                            "required": null,
+                            "optional": [
+                                "US",
+                                "01",
+                                "02",
+                                "04",
+                                "05",
+                                "06",
+                                "08",
+                                "09",
+                                "10",
+                                "11",
+                                "12",
+                                "13",
+                                "15",
+                                "16",
+                                "17",
+                                "18",
+                                "19",
+                                "20",
+                                "21",
+                                "22",
+                                "23",
+                                "24",
+                                "25",
+                                "26",
+                                "27",
+                                "28",
+                                "29",
+                                "30",
+                                "31",
+                                "32",
+                                "33",
+                                "34",
+                                "35",
+                                "36",
+                                "37",
+                                "38",
+                                "39",
+                                "40",
+                                "41",
+                                "42",
+                                "44",
+                                "45",
+                                "46",
+                                "47",
+                                "48",
+                                "49",
+                                "50",
+                                "51",
+                                "53",
+                                "54",
+                                "55",
+                                "56",
+                                "72"
+                            ]
+                        },
+                        "target": {
+                            "required": ["pct cases"],
+                            "optional": ["samples"]
+                        },
+                        "horizon": {
+                            "required": null,
+                            "optional": [
+                                -27,
+                                -26,
+                                -25,
+                                -24,
+                                -23,
+                                -22,
+                                -21,
+                                -20,
+                                -19,
+                                -18,
+                                -17,
+                                -16,
+                                -15,
+                                -16,
+                                -15,
+                                -14,
+                                -13,
+                                -12,
+                                -11,
+                                -10,
+                                -9,
+                                -8,
+                                -7,
+                                -6,
+                                -5,
+                                -4,
+                                -3,
+                                -2,
+                                -1,
+                                0,
+                                1,
+                                2,
+                                3,
+                                4,
+                                5,
+                                6,
+                                7 
+                            ]
                         }
                     },
-                    "output_type": {},
-                    "target_metadata":[]
+                    "output_type": {
+                        "mean": {
+                            "output_type_id": {
+                                "required": ["NA"],
+                                "optional": null
+                            },
+                            "value": {
+                                "type": "double",
+                                "minimum": 0
+                            }
+                        },
+                        "samples": {}
+                    },
+                    "target_metadata":[
+                        {
+                            "target_id": "pct cases",
+                            "target_name": "variant percentage of overall cases",
+                            "target_units": "percentage",
+                            "target_keys": {
+                                "daily": [
+                                    "pct cases"
+                                ]
+                            },
+                            "description": "put a good description here",
+                            "target_type": "ordinal",
+                            "is_step_ahead": true,
+                            "time_unit": "day"
+                        }
+                    ]
                 }
             ],
             "submissions_due": {
-                "start": "1900-01-01",
-                "end": "2900-12-31"
+                "relative_to": "origin_date",
+                "start": -6,
+                "end": 0
             }
         }
     ]
