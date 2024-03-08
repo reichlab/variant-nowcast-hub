@@ -1,5 +1,5 @@
 {
-    "schema_version": "https://raw.githubusercontent.com/Infectious-Disease-Modeling-Hubs/schemas/main/v2.0.0/admin-schema.json",
+    "schema_version": "https://raw.githubusercontent.com/Infectious-Disease-Modeling-Hubs/schemas/main/v2.0.1/admin-schema.json",
     "name": "COVID-19 Variant Nowcast Hub",
     "maintainer": "Reich Lab",
     "contact": {
@@ -8,5 +8,13 @@
     },
     "repository_url": "https://github.com/reichlab/variant-nowcast-hub",
     "file_format": ["parquet"],
-    "timezone": "US/Eastern"
+    "timezone": "US/Eastern",
+    "cloud": {
+        "enabled": false,
+        "host": {
+            "name": "aws",
+            "storage_service": "s3",
+            "storage_location": "variant-nowcast-hub"
+        }
+    }
 }
