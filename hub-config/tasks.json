@@ -9,7 +9,7 @@
                     "task_ids": {
                         "origin_date": {
                             "required": null,
-                            "optional": ["?? is this an array of expected submission dates or something else"]
+                            "optional": ["array of accepted dates that submitted forecasts will originate from"]
                         },
                         "location": {
                             "required": null,
@@ -70,8 +70,8 @@
                             ]
                         },
                         "target": {
-                            "required": ["pct cases"],
-                            "optional": ["samples"]
+                            "required": ["variant prop"],
+                            "optional": null
                         },
                         "horizon": {
                             "required": null,
@@ -124,19 +124,31 @@
                             },
                             "value": {
                                 "type": "double",
-                                "minimum": 0
+                                "minimum": 0,
+                                "maximum": 1
                             }
                         },
-                        "samples": {}
+                        "sample": {
+                            "output_type_id": {
+                                "required": null,
+                                "optional":  ["this should be 1 to n, depending on the total number of samples required and the type of model (e.g., marginal, joint)"]
+                            },
+                            "value": {
+                                "type": "double",
+                                "minimum": 0,
+                                "maximum": 1
+                            }
+                        }
                     },
                     "target_metadata":[
                         {
-                            "target_id": "pct cases",
-                            "target_name": "variant percentage of overall cases",
+                            "target_id": "variant prop",
+                            "target_name": "variant proportion of all sequences",
                             "target_units": "percentage",
                             "target_keys": {
                                 "daily": [
-                                    "pct cases"
+                                    "variant prop",
+                                    "START HERE"
                                 ]
                             },
                             "description": "put a good description here",
