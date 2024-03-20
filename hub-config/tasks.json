@@ -130,8 +130,9 @@
                         },
                         "sample": {
                             "output_type_id": {
-                                "required": null,
-                                "optional":  ["this should be 1 to n, depending on the total number of samples required and the type of model (e.g., marginal, joint)"]
+                                "forecast_unit_task_ids_minimum": ["origin_date"],
+                                "min_samples_per_forecast_unit": 50,
+                                "max_samples_per_forecast_unit": 100
                             },
                             "value": {
                                 "type": "double",
