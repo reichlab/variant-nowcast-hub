@@ -129,10 +129,16 @@
                             }
                         },
                         "sample": {
+                            "output_type_id_params": {
+                                "forecast_unit_task_ids": ["origin_date", "location"],
+                                "samples_per_forecast_unit": 100,
+                                // "min_samples_per_forecast_unit": 50,
+                                // "max_samples_per_forecast_unit": 100
+                            },
+                            // do we need output_type_id here to validate submitted model-output data?
+                            // Are there examples of simple hubs that would only need the simple output_type_id specs and would not need the output_type_id_params?
                             "output_type_id": {
-                                "forecast_unit_task_ids_minimum": ["origin_date"],
-                                "min_samples_per_forecast_unit": 50,
-                                "max_samples_per_forecast_unit": 100
+                                "required": [1, 2, 3, 4]
                             },
                             "value": {
                                 "type": "double",
