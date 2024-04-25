@@ -52,10 +52,16 @@ def get_sequence_metadata():
         )
 
 
+def get_reference_tree():
+    """Download a reference tree as of a specific date."""
+    logger.info("Reference tree download not yet implemented, using static copy: data/reference.json")
+
+
 def main():
     logger.info("Starting pipeline")
     get_sequences()
     get_sequence_metadata()
+    get_reference_tree()
 
 
 if __name__ == "__main__":
