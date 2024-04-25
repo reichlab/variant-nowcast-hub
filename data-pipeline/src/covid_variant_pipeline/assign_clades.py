@@ -6,14 +6,14 @@ loggy = LoggerSetup(__name__)
 loggy.init_logger()
 logger = loggy.logger
 
+UPDATED_AFTER = "04/01/24"
+PACKAGE_FILE = "data/ncbi_sars-cov-2.zip"
+
 
 def get_sequences():
     """Download SARS-CoV-2 sequences from Genbank."""
 
-    updated_after = "04/01/24"
-    package_file = "data/ncbi_sars-cov-2.zip"
-
-    logger.info(f"Downloading sequences updated after {updated_after}...")
+    logger.info(f"Downloading sequences updated after {UPDATED_AFTER}...")
     subprocess.run(
         [
             "bin/datasets",
@@ -25,16 +25,37 @@ def get_sequences():
             "--host",
             "Homo sapiens",
             "--updated-after",
-            f"{updated_after}",
+            f"{UPDATED_AFTER}",
             "--filename",
-            f"{package_file}",
+            f"{PACKAGE_FILE}",
         ]
     )
+
+
+def get_sequence_metadata():
+    """Generate tabular representation of the downloaded genbank sequences."""
+
+    logger.info("Extracting sequence metadata...")
+    fields = "accession,sourcedb,sra-accs,isolate-lineage,geo-region,geo-location,isolate-collection-date,release-date,update-date,virus-pangolin,length,host-name,isolate-lineage-source,biosample-acc,completeness,lab-host,submitter-names,submitter-affiliation,submitter-country"
+    with open("data/ncbi_metadata.tsv", "w") as f:
+        subprocess.run(
+            [
+                "bin/dataformat",
+                "tsv",
+                "virus-genome",
+                "--package",
+                f"{PACKAGE_FILE}",
+                "--fields",
+                f"{fields}",
+            ],
+            stdout=f,
+        )
 
 
 def main():
     logger.info("Starting pipeline")
     get_sequences()
+    get_sequence_metadata()
 
 
 if __name__ == "__main__":
