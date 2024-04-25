@@ -1,0 +1,1 @@
+This directory contains the working files created by the pipeline.

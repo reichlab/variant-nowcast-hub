@@ -3,8 +3,6 @@ import logging
 import traceback
 from pathlib import Path
 
-import toml
-
 
 class JsonFormatter(logging.Formatter):
     """JSON log formatter."""
@@ -45,15 +43,5 @@ class LoggerSetup:
         )
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
-
-        # if app config specifies a log file, add a handler for it and
-        # format the log entries as JSON
-        config = toml.load(self.config_file)
-        log_file = config.get("tool", {}).get("covid_variant_pipeline", {}).get("log_file")
-        if log_file:
-            log_path = self.create_log_file(log_file)
-            handler = logging.FileHandler(log_path)
-            handler.setFormatter(JsonFormatter())
-            self.logger.addHandler(handler)
 
         self.logger.setLevel(logging.INFO)
