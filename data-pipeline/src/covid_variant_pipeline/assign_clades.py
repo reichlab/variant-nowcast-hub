@@ -6,10 +6,15 @@ loggy = LoggerSetup(__name__)
 loggy.init_logger()
 logger = loggy.logger
 
-UPDATED_AFTER = "04/01/24"
+UPDATED_AFTER = "04/15/24"
 DATA_DIR = "data"
 PACKAGE_NAME = "ncbi_sars-cov-2"
 PACKAGE_FILE = f"{DATA_DIR}/{PACKAGE_NAME}.zip"
+
+# randomly chose a reference tree with a last modified date of 2024-01-19
+# to get a list of available versions using the AWS CLI:
+# aws s3api list-object-versions --bucket nextstrain-data --prefix files/ncov/open/reference/reference.json --no-sign-request
+REFERENCE_TREE_VERSION = "lXbwzM1oPzrvX.2RliJ245pvkjEZCIFA"
 
 
 def get_sequences():
@@ -65,32 +70,50 @@ def get_sequence_metadata():
 
 
 def get_reference_tree():
-    """Download a reference tree as of a specific date."""
-    logger.info("Reference tree download not yet implemented, using static copy: data/reference.json")
+    """Download a reference tree."""
+
+    reference_tree_file = f"{DATA_DIR}/reference_tree-{REFERENCE_TREE_VERSION}.json"
+    logger.info(f"downloading reference tree to {reference_tree_file}")
+
+    subprocess.run(
+        [
+            "aws",
+            "s3api",
+            "get-object",
+            "--bucket",
+            "nextstrain-data",
+            "--key",
+            "files/ncov/open/reference/reference.json",
+            f"{reference_tree_file}",
+            "--version-id",
+            f"{REFERENCE_TREE_VERSION}",
+            "--no-sign-request",
+        ]
+    )
+
+    return reference_tree_file
 
 
-def assign_clades():
+def assign_clades(reference_tree: str):
     """Assign downloaded genbank sequences to a clade."""
 
-    logger.info("Assigning sequences to clades...")
+    logger.info(f"Assigning sequences to clades using reference tree {reference_tree}")
     sequence_file = f"{DATA_DIR}/ncbi_dataset/data/genomic.fna"
-    assignment_file = f"{DATA_DIR}/clade_assignments.csv"
+    assignment_file = f"{DATA_DIR}/clade_assignments-{REFERENCE_TREE_VERSION}.csv"
 
-    with open(f"{DATA_DIR}/clade_assignments.csv", "w") as f:
-        subprocess.run(
-            [
-                "bin/nextclade",
-                "run",
-                "--input-tree",
-                f"{DATA_DIR}/reference.json",
-                "--input-ref",
-                f"{DATA_DIR}/covid_reference_sequence.fasta",
-                "--output-csv",
-                f"{assignment_file}",
-                f"{sequence_file}",
-            ],
-            stdout=f,
-        )
+    subprocess.run(
+        [
+            "bin/nextclade",
+            "run",
+            "--input-tree",
+            f"{reference_tree}",
+            "--input-ref",
+            f"{DATA_DIR}/covid_reference_sequence.fasta",
+            "--output-csv",
+            f"{assignment_file}",
+            f"{sequence_file}",
+        ]
+    )
 
     return assignment_file
 
@@ -99,8 +122,8 @@ def main():
     logger.info("Starting pipeline")
     get_sequences()
     get_sequence_metadata()
-    get_reference_tree()
-    assignment_file = assign_clades()
+    reference_tree_file = get_reference_tree()
+    assignment_file = assign_clades(reference_tree_file)
 
     logger.info(f"Sequence clade assignments are ready at {assignment_file}")
 
