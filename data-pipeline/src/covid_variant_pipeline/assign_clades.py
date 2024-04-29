@@ -1,4 +1,5 @@
 import subprocess
+from importlib import resources
 
 from covid_variant_pipeline.util.logs import LoggerSetup
 
@@ -7,7 +8,11 @@ loggy.init_logger()
 logger = loggy.logger
 
 UPDATED_AFTER = "04/15/24"
-DATA_DIR = "data"
+
+# get a path object to module's location
+MODULE_PATH = resources.files("covid_variant_pipeline")
+DATA_DIR = MODULE_PATH / "data"
+EXECUTABLE_DIR = MODULE_PATH / "bin"
 PACKAGE_NAME = "ncbi_sars-cov-2"
 PACKAGE_FILE = f"{DATA_DIR}/{PACKAGE_NAME}.zip"
 
@@ -23,7 +28,7 @@ def get_sequences():
     logger.info(f"Downloading sequences updated after {UPDATED_AFTER}...")
     subprocess.run(
         [
-            "bin/datasets",
+            f"{EXECUTABLE_DIR}/datasets",
             "download",
             "virus",
             "genome",
@@ -57,7 +62,7 @@ def get_sequence_metadata():
     with open(f"{DATA_DIR}/ncbi_metadata.tsv", "w") as f:
         subprocess.run(
             [
-                "bin/dataformat",
+                f"{EXECUTABLE_DIR}/dataformat",
                 "tsv",
                 "virus-genome",
                 "--package",
@@ -103,7 +108,7 @@ def assign_clades(reference_tree: str):
 
     subprocess.run(
         [
-            "bin/nextclade",
+            f"{EXECUTABLE_DIR}/nextclade",
             "run",
             "--input-tree",
             f"{reference_tree}",
