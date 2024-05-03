@@ -1,11 +1,7 @@
 import subprocess
 from importlib import resources
 
-from covid_variant_pipeline.util.logs import LoggerSetup
-
-loggy = LoggerSetup(__name__)
-loggy.init_logger()
-logger = loggy.logger
+from loguru import logger
 
 UPDATED_AFTER = "04/15/24"
 
