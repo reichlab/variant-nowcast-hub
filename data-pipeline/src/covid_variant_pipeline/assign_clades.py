@@ -59,14 +59,15 @@ def get_sequence_metadata():
 
     logger.info("Extracting sequence metadata...")
     fields = "accession,sourcedb,sra-accs,isolate-lineage,geo-region,geo-location,isolate-collection-date,release-date,update-date,virus-pangolin,length,host-name,isolate-lineage-source,biosample-acc,completeness,lab-host,submitter-names,submitter-affiliation,submitter-country"
+
     with open(f"{DATA_DIR}/ncbi_metadata.tsv", "w") as f:
         subprocess.run(
             [
                 f"{EXECUTABLE_DIR}/dataformat",
                 "tsv",
                 "virus-genome",
-                "--package",
-                f"{PACKAGE_FILE}",
+                "--inputfile",
+                f"{DATA_DIR}/ncbi_dataset/data/data_report.jsonl",
                 "--fields",
                 f"{fields}",
             ],
