@@ -72,6 +72,38 @@ Follow the directions below to set this project up on your local machine.
 This project uses [`pip-tools`](https://github.com/jazzband/pip-tools) to generate requirements files from `pyproject.toml`.
 To install `pip-tools`, run the following after activating your virtual environment:
 
+3. Activate the virtual environment:
+
+    ```bash
+    source .venv/bin/activate
+    ```
+
+    **Note:** the command above is for Unix-based systems. If you're using Windows, the command is:
+
+    ```bash
+    .venv\Scripts\activate
+    ```
+
+4. Install the project dependencies. The following commands can also be used to update dependencies after pulling upstream code changes:
+
+    ```bash
+    # if you're planning to run the scripts without making code changes
+    pip install -r requirements/dev-requirements.txt && pip install -e .
+
+    # if you're planning to make and submit code changes
+    pip install -r requirements/dev-requirements.txt && pip install -e .
+    ```
+
+### Adding new dependencies
+
+This project uses [`pip-tools`](https://github.com/jazzband/pip-tools) to generate requirements files from `pyproject.toml`.
+
+To add a new dependency:
+
+1. Add dependency to the `dependencies` section `pyproject.toml` (if it's a dev dependency,
+add it to the `dev` section of `[project.optional-dependencies]`).
+
+2. Regenerate the `requirements.txt` file:
 ```bash
 python -m pip install pip-tools
 To add a new dependency:
