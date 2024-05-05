@@ -1,21 +1,32 @@
+import json
 import subprocess
 from importlib import resources
 
-from loguru import logger
+import requests
+import structlog
+from cloudpathlib import AnyPath
 
+from covid_variant_pipeline.util.reference_tree import get_reference_tree
+
+logger = structlog.get_logger()
+
+# TODO put these in a config file when we're further along
 UPDATED_AFTER = "04/15/24"
-
-# get a path object to module's location
-MODULE_PATH = resources.files("covid_variant_pipeline")
+MODULE_PATH = AnyPath(resources.files("covid_variant_pipeline"))
 DATA_DIR = MODULE_PATH / "data"
 EXECUTABLE_DIR = MODULE_PATH / "bin"
 PACKAGE_NAME = "ncbi_sars-cov-2"
 PACKAGE_FILE = f"{DATA_DIR}/{PACKAGE_NAME}.zip"
 
-# randomly chose a reference tree with a last modified date of 2024-01-19
-# to get a list of available versions using the AWS CLI:
-# aws s3api list-object-versions --bucket nextstrain-data --prefix files/ncov/open/reference/reference.json --no-sign-request
-REFERENCE_TREE_VERSION = "lXbwzM1oPzrvX.2RliJ245pvkjEZCIFA"
+
+def get_nextclade_session() -> requests.Session():
+    """Return a session for the nexclade API."""
+
+    session = requests.Session()
+    session.headers.update({"Accept": "application/vnd.nextstrain.dataset.main+json"})
+    session.headers.update({"Accept-Encoding": "gzip, deflate"})
+
+    return session
 
 
 def get_sequences():
@@ -71,37 +82,28 @@ def get_sequence_metadata():
         )
 
 
-def get_reference_tree():
-    """Download a reference tree."""
+def save_reference_tree(as_of_date: str) -> AnyPath:
+    """Download a reference tree and save it to a file."""
 
-    reference_tree_file = f"{DATA_DIR}/reference_tree-{REFERENCE_TREE_VERSION}.json"
-    logger.info(f"downloading reference tree to {reference_tree_file}")
+    logger.info("Downloading reference tree")
 
-    subprocess.run(
-        [
-            "aws",
-            "s3api",
-            "get-object",
-            "--bucket",
-            "nextstrain-data",
-            "--key",
-            "files/ncov/open/reference/reference.json",
-            f"{reference_tree_file}",
-            "--version-id",
-            f"{REFERENCE_TREE_VERSION}",
-            "--no-sign-request",
-        ]
-    )
+    tree = get_reference_tree(get_nextclade_session(), as_of_date)
 
-    return reference_tree_file
+    file_path = DATA_DIR / "trees" / f"{as_of_date}_tree.json"
+    with open(file_path, "w") as f:
+        json.dump(tree, f)
+
+    logger.info("Reference tree saved", path=str(file_path))
+
+    return file_path
 
 
-def assign_clades(reference_tree: str):
+def assign_clades(as_of_date: str, reference_tree: AnyPath):
     """Assign downloaded genbank sequences to a clade."""
 
     logger.info(f"Assigning sequences to clades using reference tree {reference_tree}")
     sequence_file = f"{DATA_DIR}/ncbi_dataset/data/genomic.fna"
-    assignment_file = f"{DATA_DIR}/clade_assignments-{REFERENCE_TREE_VERSION}.csv"
+    assignment_file = f"{DATA_DIR}/{as_of_date}_clade_assignments.csv"
 
     subprocess.run(
         [
@@ -120,15 +122,20 @@ def assign_clades(reference_tree: str):
     return assignment_file
 
 
-def main():
+def main(as_of_date: str):
+    # TODO: validate as_of_date to ensure it's
+    # in YYYY-MM-DD format, isn't in the future, etc.
     logger.info("Starting pipeline")
-    get_sequences()
-    get_sequence_metadata()
-    reference_tree_file = get_reference_tree()
-    assignment_file = assign_clades(reference_tree_file)
+
+    # get_sequences()
+    # get_sequence_metadata()
+    reference_tree_path = save_reference_tree(as_of_date)
+    assignment_file = assign_clades(as_of_date, reference_tree_path)
 
     logger.info(f"Sequence clade assignments are ready at {assignment_file}")
 
 
 if __name__ == "__main__":
-    main()
+    as_of_date = "2024-05-01"  # hard-coded date for testing
+    logger = logger.bind(as_of=as_of_date)
+    main(as_of_date)

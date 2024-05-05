@@ -11,16 +11,18 @@ readme = "README.md"
 license = {text = "MIT"}
 
 dependencies = [
-    "pandas>=2.2.2",
     "awscli>=1.32.92",
-    "loguru",
+    "cloudpathlib",
+    "pandas>=2.2.2",
     "polars>=0.20.23",
     "requests",
+    "structlog",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest",
+    "rich",
 ]
 
 [project.entry-points.'console_scripts']
