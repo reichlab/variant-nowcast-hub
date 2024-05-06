@@ -19,9 +19,13 @@ If you'd like to try it out, this section has the setup instructions.
 
 **Prerequisites**
 
-The setup instructions below use [PDM](https://pdm-project.org/) to install Python, manage a Python virtual environment, and manage dependencies. However, PDM is only absolutely necessary for managing dependencies (because the lockfile is in PDM format), so other tools for Python installs and environments will work as well.
+Before setting up the project:
 
-To install PDM: https://pdm-project.org/en/latest/#installation
+- Your machine will need to have an installed version of Python that meets the `requires-python` constraint in [pyproject.toml](pyproject.toml)
+- That version of Python should be set as your current Python interpreter (if you don't already have a preferred Python workflow, [pyenv](https://github.com/pyenv/pyenv) is good tool for managing Python versions on your local machine).
+
+In addition, if you're planning to make code changes that require adding or removing project dependencies, you'll need `pip-tools` installed on your machine. ([`pipx`](https://github.com/pypa/pipx) is a handy way to install python packages in a way that makes them available all the time, regardless of whatever virtual environment is currently activated.)
+
 
 **Setup**
 
@@ -33,29 +37,66 @@ Follow the directions below to set this project up on your local machine.
     cd variant-nowcast-hub/data-pipeline
     ```
 
-2. Make sure you have a version of Python installed that meets the `requires-python` constraint in [pyproject.toml](pyproject.toml).
-
-    **Note:** if you don't have Python installed, PDM can install it for you: `pdm python install 3.12.2`
-3. Install the project dependencies (this will also create a virtual environment):
+2. Create a Python virtual environment:
 
     ```bash
-    pdm install
+    python -m venv .venv
     ```
 
-To sync project dependencies after pulling upstream code changes:
+    **Note:** the resulting virtual environment will use whatever Python interpreter was active when you ran the command
+
+3. Activate the virtual environment:
+
+    ```bash
+    source .venv/bin/activate
+    ```
+
+    **Note:** the command above is for Unix-based systems. If you're using Windows, the command is:
+
+    ```bash
+    .venv\Scripts\activate
+    ```
+
+4. Install the project dependencies. The following commands can also be used to update dependencies after pulling upstream code changes:
+
+    ```bash
+    # if you're planning to run the scripts without making code changes
+    pip install -r requirements/requirements.txt && pip install -e .
+
+    # if you're planning to make and submit code changes
+    pip install -r requirements/dev-requirements.txt && pip install -e .
+    ```
+
+### Adding new dependencies
+
+This project uses [`pip-tools`](https://github.com/jazzband/pip-tools) to generate requirements files from `pyproject.toml`.
+To install `pip-tools`, run the following after activating your virtual environment:
 
 ```bash
-pdm sync
+python -m pip install pip-tools
+To add a new dependency:
+
+1. Add dependency to the `dependencies` section `pyproject.toml` (if it's a dev dependency,
+add it to the `dev` section of `[project.optional-dependencies]`).
+
+2. Regenerate the `requirements.txt` file:
+```bash
+pip-compile -o requirements/requirements.txt pyproject.toml
+```
+
+3. If you've added a dev dependency, regenerate the `requirements-dev.txt` file:
+```bash
+pip-compile --extra dev -o requirements/dev-requirements.txt pyproject.toml
 ```
 
 ## Running the code
 
 Set up the project as described above and make sure the virtual environment is activated.
 
-1. From the repo's root, navigate to the directory that contains the `assign_clades.py` script::
+1. From the repo's `data-pipeline` directory, navigate to the directory that contains the `assign_clades.py` script:
 
 ```bash
-cd data-pipeline/src/covid_variant_pipeline
+cd src/covid_variant_pipeline
 ```
 
 2. Run the script:
