@@ -103,23 +103,15 @@ To add a new dependency:
 1. Add dependency to the `dependencies` section `pyproject.toml` (if it's a dev dependency,
 add it to the `dev` section of `[project.optional-dependencies]`).
 
-2. Regenerate the `requirements.txt` file:
-```bash
-python -m pip install pip-tools
-To add a new dependency:
+2. Regenerate the `requirements.txt` file (if you've only added a dev dependency, you can skip this step)
+    ```bash
+    pip-compile -o requirements/requirements.txt pyproject.toml
+    ```
 
-1. Add dependency to the `dependencies` section `pyproject.toml` (if it's a dev dependency,
-add it to the `dev` section of `[project.optional-dependencies]`).
-
-2. Regenerate the `requirements.txt` file:
-```bash
-pip-compile -o requirements/requirements.txt pyproject.toml
-```
-
-3. If you've added a dev dependency, regenerate the `requirements-dev.txt` file:
-```bash
-pip-compile --extra dev -o requirements/dev-requirements.txt pyproject.toml
-```
+3. Regenerate the `requirements-dev.txt` file (even if you haven't added a dev dependency):
+    ```bash
+    pip-compile --extra dev -o requirements/dev-requirements.txt pyproject.toml
+    ```
 
 ## Running the code
 
@@ -127,6 +119,6 @@ Set up the project as described above and make sure the virtual environment is a
 
 1. From anywhere in the repo's `data-pipeline` directory:
 
-```bash
-assign_clades
-```
+    ```bash
+    assign_clades
+    ```
