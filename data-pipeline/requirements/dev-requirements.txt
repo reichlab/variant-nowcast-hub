@@ -14,6 +14,10 @@ certifi==2024.2.2
     # via requests
 charset-normalizer==3.3.2
     # via requests
+click==8.1.7
+    # via
+    #   covid-variant-pipeline (pyproject.toml)
+    #   rich-click
 cloudpathlib==0.18.1
     # via covid-variant-pipeline (pyproject.toml)
 colorama==0.4.6
@@ -57,6 +61,10 @@ pyyaml==6.0.1
 requests==2.31.0
     # via covid-variant-pipeline (pyproject.toml)
 rich==13.7.1
+    # via
+    #   covid-variant-pipeline (pyproject.toml)
+    #   rich-click
+rich-click==1.8.0
     # via covid-variant-pipeline (pyproject.toml)
 rsa==4.7.2
     # via awscli
@@ -66,6 +74,8 @@ six==1.16.0
     # via python-dateutil
 structlog==24.1.0
     # via covid-variant-pipeline (pyproject.toml)
+typing-extensions==4.11.0
+    # via rich-click
 tzdata==2024.1
     # via pandas
 urllib3==2.2.1

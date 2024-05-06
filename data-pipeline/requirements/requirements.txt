@@ -14,6 +14,10 @@ certifi==2024.2.2
     # via requests
 charset-normalizer==3.3.2
     # via requests
+click==8.1.7
+    # via
+    #   covid-variant-pipeline (pyproject.toml)
+    #   rich-click
 cloudpathlib==0.18.1
     # via covid-variant-pipeline (pyproject.toml)
 colorama==0.4.6
@@ -24,6 +28,10 @@ idna==3.7
     # via requests
 jmespath==1.0.1
     # via botocore
+markdown-it-py==3.0.0
+    # via rich
+mdurl==0.1.2
+    # via markdown-it-py
 numpy==1.26.4
     # via pandas
 pandas==2.2.2
@@ -32,6 +40,8 @@ polars==0.20.23
     # via covid-variant-pipeline (pyproject.toml)
 pyasn1==0.6.0
     # via rsa
+pygments==2.18.0
+    # via rich
 python-dateutil==2.9.0.post0
     # via
     #   botocore
@@ -42,6 +52,10 @@ pyyaml==6.0.1
     # via awscli
 requests==2.31.0
     # via covid-variant-pipeline (pyproject.toml)
+rich==13.7.1
+    # via rich-click
+rich-click==1.8.0
+    # via covid-variant-pipeline (pyproject.toml)
 rsa==4.7.2
     # via awscli
 s3transfer==0.10.1
@@ -50,6 +64,8 @@ six==1.16.0
     # via python-dateutil
 structlog==24.1.0
     # via covid-variant-pipeline (pyproject.toml)
+typing-extensions==4.11.0
+    # via rich-click
 tzdata==2024.1
     # via pandas
 urllib3==2.2.1

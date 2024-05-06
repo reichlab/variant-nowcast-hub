@@ -125,14 +125,14 @@ pip-compile --extra dev -o requirements/dev-requirements.txt pyproject.toml
 
 Set up the project as described above and make sure the virtual environment is activated.
 
+<<<<<<< HEAD
 1. From the repo's `data-pipeline` directory, navigate to the directory that contains the `assign_clades.py` script:
+||||||| parent of a46d249 (Put a little CLI on it)
+1. From the repo's `data-pipeline` directory, navigate to the directory that contains the `assign_clades.py` script::
+=======
+1. From anywhere in the repo's `data-pipeline` directory:
+>>>>>>> a46d249 (Put a little CLI on it)
 
 ```bash
-cd src/covid_variant_pipeline
-```
-
-2. Run the script:
-
-```bash
-python assign_clades.py
+assign_clades
 ```

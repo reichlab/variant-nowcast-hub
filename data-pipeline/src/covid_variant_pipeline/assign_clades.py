@@ -3,6 +3,7 @@ import subprocess
 from importlib import resources
 
 import requests
+import rich_click as click
 import structlog
 from cloudpathlib import AnyPath
 
@@ -125,20 +126,28 @@ def assign_clades(as_of_date: str, reference_tree: AnyPath, root_sequence: AnyPa
     return assignment_file
 
 
+@click.command()
+@click.option(
+    "--as-of-date",
+    type=click.DateTime(formats=["%Y-%m-%d"]),
+    prompt="Reference tree as of (YYYY-MM-DD)",
+    required=True,
+    help="Reference tree date to use for clade assignments (YYYY-MM-DD format)",
+)
 def main(as_of_date: str):
-    # TODO: validate as_of_date to ensure it's
-    # in YYYY-MM-DD format, isn't in the future, etc.
-    logger.info("Starting pipeline")
+    # TODO: do we need additional date validations?
+
+    # incoming as_of_date comes in as a datetime object (for validation purposes), convert back to string now
+    as_of_date = as_of_date.strftime("%Y-%m-%d")
+    logger.info("Starting pipeline", as_of_date=as_of_date)
 
     get_sequences()
     get_sequence_metadata()
     reference_tree_path, root_sequence_path = save_reference_info(as_of_date)
     assignment_file = assign_clades(as_of_date, reference_tree_path, root_sequence_path)
 
-    logger.info(f"Sequence clade assignments are ready at {assignment_file}")
+    logger.info("Sequence clade assignments are ready", assignment_file=assignment_file)
 
 
 if __name__ == "__main__":
-    as_of_date = "2024-05-06"  # hard-coded date for testing
-    logger = logger.bind(as_of=as_of_date)
-    main(as_of_date)
+    main()

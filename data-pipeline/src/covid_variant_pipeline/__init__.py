@@ -10,7 +10,7 @@ def setup_logging():
         structlog.processors.CallsiteParameterAdder(
             [
                 structlog.processors.CallsiteParameter.FILENAME,
-                structlog.processors.CallsiteParameter.FUNC_NAME,
+                structlog.processors.CallsiteParameter.LINENO,
             ]
         ),
     ]
