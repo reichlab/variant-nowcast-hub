@@ -6,7 +6,7 @@ import requests
 import structlog
 from cloudpathlib import AnyPath
 
-from covid_variant_pipeline.util.reference_tree import get_reference_tree
+from covid_variant_pipeline.util.reference import get_reference_data
 
 logger = structlog.get_logger()
 
@@ -15,6 +15,7 @@ UPDATED_AFTER = "04/15/24"
 MODULE_PATH = AnyPath(resources.files("covid_variant_pipeline"))
 DATA_DIR = MODULE_PATH / "data"
 EXECUTABLE_DIR = MODULE_PATH / "bin"
+REFERENCE_DIR = DATA_DIR / "reference"
 PACKAGE_NAME = "ncbi_sars-cov-2"
 PACKAGE_FILE = f"{DATA_DIR}/{PACKAGE_NAME}.zip"
 
@@ -82,23 +83,25 @@ def get_sequence_metadata():
         )
 
 
-def save_reference_tree(as_of_date: str) -> AnyPath:
+def save_reference_info(as_of_date: str) -> AnyPath:
     """Download a reference tree and save it to a file."""
 
-    logger.info("Downloading reference tree")
+    reference = get_reference_data(get_nextclade_session(), as_of_date)
 
-    tree = get_reference_tree(get_nextclade_session(), as_of_date)
+    tree_file_path = REFERENCE_DIR / f"{as_of_date}_tree.json"
+    with open(tree_file_path, "w") as f:
+        json.dump(reference, f)
 
-    file_path = DATA_DIR / "trees" / f"{as_of_date}_tree.json"
-    with open(file_path, "w") as f:
-        json.dump(tree, f)
+    root_sequence_file_path = REFERENCE_DIR / f"{as_of_date}_root_sequence.json"
+    with open(root_sequence_file_path, "w") as f:
+        json.dump(reference["root_sequence"], f)
 
-    logger.info("Reference tree saved", path=str(file_path))
+    logger.info("Reference data saved", tree_path=str(tree_file_path), root_sequence_path=str(root_sequence_file_path))
 
-    return file_path
+    return tree_file_path, root_sequence_file_path
 
 
-def assign_clades(as_of_date: str, reference_tree: AnyPath):
+def assign_clades(as_of_date: str, reference_tree: AnyPath, root_sequence: AnyPath):
     """Assign downloaded genbank sequences to a clade."""
 
     logger.info(f"Assigning sequences to clades using reference tree {reference_tree}")
@@ -127,15 +130,15 @@ def main(as_of_date: str):
     # in YYYY-MM-DD format, isn't in the future, etc.
     logger.info("Starting pipeline")
 
-    # get_sequences()
-    # get_sequence_metadata()
-    reference_tree_path = save_reference_tree(as_of_date)
-    assignment_file = assign_clades(as_of_date, reference_tree_path)
+    get_sequences()
+    get_sequence_metadata()
+    reference_tree_path, root_sequence_path = save_reference_info(as_of_date)
+    assignment_file = assign_clades(as_of_date, reference_tree_path, root_sequence_path)
 
     logger.info(f"Sequence clade assignments are ready at {assignment_file}")
 
 
 if __name__ == "__main__":
-    as_of_date = "2024-05-01"  # hard-coded date for testing
+    as_of_date = "2024-05-06"  # hard-coded date for testing
     logger = logger.bind(as_of=as_of_date)
     main(as_of_date)
