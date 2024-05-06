@@ -70,7 +70,10 @@ Follow the directions below to set this project up on your local machine.
 ### Adding new dependencies
 
 This project uses [`pip-tools`](https://github.com/jazzband/pip-tools) to generate requirements files from `pyproject.toml`.
+To install `pip-tools`, run the following after activating your virtual environment:
 
+```bash
+python -m pip install pip-tools
 To add a new dependency:
 
 1. Add dependency to the `dependencies` section `pyproject.toml` (if it's a dev dependency,
