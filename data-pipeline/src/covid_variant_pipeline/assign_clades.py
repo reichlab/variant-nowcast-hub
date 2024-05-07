@@ -2,7 +2,6 @@ import json
 import subprocess
 from importlib import resources
 
-import requests
 import rich_click as click
 import structlog
 from cloudpathlib import AnyPath
@@ -17,18 +16,9 @@ MODULE_PATH = AnyPath(resources.files("covid_variant_pipeline"))
 DATA_DIR = MODULE_PATH / "data"
 EXECUTABLE_DIR = MODULE_PATH / "bin"
 REFERENCE_DIR = DATA_DIR / "reference"
+NEXTCLADE_BASE_URL = "https://nextstrain.org/nextclade/sars-cov-2"
 PACKAGE_NAME = "ncbi_sars-cov-2"
 PACKAGE_FILE = f"{DATA_DIR}/{PACKAGE_NAME}.zip"
-
-
-def get_nextclade_session() -> requests.Session():
-    """Return a session for the nexclade API."""
-
-    session = requests.Session()
-    session.headers.update({"Accept": "application/vnd.nextstrain.dataset.main+json"})
-    session.headers.update({"Accept-Encoding": "gzip, deflate"})
-
-    return session
 
 
 def get_sequences():
@@ -87,7 +77,7 @@ def get_sequence_metadata():
 def save_reference_info(as_of_date: str) -> AnyPath:
     """Download a reference tree and save it to a file."""
 
-    reference = get_reference_data(get_nextclade_session(), as_of_date)
+    reference = get_reference_data(NEXTCLADE_BASE_URL, as_of_date)
 
     tree_file_path = REFERENCE_DIR / f"{as_of_date}_tree.json"
     with open(tree_file_path, "w") as f:

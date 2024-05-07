@@ -67,6 +67,20 @@ Follow the directions below to set this project up on your local machine.
     pip install -r requirements/dev-requirements.txt && pip install -e .
     ```
 
+### Running the test suite
+
+If you've installed the dev requirements and want to run the unit tests:
+
+```bash
+pytest -k unit
+```
+
+To run the full test suite, including an integration test that runs the pipeline end-to-end:
+
+```bash
+pytest
+```
+
 ### Adding new dependencies
 
 This project uses [`pip-tools`](https://github.com/jazzband/pip-tools) to generate requirements files from `pyproject.toml`.

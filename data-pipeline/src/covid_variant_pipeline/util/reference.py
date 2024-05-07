@@ -5,11 +5,15 @@ import structlog
 logger = structlog.get_logger()
 
 
-def get_reference_data(session: requests.Session, as_of_date: str) -> dict:
+def get_reference_data(base_url: str, as_of_date: str) -> dict:
     """Return a reference tree as of a given date in YYYY-MM-DD format."""
 
-    base_url = "https://nextstrain.org/nextclade/sars-cov-2"
-    response = session.get(f"{base_url}@{as_of_date}")
+    headers = {
+        "Accept": "application/vnd.nextstrain.dataset.main+json",
+        "Accept-Encoding": "gzip, deflate",
+    }
+
+    response = requests.get(f"{base_url}@{as_of_date}", headers=headers)
 
     if not response.ok:
         logger.error(

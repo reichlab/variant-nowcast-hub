@@ -34,9 +34,10 @@ assign_clades = "covid_variant_pipeline.assign_clades:main"
 requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
-
-[tool.pdm]
-distribution = true
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
 
 [tool.ruff]
 line-length = 120
