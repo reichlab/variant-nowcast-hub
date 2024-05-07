@@ -67,40 +67,72 @@ Follow the directions below to set this project up on your local machine.
     pip install -r requirements/dev-requirements.txt && pip install -e .
     ```
 
+### Running the test suite
+
+If you've installed the dev requirements and want to run the unit tests:
+
+```bash
+pytest -k unit
+```
+
+To run the full test suite, including an integration test that runs the pipeline end-to-end:
+
+```bash
+pytest
+```
+
 ### Adding new dependencies
 
 This project uses [`pip-tools`](https://github.com/jazzband/pip-tools) to generate requirements files from `pyproject.toml`.
 To install `pip-tools`, run the following after activating your virtual environment:
 
-```bash
-python -m pip install pip-tools
+3. Activate the virtual environment:
+
+    ```bash
+    source .venv/bin/activate
+    ```
+
+    **Note:** the command above is for Unix-based systems. If you're using Windows, the command is:
+
+    ```bash
+    .venv\Scripts\activate
+    ```
+
+4. Install the project dependencies. The following commands can also be used to update dependencies after pulling upstream code changes:
+
+    ```bash
+    # if you're planning to run the scripts without making code changes
+    pip install -r requirements/dev-requirements.txt && pip install -e .
+
+    # if you're planning to make and submit code changes
+    pip install -r requirements/dev-requirements.txt && pip install -e .
+    ```
+
+### Adding new dependencies
+
+This project uses [`pip-tools`](https://github.com/jazzband/pip-tools) to generate requirements files from `pyproject.toml`.
+
 To add a new dependency:
 
 1. Add dependency to the `dependencies` section `pyproject.toml` (if it's a dev dependency,
 add it to the `dev` section of `[project.optional-dependencies]`).
 
-2. Regenerate the `requirements.txt` file:
-```bash
-pip-compile -o requirements/requirements.txt pyproject.toml
-```
+2. Regenerate the `requirements.txt` file (if you've only added a dev dependency, you can skip this step)
+    ```bash
+    pip-compile -o requirements/requirements.txt pyproject.toml
+    ```
 
-3. If you've added a dev dependency, regenerate the `requirements-dev.txt` file:
-```bash
-pip-compile --extra dev -o requirements/dev-requirements.txt pyproject.toml
-```
+3. Regenerate the `requirements-dev.txt` file (even if you haven't added a dev dependency):
+    ```bash
+    pip-compile --extra dev -o requirements/dev-requirements.txt pyproject.toml
+    ```
 
 ## Running the code
 
 Set up the project as described above and make sure the virtual environment is activated.
 
-1. From the repo's `data-pipeline` directory, navigate to the directory that contains the `assign_clades.py` script:
+1. From anywhere in the repo's `data-pipeline` directory:
 
-```bash
-cd src/covid_variant_pipeline
-```
-
-2. Run the script:
-
-```bash
-python assign_clades.py
-```
+    ```bash
+    assign_clades
+    ```

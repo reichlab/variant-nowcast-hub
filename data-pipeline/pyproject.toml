@@ -11,27 +11,34 @@ readme = "README.md"
 license = {text = "MIT"}
 
 dependencies = [
-    "pandas>=2.2.2",
     "awscli>=1.32.92",
+    "click",
+    "cloudpathlib",
+    "pandas>=2.2.2",
     "polars>=0.20.23",
+    "requests",
+    "rich-click",
+    "structlog",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest",
+    "rich",
 ]
 
-[project.entry-points.'console_scripts']
-assign_clades = 'covid_variant_pipeline.assign_clades:main'
+[project.entry-points."console_scripts"]
+assign_clades = "covid_variant_pipeline.assign_clades:main"
 
 [build-system]
 requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
-
-[tool.pdm]
-distribution = true
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
 
 [tool.ruff]
 line-length = 120
-lint.extend-select = ['I']
+lint.extend-select = ["I"]
