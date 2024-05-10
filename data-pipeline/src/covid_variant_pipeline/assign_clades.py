@@ -1,4 +1,6 @@
+import datetime
 import json
+import os
 import subprocess
 from importlib import resources
 
@@ -11,20 +13,25 @@ from covid_variant_pipeline.util.reference import get_reference_data
 logger = structlog.get_logger()
 
 # TODO put these in a config file when we're further along
-UPDATED_AFTER = "04/15/24"
+UPDATED_AFTER = "05/01/24"
 MODULE_PATH = AnyPath(resources.files("covid_variant_pipeline"))
 DATA_DIR = MODULE_PATH / "data"
 EXECUTABLE_DIR = MODULE_PATH / "bin"
+SEQUENCE_DIR = DATA_DIR / "sequence"
 REFERENCE_DIR = DATA_DIR / "reference"
+ASSIGNMENT_DIR = DATA_DIR / "assignment"
 NEXTCLADE_BASE_URL = "https://nextstrain.org/nextclade/sars-cov-2"
-PACKAGE_NAME = "ncbi_sars-cov-2"
-PACKAGE_FILE = f"{DATA_DIR}/{PACKAGE_NAME}.zip"
+PACKAGE_NAME = "ncbi.zip"
 
 
-def get_sequences():
+def get_sequences(run_time: str) -> str:
     """Download SARS-CoV-2 sequences from Genbank."""
 
-    logger.info(f"Downloading sequences updated after {UPDATED_AFTER}...")
+    output_dir = f"{SEQUENCE_DIR}/{run_time}"
+    output_file = f"{output_dir}/{PACKAGE_NAME}"
+
+    os.makedirs(output_dir, exist_ok=True)
+
     subprocess.run(
         [
             f"{EXECUTABLE_DIR}/datasets",
@@ -38,7 +45,7 @@ def get_sequences():
             "--updated-after",
             f"{UPDATED_AFTER}",
             "--filename",
-            f"{PACKAGE_FILE}",
+            f"{output_file}",
         ]
     )
 
@@ -46,35 +53,41 @@ def get_sequences():
     subprocess.run(
         [
             "unzip",
-            f"{PACKAGE_FILE}",
+            f"{output_file}",
             "-d",
-            f"{DATA_DIR}/",
+            f"{output_dir}/",
         ]
     )
 
+    logger.info("NCBI SARS-COV-2 genome package downloaded", run_time=run_time, package_location=output_file)
+    return output_dir
 
-def get_sequence_metadata():
+
+def get_sequence_metadata(run_time: str, sequence_dir: str):
     """Generate tabular representation of the downloaded genbank sequences."""
 
-    logger.info("Extracting sequence metadata...")
     fields = "accession,sourcedb,sra-accs,isolate-lineage,geo-region,geo-location,isolate-collection-date,release-date,update-date,virus-pangolin,length,host-name,isolate-lineage-source,biosample-acc,completeness,lab-host,submitter-names,submitter-affiliation,submitter-country"
+    metadata_file = f"{sequence_dir}/{run_time}-metadata.tsv"
 
-    with open(f"{DATA_DIR}/ncbi_metadata.tsv", "w") as f:
+    with open(metadata_file, "w") as f:
         subprocess.run(
             [
                 f"{EXECUTABLE_DIR}/dataformat",
                 "tsv",
                 "virus-genome",
                 "--inputfile",
-                f"{DATA_DIR}/ncbi_dataset/data/data_report.jsonl",
+                f"{sequence_dir}/ncbi_dataset/data/data_report.jsonl",
                 "--fields",
                 f"{fields}",
             ],
             stdout=f,
         )
 
+    logger.info("extracted sequence metadata", run_time=run_time, metadata_file=metadata_file)
+    return metadata_file
 
-def save_reference_info(as_of_date: str) -> AnyPath:
+
+def save_reference_info(as_of_date: str) -> tuple[AnyPath, AnyPath]:
     """Download a reference tree and save it to a file."""
 
     reference = get_reference_data(NEXTCLADE_BASE_URL, as_of_date)
@@ -129,10 +142,12 @@ def main(as_of_date: str):
 
     # incoming as_of_date comes in as a datetime object (for validation purposes), convert back to string now
     as_of_date = as_of_date.strftime("%Y-%m-%d")
-    logger.info("Starting pipeline", as_of_date=as_of_date)
+    run_time = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
 
-    get_sequences()
-    get_sequence_metadata()
+    logger.info("Starting pipeline", as_of_date=as_of_date, run_time=run_time)
+
+    sequence_dir = get_sequences(run_time)
+    metadata_file = get_sequence_metadata(run_time, sequence_dir)
     reference_tree_path, root_sequence_path = save_reference_info(as_of_date)
     assignment_file = assign_clades(as_of_date, reference_tree_path, root_sequence_path)
 
