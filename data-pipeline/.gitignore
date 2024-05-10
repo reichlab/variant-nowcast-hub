@@ -1,5 +1,9 @@
 .DS_Store
 
+# Keep intermediate variant pipeline outputs out of git,
+# but include the final clade assignment file
+**/data/*
+!**/data/assignment/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
