@@ -102,7 +102,7 @@ To install `pip-tools`, run the following after activating your virtual environm
 
     ```bash
     # if you're planning to run the scripts without making code changes
-    pip install -r requirements/dev-requirements.txt && pip install -e .
+    pip install -r requirements/requirements.txt && pip install -e .
 
     # if you're planning to make and submit code changes
     pip install -r requirements/dev-requirements.txt && pip install -e .
