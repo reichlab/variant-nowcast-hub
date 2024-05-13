@@ -4,11 +4,13 @@ import os
 import subprocess
 from importlib import resources
 
+import polars as pl
 import rich_click as click
 import structlog
 from cloudpathlib import AnyPath
 
 from covid_variant_pipeline.util.reference import get_reference_data
+from covid_variant_pipeline.util.sequence import parse_sequence_assignments
 
 logger = structlog.get_logger()
 
@@ -18,19 +20,20 @@ MODULE_PATH = AnyPath(resources.files("covid_variant_pipeline"))
 DATA_DIR = MODULE_PATH / "data"
 EXECUTABLE_DIR = MODULE_PATH / "bin"
 SEQUENCE_DIR = DATA_DIR / "sequence"
+SEQUENCE_FILE = "ncbi_dataset/data/genomic.fna"
 REFERENCE_DIR = DATA_DIR / "reference"
 ASSIGNMENT_DIR = DATA_DIR / "assignment"
 NEXTCLADE_BASE_URL = "https://nextstrain.org/nextclade/sars-cov-2"
 PACKAGE_NAME = "ncbi.zip"
 
 
-def get_sequences(run_time: str) -> str:
+def get_sequences(run_time: str) -> AnyPath:
     """Download SARS-CoV-2 sequences from Genbank."""
 
-    output_dir = f"{SEQUENCE_DIR}/{run_time}"
-    output_file = f"{output_dir}/{PACKAGE_NAME}"
+    sequence_dir = SEQUENCE_DIR / run_time
+    sequence_package = sequence_dir / PACKAGE_NAME
 
-    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(sequence_dir, exist_ok=True)
 
     subprocess.run(
         [
@@ -45,7 +48,7 @@ def get_sequences(run_time: str) -> str:
             "--updated-after",
             f"{UPDATED_AFTER}",
             "--filename",
-            f"{output_file}",
+            f"{sequence_package}",
         ]
     )
 
@@ -53,14 +56,15 @@ def get_sequences(run_time: str) -> str:
     subprocess.run(
         [
             "unzip",
-            f"{output_file}",
+            "-q",
+            f"{sequence_package}",
             "-d",
-            f"{output_dir}/",
+            f"{sequence_dir}/",
         ]
     )
 
-    logger.info("NCBI SARS-COV-2 genome package downloaded", run_time=run_time, package_location=output_file)
-    return output_dir
+    logger.info("NCBI SARS-COV-2 genome package downloaded", run_time=run_time, package_location=sequence_package)
+    return sequence_dir
 
 
 def get_sequence_metadata(run_time: str, sequence_dir: str):
@@ -105,12 +109,16 @@ def save_reference_info(as_of_date: str) -> tuple[AnyPath, AnyPath]:
     return tree_file_path, root_sequence_file_path
 
 
-def assign_clades(as_of_date: str, reference_tree: AnyPath, root_sequence: AnyPath):
+def assign_clades(run_time: str, sequence_dir: AnyPath, reference_tree: AnyPath, root_sequence: AnyPath):
     """Assign downloaded genbank sequences to a clade."""
 
     logger.info(f"Assigning sequences to clades using reference tree {reference_tree}")
-    sequence_file = f"{DATA_DIR}/ncbi_dataset/data/genomic.fna"
-    assignment_file = f"{DATA_DIR}/{as_of_date}_clade_assignments.csv"
+    sequence_file = sequence_dir / SEQUENCE_FILE
+    assignment_file = f"{ASSIGNMENT_DIR}/{run_time}_clade_assignments_no_metadata.csv"
+
+    # temporary: until we fix parsing of the root sequence returned via API, we'll hard-code
+    # the once we saved earlier
+    root_sequence = REFERENCE_DIR / "covid_reference_sequence.fasta"
 
     subprocess.run(
         [
@@ -119,7 +127,7 @@ def assign_clades(as_of_date: str, reference_tree: AnyPath, root_sequence: AnyPa
             "--input-tree",
             f"{reference_tree}",
             "--input-ref",
-            f"{DATA_DIR}/covid_reference_sequence.fasta",
+            f"{root_sequence}",
             "--output-csv",
             f"{assignment_file}",
             f"{sequence_file}",
@@ -127,6 +135,43 @@ def assign_clades(as_of_date: str, reference_tree: AnyPath, root_sequence: AnyPa
     )
 
     return assignment_file
+
+
+def merge_metadata(
+    as_of_date: str, run_datetime: datetime.datetime, metadata_file: AnyPath, assignment_file: AnyPath
+) -> pl.DataFrame:
+    """Merge sequence metadata with clade assignments."""
+
+    df_metadata = pl.read_csv(metadata_file, separator="\t")
+
+    # we're expecting one row per sequence id (aka Accession)
+    # TODO: how do we want to handle the case where the metadata file has
+    # duplicate Accession values?
+    assert df_metadata["Accession"].n_unique() == df_metadata.shape[0]
+
+    df_assignments = pl.read_csv(assignment_file, separator=";")
+    df_assignments = parse_sequence_assignments(df_assignments)
+
+    joined = df_metadata.join(df_assignments, left_on="Accession", right_on="seq", how="left")
+    joined = joined.with_columns(
+        sequence_retrieved_datetime=run_datetime,
+        reference_tree_date=datetime.datetime.strptime(as_of_date, "%Y-%m-%d").date(),
+    )
+    num_sequences = joined.shape[0]
+
+    missing_clade_assignments = joined.filter(pl.col("Accession").is_null())
+    num_missing_assignments = missing_clade_assignments.shape[0]
+
+    if num_missing_assignments == 0:
+        logger.info("Sequence metdata merged with clade assignments", num_sequences=num_sequences)
+    else:
+        logger.warning(
+            "Some sequences are missing clade assignments",
+            num_sequences=num_sequences,
+            missing_clade_assignments=missing_clade_assignments,
+        )
+
+    return joined
 
 
 @click.command()
@@ -142,16 +187,26 @@ def main(as_of_date: str):
 
     # incoming as_of_date comes in as a datetime object (for validation purposes), convert back to string now
     as_of_date = as_of_date.strftime("%Y-%m-%d")
-    run_time = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
+    now = datetime.datetime.now()
+    run_time = now.strftime("%Y%m%dT%H%M%S")
 
     logger.info("Starting pipeline", as_of_date=as_of_date, run_time=run_time)
 
     sequence_dir = get_sequences(run_time)
     metadata_file = get_sequence_metadata(run_time, sequence_dir)
     reference_tree_path, root_sequence_path = save_reference_info(as_of_date)
-    assignment_file = assign_clades(as_of_date, reference_tree_path, root_sequence_path)
+    assignment_file = assign_clades(run_time, sequence_dir, reference_tree_path, root_sequence_path)
 
-    logger.info("Sequence clade assignments are ready", assignment_file=assignment_file)
+    merged_data = merge_metadata(as_of_date, now, metadata_file, assignment_file)
+    final_assignment_file = f"{ASSIGNMENT_DIR}/{run_time}_clade_assignments.csv"
+    merged_data.write_csv(final_assignment_file)
+
+    logger.info(
+        "Sequence clade assignments are ready",
+        assignment_file=final_assignment_file,
+        run_time=run_time,
+        as_of_date=as_of_date,
+    )
 
 
 if __name__ == "__main__":
