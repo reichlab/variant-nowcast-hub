@@ -159,11 +159,12 @@ def merge_metadata(
     )
     num_sequences = joined.shape[0]
 
-    missing_clade_assignments = joined.filter(pl.col("Accession").is_null())
+    # ?? what is the difference between "clade" and "clade_nextstrain" ??
+    missing_clade_assignments = joined.filter(pl.col("clade_nextstrain").is_null())
     num_missing_assignments = missing_clade_assignments.shape[0]
 
     if num_missing_assignments == 0:
-        logger.info("Sequence metdata merged with clade assignments", num_sequences=num_sequences)
+        logger.info("Sequence metadata merged with clade assignments", num_sequences=num_sequences)
     else:
         logger.warning(
             "Some sequences are missing clade assignments",
