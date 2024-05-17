@@ -35,7 +35,9 @@ markdown-it-py==3.0.0
 mdurl==0.1.2
     # via markdown-it-py
 numpy==1.26.4
-    # via pandas
+    # via
+    #   pandas
+    #   pyarrow
 packaging==24.0
     # via pytest
 pandas==2.2.2
@@ -43,6 +45,8 @@ pandas==2.2.2
 pluggy==1.5.0
     # via pytest
 polars==0.20.23
+    # via covid-variant-pipeline (pyproject.toml)
+pyarrow==16.0.0
     # via covid-variant-pipeline (pyproject.toml)
 pyasn1==0.6.0
     # via rsa

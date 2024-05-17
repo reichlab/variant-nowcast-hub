@@ -14,9 +14,11 @@ dependencies = [
     "awscli>=1.32.92",
     "click",
     "cloudpathlib",
-    "pandas>=2.2.2",
+    "pandas",
     "polars>=0.20.23",
+    "pyarrow",
     "requests",
+    "rich",
     "rich-click",
     "structlog",
 ]
@@ -24,7 +26,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest",
-    "rich",
 ]
 
 [project.entry-points."console_scripts"]
