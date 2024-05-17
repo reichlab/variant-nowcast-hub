@@ -149,16 +149,10 @@
                             "target_id": "variant prop",
                             "target_name": "frequency of observed variant lineage",
                             "target_units": "percentage",
-                            "target_keys": {
-                                "daily": [
-                                    "variant prop",
-                                    "START HERE"
-                                ]
-                            },
-                            "description": "put a good description here",
-                            "target_type": "ordinal",
-                            "is_step_ahead": true,
-                            "time_unit": "day"
+                            "target_keys": null,
+                            "description": "the predicted percentage of cases attributed to the specified variant",
+                            "target_type": "continuous",
+                            "is_step_ahead": false
                         }
                     ]
                 }
