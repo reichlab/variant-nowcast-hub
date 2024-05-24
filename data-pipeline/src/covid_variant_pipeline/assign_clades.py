@@ -10,7 +10,7 @@ import structlog
 from cloudpathlib import AnyPath
 
 from covid_variant_pipeline.util.reference import get_reference_data
-from covid_variant_pipeline.util.sequence import parse_sequence_assignments
+from covid_variant_pipeline.util.sequence import get_covid_genome_data, parse_sequence_assignments
 
 logger = structlog.get_logger()
 
@@ -35,22 +35,9 @@ def get_sequences(run_time: str) -> AnyPath:
 
     os.makedirs(sequence_dir, exist_ok=True)
 
-    subprocess.run(
-        [
-            f"{EXECUTABLE_DIR}/datasets",
-            "download",
-            "virus",
-            "genome",
-            "taxon",
-            "SARS-CoV-2",
-            "--host",
-            "Homo sapiens",
-            "--updated-after",
-            f"{UPDATED_AFTER}",
-            "--filename",
-            f"{sequence_package}",
-        ]
-    )
+    # TODO: maybe add released_since_date to the CLI options?
+    # Currently, function below will use a default of 2 weeks ago
+    get_covid_genome_data(filename=sequence_package)
 
     # unzip the data package
     subprocess.run(
@@ -63,7 +50,9 @@ def get_sequences(run_time: str) -> AnyPath:
         ]
     )
 
-    logger.info("NCBI SARS-COV-2 genome package downloaded", run_time=run_time, package_location=sequence_package)
+    logger.info(
+        "NCBI SARS-COV-2 genome package downloaded and unzipped", run_time=run_time, package_location=sequence_package
+    )
     return sequence_dir
 
 

@@ -1,0 +1,1 @@
+This directory contains SAR-COV-2 sequence data assigned to clades.
