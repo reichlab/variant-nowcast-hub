@@ -4,6 +4,8 @@
 # but include the final clade assignment file
 **/data/*
 !**/data/assignment/
+**/data/assignment/*_no_metadata.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
