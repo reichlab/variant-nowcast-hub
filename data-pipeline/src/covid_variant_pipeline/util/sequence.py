@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 
 import polars as pl
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 import structlog
 
 logger = structlog.get_logger()
@@ -24,10 +26,18 @@ def get_covid_genome_data(
         "Accept-Encoding": "br, deflate, gzip, zstd",
     }
 
-    # TODO: add session retries
     session = requests.Session()
+    # attach a urllib3 retry adapter to the requests session
+    # https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#urllib3.util.retry.Retry
+    retries = Retry(
+        total = 5,
+        allowed_methods=frozenset(['GET', 'POST']),
+        backoff_factor = 1,
+        status_forcelist = [401, 403, 404, 429, 500, 502, 503, 504])
+    session.mount('https://', HTTPAdapter(max_retries=retries))
     session.headers.update(headers)
 
+    # TODO: this might be a better as an item in the forthcoming config file
     request_body = {
         "released_since": released_since_date,
         "taxon": "SARS-CoV-2",
