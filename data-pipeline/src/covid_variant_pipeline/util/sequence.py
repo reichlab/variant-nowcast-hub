@@ -4,9 +4,9 @@ from datetime import datetime, timedelta
 
 import polars as pl
 import requests
+import structlog
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
-import structlog
 
 logger = structlog.get_logger()
 
@@ -30,11 +30,12 @@ def get_covid_genome_data(
     # attach a urllib3 retry adapter to the requests session
     # https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#urllib3.util.retry.Retry
     retries = Retry(
-        total = 5,
-        allowed_methods=frozenset(['GET', 'POST']),
-        backoff_factor = 1,
-        status_forcelist = [401, 403, 404, 429, 500, 502, 503, 504])
-    session.mount('https://', HTTPAdapter(max_retries=retries))
+        total=5,
+        allowed_methods=frozenset(["GET", "POST"]),
+        backoff_factor=1,
+        status_forcelist=[401, 403, 404, 429, 500, 502, 503, 504],
+    )
+    session.mount("https://", HTTPAdapter(max_retries=retries))
     session.headers.update(headers)
 
     # TODO: this might be a better as an item in the forthcoming config file
@@ -55,20 +56,23 @@ def get_covid_genome_data(
     logger.info("NCBI API call starting", released_since_date=released_since_date)
 
     start = time.perf_counter()
-    response = session.post(base_url, data=json.dumps(request_body), stream=True)
+    response = session.post(base_url, data=json.dumps(request_body), stream=True, timeout=(10, 300))
 
     if not response.ok:
         logger.error(
             "Failed to download genome package",
             status_code=response.status_code,
+            response_text=response.text,
             request=response.request.url,
             request_body=request_body,
         )
+        raise SystemExit(f"Unsuccessful call to NCBI API: {response.status_code}: {response.reason}")
 
     with open(filename, "wb") as f:
         # we can tweak the chunk_size after getting a better idea of where this will run
         for chunk in response.iter_content(chunk_size=524288):
-            f.write(chunk)
+            if chunk:
+                f.write(chunk)
 
     end = time.perf_counter()
     elapsed = end - start
