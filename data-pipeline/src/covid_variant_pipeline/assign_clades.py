@@ -80,16 +80,16 @@ def get_sequence_metadata(run_time: str, sequence_dir: str):
     return metadata_file
 
 
-def save_reference_info(as_of_date: str) -> tuple[AnyPath, AnyPath]:
+def save_reference_info(reference_tree_date: str) -> tuple[AnyPath, AnyPath]:
     """Download a reference tree and save it to a file."""
 
-    reference = get_reference_data(NEXTCLADE_BASE_URL, as_of_date)
+    reference = get_reference_data(NEXTCLADE_BASE_URL, reference_tree_date)
 
-    tree_file_path = REFERENCE_DIR / f"{as_of_date}_tree.json"
+    tree_file_path = REFERENCE_DIR / f"{reference_tree_date}_tree.json"
     with open(tree_file_path, "w") as f:
         json.dump(reference, f)
 
-    root_sequence_file_path = REFERENCE_DIR / f"{as_of_date}_root_sequence.json"
+    root_sequence_file_path = REFERENCE_DIR / f"{reference_tree_date}_root_sequence.json"
     with open(root_sequence_file_path, "w") as f:
         json.dump(reference["root_sequence"], f)
 
@@ -127,7 +127,7 @@ def assign_clades(run_time: str, sequence_dir: AnyPath, reference_tree: AnyPath,
 
 
 def merge_metadata(
-    as_of_date: str, run_datetime: datetime.datetime, metadata_file: AnyPath, assignment_file: AnyPath
+    reference_tree_date: str, run_datetime: datetime.datetime, metadata_file: AnyPath, assignment_file: AnyPath
 ) -> pl.DataFrame:
     """Merge sequence metadata with clade assignments."""
 
@@ -144,7 +144,7 @@ def merge_metadata(
     joined = df_metadata.join(df_assignments, left_on="Accession", right_on="seq", how="left")
     joined = joined.with_columns(
         sequence_retrieved_datetime=run_datetime,
-        reference_tree_date=datetime.datetime.strptime(as_of_date, "%Y-%m-%d").date(),
+        reference_tree_date=datetime.datetime.strptime(reference_tree_date, "%Y-%m-%d").date(),
     )
     num_sequences = joined.shape[0]
 
@@ -166,28 +166,28 @@ def merge_metadata(
 
 @click.command()
 @click.option(
-    "--as-of-date",
+    "--reference-tree-date",
     type=click.DateTime(formats=["%Y-%m-%d"]),
-    prompt="Reference tree as of (YYYY-MM-DD)",
+    prompt="The reference tree as of date (YYYY-MM-DD)",
     required=True,
     help="Reference tree date to use for clade assignments (YYYY-MM-DD format)",
 )
-def main(as_of_date: str):
+def main(reference_tree_date: str):
     # TODO: do we need additional date validations?
 
-    # incoming as_of_date comes in as a datetime object (for validation purposes), convert back to string now
-    as_of_date = as_of_date.strftime("%Y-%m-%d")
+    # incoming reference_tree_date comes in as a datetime object (for validation purposes), convert back to string now
+    reference_tree_date = reference_tree_date.strftime("%Y-%m-%d")
     now = datetime.datetime.now()
     run_time = now.strftime("%Y%m%dT%H%M%S")
 
-    logger.info("Starting pipeline", as_of_date=as_of_date, run_time=run_time)
+    logger.info("Starting pipeline", reference_tree_date=reference_tree_date, run_time=run_time)
 
     sequence_dir = get_sequences(run_time)
     metadata_file = get_sequence_metadata(run_time, sequence_dir)
-    reference_tree_path, root_sequence_path = save_reference_info(as_of_date)
+    reference_tree_path, root_sequence_path = save_reference_info(reference_tree_date)
     assignment_file = assign_clades(run_time, sequence_dir, reference_tree_path, root_sequence_path)
 
-    merged_data = merge_metadata(as_of_date, now, metadata_file, assignment_file)
+    merged_data = merge_metadata(reference_tree_date, now, metadata_file, assignment_file)
     final_assignment_file = f"{ASSIGNMENT_DIR}/{run_time}_clade_assignments.csv"
     merged_data.write_csv(final_assignment_file)
 
@@ -195,7 +195,7 @@ def main(as_of_date: str):
         "Sequence clade assignments are ready",
         assignment_file=final_assignment_file,
         run_time=run_time,
-        as_of_date=as_of_date,
+        reference_tree_date=reference_tree_date,
     )
 
 
