@@ -3,8 +3,13 @@
 # Keep intermediate variant pipeline outputs out of git,
 # but include the final clade assignment file
 **/data/*
-!**/data/assignment/
-**/data/assignment/*_no_metadata.csv
+!**/data/*/
+**/data/*/*no_metadata.csv
+**/data/*/*.fasta
+**/data/*/*.json
+**/data/*/*.md
+**/data/*/*.tsv
+**/data/*/*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
