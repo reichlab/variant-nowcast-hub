@@ -27,22 +27,21 @@ NEXTCLADE_BASE_URL = "https://nextstrain.org/nextclade/sars-cov-2"
 PACKAGE_NAME = "ncbi.zip"
 
 
-def get_sequences(run_time: str) -> AnyPath:
+def get_sequences(released_since_date: str) -> AnyPath:
     """Download SARS-CoV-2 sequences from Genbank."""
 
-    sequence_dir = SEQUENCE_DIR / run_time
+    sequence_dir = SEQUENCE_DIR / released_since_date
     sequence_package = sequence_dir / PACKAGE_NAME
 
     os.makedirs(sequence_dir, exist_ok=True)
 
-    # TODO: maybe add released_since_date to the CLI options?
-    # Currently, function below will use a default of 2 weeks ago
-    get_covid_genome_data(filename=sequence_package)
+    get_covid_genome_data(released_since_date, filename=sequence_package)
 
     # unzip the data package
     subprocess.run(
         [
             "unzip",
+            "-o",
             "-q",
             f"{sequence_package}",
             "-d",
@@ -50,17 +49,15 @@ def get_sequences(run_time: str) -> AnyPath:
         ]
     )
 
-    logger.info(
-        "NCBI SARS-COV-2 genome package downloaded and unzipped", run_time=run_time, package_location=sequence_package
-    )
+    logger.info("NCBI SARS-COV-2 genome package downloaded and unzipped", package_location=sequence_package)
     return sequence_dir
 
 
-def get_sequence_metadata(run_time: str, sequence_dir: str):
+def get_sequence_metadata(sequence_released_since_date: str, sequence_dir: str):
     """Generate tabular representation of the downloaded genbank sequences."""
 
     fields = "accession,sourcedb,sra-accs,isolate-lineage,geo-region,geo-location,isolate-collection-date,release-date,update-date,virus-pangolin,length,host-name,isolate-lineage-source,biosample-acc,completeness,lab-host,submitter-names,submitter-affiliation,submitter-country"
-    metadata_file = f"{sequence_dir}/{run_time}-metadata.tsv"
+    metadata_file = f"{sequence_dir}/{sequence_released_since_date}-metadata.tsv"
 
     with open(metadata_file, "w") as f:
         subprocess.run(
@@ -76,7 +73,7 @@ def get_sequence_metadata(run_time: str, sequence_dir: str):
             stdout=f,
         )
 
-    logger.info("extracted sequence metadata", run_time=run_time, metadata_file=metadata_file)
+    logger.info("extracted sequence metadata", metadata_file=metadata_file)
     return metadata_file
 
 
@@ -98,12 +95,14 @@ def save_reference_info(reference_tree_date: str) -> tuple[AnyPath, AnyPath]:
     return tree_file_path, root_sequence_file_path
 
 
-def assign_clades(run_time: str, sequence_dir: AnyPath, reference_tree: AnyPath, root_sequence: AnyPath):
+def assign_clades(
+    sequence_released_since_date: str, sequence_dir: AnyPath, reference_tree: AnyPath, root_sequence: AnyPath
+):
     """Assign downloaded genbank sequences to a clade."""
 
     logger.info(f"Assigning sequences to clades using reference tree {reference_tree}")
     sequence_file = sequence_dir / SEQUENCE_FILE
-    assignment_file = f"{ASSIGNMENT_DIR}/{run_time}_clade_assignments_no_metadata.csv"
+    assignment_file = f"{ASSIGNMENT_DIR}/{sequence_released_since_date}_clade_assignments_no_metadata.csv"
 
     # temporary: until we fix parsing of the root sequence returned via API, we'll hard-code
     # the once we saved earlier
@@ -166,29 +165,38 @@ def merge_metadata(
 
 @click.command()
 @click.option(
+    "--sequence-released-since-date",
+    type=click.DateTime(formats=["%Y-%m-%d"]),
+    prompt="Include SARS CoV-2 genome data released on or after this date (YYYY-MM-DD)",
+    required=True,
+    help="Limit the downloaded SARS CoV-2 package to sequences released on or after this date (YYYY-MM-DD format)",
+)
+@click.option(
     "--reference-tree-date",
     type=click.DateTime(formats=["%Y-%m-%d"]),
     prompt="The reference tree as of date (YYYY-MM-DD)",
     required=True,
     help="Reference tree date to use for clade assignments (YYYY-MM-DD format)",
 )
-def main(reference_tree_date: str):
+def main(sequence_released_since_date: datetime.date, reference_tree_date: datetime.date):
     # TODO: do we need additional date validations?
 
-    # incoming reference_tree_date comes in as a datetime object (for validation purposes), convert back to string now
+    # incoming dates arrive as datetime objects (for validation purposes), convert back to string now
+    breakpoint()
+    sequence_released_since_date = sequence_released_since_date.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
     reference_tree_date = reference_tree_date.strftime("%Y-%m-%d")
     now = datetime.datetime.now()
     run_time = now.strftime("%Y%m%dT%H%M%S")
 
     logger.info("Starting pipeline", reference_tree_date=reference_tree_date, run_time=run_time)
 
-    sequence_dir = get_sequences(run_time)
-    metadata_file = get_sequence_metadata(run_time, sequence_dir)
+    sequence_dir = get_sequences(sequence_released_since_date)
+    metadata_file = get_sequence_metadata(sequence_released_since_date, sequence_dir)
     reference_tree_path, root_sequence_path = save_reference_info(reference_tree_date)
-    assignment_file = assign_clades(run_time, sequence_dir, reference_tree_path, root_sequence_path)
+    assignment_file = assign_clades(sequence_released_since_date, sequence_dir, reference_tree_path, root_sequence_path)
 
     merged_data = merge_metadata(reference_tree_date, now, metadata_file, assignment_file)
-    final_assignment_file = f"{ASSIGNMENT_DIR}/{run_time}_clade_assignments.csv"
+    final_assignment_file = f"{ASSIGNMENT_DIR}/{sequence_released_since_date}_clade_assignments.csv"
     merged_data.write_csv(final_assignment_file)
 
     logger.info(

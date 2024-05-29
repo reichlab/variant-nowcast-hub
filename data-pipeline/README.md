@@ -129,10 +129,18 @@ add it to the `dev` section of `[project.optional-dependencies]`).
 
 ## Running the code
 
-Set up the project as described above and make sure the virtual environment is activated.
+Set up the project as described above and make sure the virtual environment is activated. The code that downloads the Genbank
+sequences and assigns them to clades is a command-line tool called `assign_clades`.
 
-1. From anywhere in the repo's `data-pipeline` directory:
+To see the options and other help information from anywhere in the repo's `data-pipeline` directory:
 
-    ```bash
-    assign_clades
-    ```
+```bash
+assign_clades --help
+```
+
+To download Genbank sequences that have been released in 2024-05-15 and assign clades to them using the SARS-Cov-2 reference
+tree as it looked on 2024-05-01:
+
+```bash
+assign_clades --sequence-released-since-date 2024-05-24 --reference-tree-date 2024-05-01
+```

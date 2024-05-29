@@ -1,6 +1,5 @@
 import json
 import time
-from datetime import datetime, timedelta
 
 import polars as pl
 import requests
@@ -12,15 +11,13 @@ logger = structlog.get_logger()
 
 
 def get_covid_genome_data(
+    released_since_date: str,
     base_url: str = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/virus/genome/download",
-    released_since_date: str = None,
     filename: str = "ncbi.zip",
 ) -> dict:
     """Download genome data package from NCBI."""
 
-    if not released_since_date:
-        released_since_date = (datetime.now() - timedelta(weeks=2)).strftime(("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z")
-
+    # released
     headers = {
         "Accept": "application/zip",
         "Accept-Encoding": "br, deflate, gzip, zstd",
