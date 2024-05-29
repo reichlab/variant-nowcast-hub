@@ -172,7 +172,7 @@ def merge_metadata(config: Config) -> pl.DataFrame:
 )
 @click.option(
     "--data-dir",
-    prompt="Directory where the clade assignment file will be saved",
+    prompt="Directory where the clade assignment file will be saved (do not use ~)",
     default=str(MODULE_PATH / "data"),
     help=f"Directory where the clade assignment file will be saved. Default: {str(MODULE_PATH / 'data')}.",
 )
