@@ -52,7 +52,7 @@ def get_covid_genome_data(
     logger.info("NCBI API call starting", released_since_date=released_since_date)
 
     start = time.perf_counter()
-    response = session.post(base_url, data=json.dumps(request_body), stream=True, timeout=(10, 300))
+    response = session.post(base_url, data=json.dumps(request_body), timeout=(300, 300))
 
     if not response.ok:
         # If the session retries the max number of times, the app will throw an error before we get here.
@@ -67,11 +67,13 @@ def get_covid_genome_data(
         # Exit the pipeline without displaying a traceback
         raise SystemExit(f"Unsuccessful call to NCBI API: {response.status_code}: {response.reason}")
 
-    # TODO: Am still seeing intermittent errors: ChunkedEncodingError(ProtocolError('Response ended prematurely')
+    # Originally tried saving the NCBI package via a stream call and iter_content (to prevent potential
+    # memory issues that can arise when download large files). However, ran into an intermittent error:
+    # ChunkedEncodingError(ProtocolError('Response ended prematurely').
+    # We may need to revisit this at some point, depending on how much data we place to request via the
+    # API and what kind of machine the pipeline will run on.
     with open(filename, "wb") as f:
-        for chunk in response.iter_content(chunk_size=262144):
-            if chunk:
-                f.write(chunk)
+        f.write(response.content)
 
     end = time.perf_counter()
     elapsed = end - start
