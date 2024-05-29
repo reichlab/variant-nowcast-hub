@@ -13,7 +13,17 @@ def test_main(tmp_path):
     runner = CliRunner()
     with runner.isolated_filesystem(temp_dir=tmp_path):
         result = runner.invoke(
-            main, ["--sequence-released-since-date", str(test_date), "--reference-tree-date", str(test_date)]
+            main,
+            [
+                "--sequence-released-since-date",
+                str(test_date),
+                "--reference-tree-date",
+                str(test_date),
+                "--data-dir",
+                tmp_path,
+            ],
+            catch_exceptions=True,
+            color=True,
         )
         assert result.exit_code == 0
 

@@ -14,10 +14,9 @@ def get_covid_genome_data(
     released_since_date: str,
     base_url: str = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/virus/genome/download",
     filename: str = "ncbi.zip",
-) -> dict:
+):
     """Download genome data package from NCBI."""
 
-    # released
     headers = {
         "Accept": "application/zip",
         "Accept-Encoding": "br, deflate, gzip, zstd",
@@ -56,6 +55,8 @@ def get_covid_genome_data(
     response = session.post(base_url, data=json.dumps(request_body), stream=True, timeout=(10, 300))
 
     if not response.ok:
+        # If the session retries the max number of times, the app will throw an error before we get here.
+        # So if we're here, it's because the post request failed on an HTTP status not on the above status_forcelist.
         logger.error(
             "Failed to download genome package",
             status_code=response.status_code,
@@ -63,11 +64,12 @@ def get_covid_genome_data(
             request=response.request.url,
             request_body=request_body,
         )
+        # Exit the pipeline without displaying a traceback
         raise SystemExit(f"Unsuccessful call to NCBI API: {response.status_code}: {response.reason}")
 
+    # TODO: Am still seeing intermittent errors: ChunkedEncodingError(ProtocolError('Response ended prematurely')
     with open(filename, "wb") as f:
-        # we can tweak the chunk_size after getting a better idea of where this will run
-        for chunk in response.iter_content(chunk_size=524288):
+        for chunk in response.iter_content(chunk_size=262144):
             if chunk:
                 f.write(chunk)
 
