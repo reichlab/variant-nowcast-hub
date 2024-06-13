@@ -64,7 +64,7 @@ Follow the directions below to set this project up on your local machine.
     pip install -r requirements/requirements.txt && pip install -e .
 
     # if you're planning to make and submit code changes
-    pip install -r requirements/dev-requirements.txt && pip install -e .
+    pip install -r requirements/requirements-dev.txt && pip install -e .
     ```
 
 ### Running the test suite
@@ -124,7 +124,7 @@ add it to the `dev` section of `[project.optional-dependencies]`).
 
 3. Regenerate the `requirements-dev.txt` file (even if you haven't added a dev dependency):
     ```bash
-    pip-compile --extra dev -o requirements/dev-requirements.txt pyproject.toml
+    pip-compile --extra dev -o requirements/requirements-dev.txt pyproject.toml
     ```
 
 ## Running the code

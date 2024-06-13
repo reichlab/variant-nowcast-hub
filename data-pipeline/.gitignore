@@ -3,6 +3,7 @@
 # Keep intermediate variant pipeline outputs out of git,
 # but include the final clade assignment file
 **/data/*
+# If we decide not to commit the final clad assigment file, remove the following **/data lines
 !**/data/*/
 **/data/*/*no_metadata.csv
 **/data/*/*.fasta
