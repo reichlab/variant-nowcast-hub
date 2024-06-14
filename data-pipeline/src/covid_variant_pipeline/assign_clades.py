@@ -2,6 +2,7 @@ import datetime
 import json
 import os
 import subprocess
+import zipfile
 from importlib import resources
 
 import polars as pl
@@ -41,16 +42,8 @@ def get_sequences(config: Config):
     get_covid_genome_data(sequence_released_datetime, filename=sequence_package)
 
     # unzip the data package
-    subprocess.run(
-        [
-            "unzip",
-            "-o",
-            "-q",
-            f"{sequence_package}",
-            "-d",
-            f"{config.data_path}/",
-        ]
-    )
+    with zipfile.ZipFile(sequence_package, "r") as package_zip:
+        package_zip.extractall(config.data_path)
 
     logger.info("NCBI SARS-COV-2 genome package downloaded and unzipped", package_location=sequence_package)
 
@@ -77,7 +70,7 @@ def get_sequence_metadata(config: Config):
     logger.info("extracted sequence metadata", metadata_file=config.ncbi_sequence_metadata_file)
 
 
-def save_reference_info(config: Config) -> tuple[AnyPath, AnyPath]:
+def save_reference_info(config: Config):
     """Download a reference tree and save it to a file."""
 
     reference = get_reference_data(config.nextclade_base_url, config.reference_tree_date)
