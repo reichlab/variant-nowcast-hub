@@ -1,1 +1,0 @@
-This directory contains SARS-COV-2 reference tree and root sequence information downloaded via the Nexclade API.

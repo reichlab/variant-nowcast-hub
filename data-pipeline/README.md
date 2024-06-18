@@ -64,7 +64,7 @@ Follow the directions below to set this project up on your local machine.
     pip install -r requirements/requirements.txt && pip install -e .
 
     # if you're planning to make and submit code changes
-    pip install -r requirements/dev-requirements.txt && pip install -e .
+    pip install -r requirements/requirements-dev.txt && pip install -e .
     ```
 
 ### Running the test suite
@@ -124,15 +124,23 @@ add it to the `dev` section of `[project.optional-dependencies]`).
 
 3. Regenerate the `requirements-dev.txt` file (even if you haven't added a dev dependency):
     ```bash
-    pip-compile --extra dev -o requirements/dev-requirements.txt pyproject.toml
+    pip-compile --extra dev -o requirements/requirements-dev.txt pyproject.toml
     ```
 
 ## Running the code
 
-Set up the project as described above and make sure the virtual environment is activated.
+Set up the project as described above and make sure the virtual environment is activated. The code that downloads the Genbank
+sequences and assigns them to clades is a command-line tool called `assign_clades`.
 
-1. From anywhere in the repo's `data-pipeline` directory:
+To see the options and other help information from anywhere in the repo's `data-pipeline` directory:
 
-    ```bash
-    assign_clades
-    ```
+```bash
+assign_clades --help
+```
+
+To download Genbank sequences that have been released in 2024-05-15 and assign clades to them using the SARS-Cov-2 reference
+tree as it looked on 2024-05-01:
+
+```bash
+assign_clades --sequence-released-since-date 2024-05-24 --reference-tree-date 2024-05-01
+```
