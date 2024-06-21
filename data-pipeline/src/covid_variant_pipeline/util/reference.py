@@ -38,7 +38,14 @@ def get_reference_data(base_url: str, as_of_date: str) -> dict:
     }
 
     try:
-        reference["root_sequence"] = reference_data["root_sequence"]
+        # response schema: https://raw.githubusercontent.com/nextstrain/augur/HEAD/augur/data/schema-export-v2.json
+        # root sequence schema: https://raw.githubusercontent.com/nextstrain/augur/HEAD/augur/data/schema-export-root-sequence.json
+        # this code adds a fasta-compliant header to the root sequence returned by the API (correct fasta format is required
+        # in a subsequent step that uses nextclade to perform clade assignments)
+        fasta_root_header = (">NC_045512.2 Severe acute respiratory syndrome"
+                            " coronavirus 2 isolate Wuhan-Hu-1, complete genome")
+        root_sequence = reference_data["root_sequence"]["nuc"]
+        reference["root_sequence"] = f"{fasta_root_header}\n{root_sequence}"
     except KeyError as e:
         # Older versions of the dataset don't include a root_sequence. Depending on how
         # far back in time we're going, we may need to handle this scenario. For now,

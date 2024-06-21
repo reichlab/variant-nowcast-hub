@@ -34,7 +34,7 @@ class Config:
         self.ncbi_sequence_file = self.data_path / "ncbi_dataset/data/genomic.fna"
         self.ncbi_sequence_metadata_file = self.data_path / f"{self.sequence_released_since_date}-metadata.tsv"
         self.reference_tree_file = self.data_path / f"{self.reference_tree_date}_tree.json"
-        self.root_sequence_file = self.data_path / f"{self.reference_tree_date}_root_sequence.json"
+        self.root_sequence_file = self.data_path / f"{self.reference_tree_date}_root_sequence.fasta"
         self.assignment_no_metadata_file = (
             self.data_path / f"{self.sequence_released_since_date}_clade_assignments_no_metadata.csv"
         )

@@ -79,7 +79,8 @@ def save_reference_info(config: Config):
         json.dump(reference, f)
 
     with open(config.root_sequence_file, "w") as f:
-        json.dump(reference["root_sequence"], f)
+        # json.dump(reference["root_sequence"], f)
+        f.write(reference["root_sequence"])
 
     logger.info(
         "Reference data saved",
@@ -93,9 +94,6 @@ def assign_clades(config: Config):
 
     logger.info("Assigning sequences to clades using reference tree")
 
-    # TEMPORARY: until we fix parsing of the root sequence returned via API, use a saved root sequence
-    temp_root_sequence = config.executable_path / "covid_reference_sequence.fasta"
-
     subprocess.run(
         [
             f"{config.executable_path}/nextclade",
@@ -103,7 +101,7 @@ def assign_clades(config: Config):
             "--input-tree",
             f"{config.reference_tree_file}",
             "--input-ref",
-            f"{temp_root_sequence}",
+            f"{config.root_sequence_file}",
             "--output-csv",
             f"{config.assignment_no_metadata_file}",
             f"{config.ncbi_sequence_file}",
