@@ -33,13 +33,13 @@ def setup_config(base_data_dir: str, sequence_released_date: datetime, reference
 def get_sequences(config: Config):
     """Download SARS-CoV-2 sequences from Genbank."""
 
-    sequence_package = config.data_path / config.nextclade_package_name
+    sequence_package = config.data_path / config.ncbi_package_name
 
     # API requires a datetime string for the released_since parameter
     sequence_released_date = datetime.datetime.strptime(config.sequence_released_since_date, "%Y-%m-%d")
     sequence_released_datetime = sequence_released_date.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
-    get_covid_genome_data(sequence_released_datetime, filename=sequence_package)
+    get_covid_genome_data(sequence_released_datetime, base_url=config.ncbi_base_url, filename=sequence_package)
 
     # unzip the data package
     with zipfile.ZipFile(sequence_package, "r") as package_zip:

@@ -12,8 +12,8 @@ logger = structlog.get_logger()
 
 def get_covid_genome_data(
     released_since_date: str,
-    base_url: str = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/virus/genome/download",
-    filename: str = "ncbi.zip",
+    base_url: str,
+    filename: str
 ):
     """Download genome data package from NCBI."""
 

@@ -18,10 +18,10 @@ class Config:
     module_path: AnyPath = AnyPath(resources.files("covid_variant_pipeline"))
     executable_path: AnyPath = module_path / "bin"
     ncbi_base_url: str = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/virus/genome/download"
+    ncbi_package_name: str = "ncbi.zip"
     ncbi_sequence_file: AnyPath = None
     ncbi_sequence_metadata_file: AnyPath = None
     nextclade_base_url: str = "https://nextstrain.org/nextclade/sars-cov-2"
-    nextclade_package_name: str = "ncbi.zip"
     reference_tree_file: AnyPath = None
     root_sequence_file: AnyPath = None
     assignment_no_metadata_file: AnyPath = None
