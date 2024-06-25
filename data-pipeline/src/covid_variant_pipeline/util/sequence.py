@@ -2,6 +2,7 @@
 
 import json
 import time
+import zipfile
 
 import polars as pl
 import structlog
@@ -55,6 +56,20 @@ def get_covid_genome_data(
     elapsed = end - start
 
     logger.info("NCBI API call completed", elapsed=elapsed)
+
+
+def unzip_sequence_package(filename: str, data_path: str):
+    """Unzip the downloaded virus genome data package."""
+    with zipfile.ZipFile(filename, "r") as package_zip:
+        zip_contents = package_zip.namelist()
+        is_metadata = next((s for s in zip_contents if "data_report" in s), None)
+        is_sequence = next((s for s in zip_contents if "genomic" in s), None)
+        if is_metadata and is_sequence:
+            package_zip.extractall(data_path)
+        else:
+            logger.error("NCBI package is missing expected files", zip_contents=zip_contents)
+            # Exit the pipeline without displaying a traceback
+            raise SystemExit("Error downloading NCBI package")
 
 
 def parse_sequence_assignments(df_assignments: pl.DataFrame) -> pl.DataFrame:

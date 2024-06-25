@@ -12,7 +12,11 @@ from cloudpathlib import AnyPath
 
 from covid_variant_pipeline.util.config import Config
 from covid_variant_pipeline.util.reference import get_reference_data
-from covid_variant_pipeline.util.sequence import get_covid_genome_data, parse_sequence_assignments
+from covid_variant_pipeline.util.sequence import (
+    get_covid_genome_data,
+    parse_sequence_assignments,
+    unzip_sequence_package,
+)
 
 MODULE_PATH = AnyPath(resources.files("covid_variant_pipeline"))
 logger = structlog.get_logger()
@@ -40,10 +44,7 @@ def get_sequences(config: Config):
     sequence_released_datetime = sequence_released_date.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
     get_covid_genome_data(sequence_released_datetime, base_url=config.ncbi_base_url, filename=sequence_package)
-
-    # unzip the data package
-    with zipfile.ZipFile(sequence_package, "r") as package_zip:
-        package_zip.extractall(config.data_path)
+    unzip_sequence_package(sequence_package, config.data_path)
 
     logger.info("NCBI SARS-COV-2 genome package downloaded and unzipped", package_location=sequence_package)
 
@@ -79,7 +80,6 @@ def save_reference_info(config: Config):
         json.dump(reference, f)
 
     with open(config.root_sequence_file, "w") as f:
-        # json.dump(reference["root_sequence"], f)
         f.write(reference["root_sequence"])
 
     logger.info(
