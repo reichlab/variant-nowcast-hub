@@ -26,14 +26,16 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "coverage",
+    "mypy",
     "pytest",
+    "ruff",
 ]
 
 [project.entry-points."console_scripts"]
 assign_clades = "covid_variant_pipeline.assign_clades:main"
 
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
@@ -45,3 +47,6 @@ filterwarnings = [
 [tool.ruff]
 line-length = 120
 lint.extend-select = ["I"]
+
+[tools.setuptools]
+packages = ["covid_variant_pipeline"]

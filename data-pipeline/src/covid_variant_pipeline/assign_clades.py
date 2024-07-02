@@ -2,7 +2,6 @@ import datetime
 import json
 import os
 import subprocess
-import zipfile
 from importlib import resources
 
 import polars as pl
