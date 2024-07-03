@@ -1,37 +1,26 @@
+"""Functions for retrieving and parsing SARS-CoV-2 virus genome data."""
+
 import json
 import time
+import zipfile
 
 import polars as pl
-import requests
 import structlog
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry  # type: ignore
+from covid_variant_pipeline.util.session import check_response, get_session
 
 logger = structlog.get_logger()
 
 
 def get_covid_genome_data(
     released_since_date: str,
-    base_url: str = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/virus/genome/download",
-    filename: str = "ncbi.zip",
+    base_url: str,
+    filename: str
 ):
     """Download genome data package from NCBI."""
-
     headers = {
         "Accept": "application/zip",
-        "Accept-Encoding": "br, deflate, gzip, zstd",
     }
-
-    session = requests.Session()
-    # attach a urllib3 retry adapter to the requests session
-    # https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#urllib3.util.retry.Retry
-    retries = Retry(
-        total=5,
-        allowed_methods=frozenset(["GET", "POST"]),
-        backoff_factor=1,
-        status_forcelist=[401, 403, 404, 429, 500, 502, 503, 504],
-    )
-    session.mount("https://", HTTPAdapter(max_retries=retries))
+    session = get_session()
     session.headers.update(headers)
 
     # TODO: this might be a better as an item in the forthcoming config file
@@ -53,19 +42,7 @@ def get_covid_genome_data(
 
     start = time.perf_counter()
     response = session.post(base_url, data=json.dumps(request_body), timeout=(300, 300))
-
-    if not response.ok:
-        # If the session retries the max number of times, the app will throw an error before we get here.
-        # So if we're here, it's because the post request failed on an HTTP status not on the above status_forcelist.
-        logger.error(
-            "Failed to download genome package",
-            status_code=response.status_code,
-            response_text=response.text,
-            request=response.request.url,
-            request_body=request_body,
-        )
-        # Exit the pipeline without displaying a traceback
-        raise SystemExit(f"Unsuccessful call to NCBI API: {response.status_code}: {response.reason}")
+    check_response(response)
 
     # Originally tried saving the NCBI package via a stream call and iter_content (to prevent potential
     # memory issues that can arise when download large files). However, ran into an intermittent error:
@@ -79,6 +56,20 @@ def get_covid_genome_data(
     elapsed = end - start
 
     logger.info("NCBI API call completed", elapsed=elapsed)
+
+
+def unzip_sequence_package(filename: str, data_path: str):
+    """Unzip the downloaded virus genome data package."""
+    with zipfile.ZipFile(filename, "r") as package_zip:
+        zip_contents = package_zip.namelist()
+        is_metadata = next((s for s in zip_contents if "data_report" in s), None)
+        is_sequence = next((s for s in zip_contents if "genomic" in s), None)
+        if is_metadata and is_sequence:
+            package_zip.extractall(data_path)
+        else:
+            logger.error("NCBI package is missing expected files", zip_contents=zip_contents)
+            # Exit the pipeline without displaying a traceback
+            raise SystemExit("Error downloading NCBI package")
 
 
 def parse_sequence_assignments(df_assignments: pl.DataFrame) -> pl.DataFrame:

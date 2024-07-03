@@ -2,7 +2,6 @@ import datetime
 import json
 import os
 import subprocess
-import zipfile
 from importlib import resources
 
 import polars as pl
@@ -12,7 +11,11 @@ from cloudpathlib import AnyPath
 
 from covid_variant_pipeline.util.config import Config
 from covid_variant_pipeline.util.reference import get_reference_data
-from covid_variant_pipeline.util.sequence import get_covid_genome_data, parse_sequence_assignments
+from covid_variant_pipeline.util.sequence import (
+    get_covid_genome_data,
+    parse_sequence_assignments,
+    unzip_sequence_package,
+)
 
 MODULE_PATH = AnyPath(resources.files("covid_variant_pipeline"))
 logger = structlog.get_logger()
@@ -33,17 +36,14 @@ def setup_config(base_data_dir: str, sequence_released_date: datetime, reference
 def get_sequences(config: Config):
     """Download SARS-CoV-2 sequences from Genbank."""
 
-    sequence_package = config.data_path / config.nextclade_package_name
+    sequence_package = config.data_path / config.ncbi_package_name
 
     # API requires a datetime string for the released_since parameter
     sequence_released_date = datetime.datetime.strptime(config.sequence_released_since_date, "%Y-%m-%d")
     sequence_released_datetime = sequence_released_date.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
-    get_covid_genome_data(sequence_released_datetime, filename=sequence_package)
-
-    # unzip the data package
-    with zipfile.ZipFile(sequence_package, "r") as package_zip:
-        package_zip.extractall(config.data_path)
+    get_covid_genome_data(sequence_released_datetime, base_url=config.ncbi_base_url, filename=sequence_package)
+    unzip_sequence_package(sequence_package, config.data_path)
 
     logger.info("NCBI SARS-COV-2 genome package downloaded and unzipped", package_location=sequence_package)
 
@@ -79,7 +79,7 @@ def save_reference_info(config: Config):
         json.dump(reference, f)
 
     with open(config.root_sequence_file, "w") as f:
-        json.dump(reference["root_sequence"], f)
+        f.write(reference["root_sequence"])
 
     logger.info(
         "Reference data saved",
@@ -93,9 +93,6 @@ def assign_clades(config: Config):
 
     logger.info("Assigning sequences to clades using reference tree")
 
-    # TEMPORARY: until we fix parsing of the root sequence returned via API, use a saved root sequence
-    temp_root_sequence = config.executable_path / "covid_reference_sequence.fasta"
-
     subprocess.run(
         [
             f"{config.executable_path}/nextclade",
@@ -103,7 +100,7 @@ def assign_clades(config: Config):
             "--input-tree",
             f"{config.reference_tree_file}",
             "--input-ref",
-            f"{temp_root_sequence}",
+            f"{config.root_sequence_file}",
             "--output-csv",
             f"{config.assignment_no_metadata_file}",
             f"{config.ncbi_sequence_file}",

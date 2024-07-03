@@ -1,0 +1,32 @@
+name: run-code-checks
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  run-checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: data-pipeline
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Set up Python 🐍
+        uses: actions/setup-python@v5
+        with:
+          cache: pip
+          python-version: '3.11'
+
+      - name: Install dependencies 📦️
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements/requirements-dev.txt -e .
+
+      - name: lint 🧹
+        run: ruff check
+
+      - name: run tests 🧪
+        run: pytest -k unit
