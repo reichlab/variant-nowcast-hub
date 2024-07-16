@@ -27,8 +27,16 @@ class Config:
     assignment_no_metadata_file: AnyPath = None
     assignment_file: AnyPath = None
 
-    def __post_init__(self, data_path_root, sequence_released_date, reference_tree_as_of_date):
-        self.data_path = data_path_root / self.run_time
+    def __post_init__(
+        self,
+        data_path_root: str | None,
+        sequence_released_date: datetime.date,
+        reference_tree_as_of_date: datetime.date,
+    ):
+        if data_path_root:
+            self.data_path = AnyPath(data_path_root)
+        else:
+            self.data_path = AnyPath(".").home() / "covid_variant" / self.run_time
         self.sequence_released_since_date = sequence_released_date.strftime("%Y-%m-%d")
         self.reference_tree_date = reference_tree_as_of_date.strftime("%Y-%m-%d")
         self.ncbi_sequence_file = self.data_path / "ncbi_dataset/data/genomic.fna"

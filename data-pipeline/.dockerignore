@@ -1,0 +1,12 @@
+**/__pycache__
+**/.DS_Store
+
+**/bin/
+**/data/
+
+# Environments
+**/.env
+**/.venv
+**/env/
+**/venv/
+**/ENV/

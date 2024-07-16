@@ -13,9 +13,43 @@ This is _not_ production code. The purpose of the code is to help us see if the 
 We're working with small amounts of data so we can iterate quickly.
 
 
-## Setup
+## Docker Setup
 
-If you'd like to try it out, this section has the setup instructions.
+Use the directions below to run the pipeline in a Docker container.
+
+**Prerequisites**
+
+- Docker
+
+**Setup**
+
+1. Clone this repository and change into the project's data-pipeline directory:
+
+    ```bash
+    cd variant-nowcast-hub/data-pipeline
+    ```
+2. Build the Docker image:
+
+    ```bash
+    docker build --platform=linux/amd64 -t variant-nowcast-hub .
+    ```
+
+3. Run the pipeline, passing in required arguments:
+
+    ```bash
+    docker run --platform linux/amd64 \
+    -v ./data:/home/pipeline-user/covid_variant \
+    variant-nowcast-hub assign_clades \
+    --sequence-released-since-date 2024-07-16 \
+    --reference-tree-date 2024-07-16 \
+    --data-dir /home/pipeline-user
+    ```
+
+The clade assignments will now be in the `./data` directory.
+
+## Local Machine Setup
+
+If you'd like to run or develop outside of Docker, this section has the setup instructions.
 
 **Prerequisites**
 
