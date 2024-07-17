@@ -14,19 +14,16 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
 
-      - name: Set up Python 🐍
-        uses: actions/setup-python@v5
-        with:
-          cache: pip
-          python-version: '3.11'
-
-      - name: Install dependencies 📦️
+      - name: Build Docker image 🐳
         run: |
-          pip install --upgrade pip
-          pip install -r requirements/requirements-dev.txt -e .
+          docker build -t data-pipeline .
 
       - name: lint 🧹
-        run: ruff check
+        run: |
+          docker run --entrypoint /bin/bash data-pipeline \
+          -c "ruff check"
 
-      - name: run tests 🧪
-        run: pytest -k unit
+      - name: run unit tests 🧪
+        run: |
+          docker run --entrypoint /bin/bash data-pipeline \
+          -c "pytest -k unit"
