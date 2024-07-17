@@ -57,9 +57,11 @@ Before setting up the project:
 
 - Your machine will need to have an installed version of Python that meets the `requires-python` constraint in [pyproject.toml](pyproject.toml)
 - That version of Python should be set as your current Python interpreter (if you don't already have a preferred Python workflow, [pyenv](https://github.com/pyenv/pyenv) is good tool for managing Python versions on your local machine).
+- You will need to install two CLI tools used by the pipeline, and ensure they're available in your PATH:
+    - [dataformat](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/download-and-install/), to format sequence metadata
+    - [Nextclade](https://docs.nextstrain.org/projects/nextclade/en/stable/user/nextclade-cli/installation/index.html), to assign clades to sequences
 
 In addition, if you're planning to make code changes that require adding or removing project dependencies, you'll need `pip-tools` installed on your machine. ([`pipx`](https://github.com/pypa/pipx) is a handy way to install python packages in a way that makes them available all the time, regardless of whatever virtual environment is currently activated.)
-
 
 **Setup**
 

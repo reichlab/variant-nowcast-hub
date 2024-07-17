@@ -1,6 +1,5 @@
 from dataclasses import InitVar, asdict, dataclass
 from datetime import datetime
-from importlib import resources
 from pprint import pprint
 
 from cloudpathlib import AnyPath
@@ -15,8 +14,6 @@ class Config:
     reference_tree_date: str = None
     now = datetime.now()
     run_time = now.strftime("%Y%m%dT%H%M%S")
-    module_path: AnyPath = AnyPath(resources.files("covid_variant_pipeline"))
-    executable_path: AnyPath = module_path / "bin"
     ncbi_base_url: str = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/virus/genome/download"
     ncbi_package_name: str = "ncbi.zip"
     ncbi_sequence_file: AnyPath = None

@@ -53,7 +53,7 @@ def get_sequence_metadata(config: Config):
     with open(config.ncbi_sequence_metadata_file, "w") as f:
         subprocess.run(
             [
-                f"{config.executable_path}/dataformat",
+                "dataformat",
                 "tsv",
                 "virus-genome",
                 "--inputfile",
@@ -92,7 +92,7 @@ def assign_clades(config: Config):
 
     subprocess.run(
         [
-            f"{config.executable_path}/nextclade",
+            "nextclade",
             "run",
             "--input-tree",
             f"{config.reference_tree_file}",
