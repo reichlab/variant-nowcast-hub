@@ -11,11 +11,7 @@ from covid_variant_pipeline.util.session import check_response, get_session
 logger = structlog.get_logger()
 
 
-def get_covid_genome_data(
-    released_since_date: str,
-    base_url: str,
-    filename: str
-):
+def get_covid_genome_data(released_since_date: str, base_url: str, filename: str):
     """Download genome data package from NCBI."""
     headers = {
         "Accept": "application/zip",

@@ -33,8 +33,9 @@ def get_reference_data(base_url: str, as_of_date: str) -> dict:
         # response schema: https://raw.githubusercontent.com/nextstrain/augur/HEAD/augur/data/schema-export-v2.json
         # root sequence schema: https://raw.githubusercontent.com/nextstrain/augur/HEAD/augur/data/schema-export-root-sequence.json
         # this code adds a fasta-compliant header to the root sequence returned by the API
-        fasta_root_header = (">NC_045512.2 Severe acute respiratory syndrome"
-                            " coronavirus 2 isolate Wuhan-Hu-1, complete genome")
+        fasta_root_header = (
+            ">NC_045512.2 Severe acute respiratory syndrome" " coronavirus 2 isolate Wuhan-Hu-1, complete genome"
+        )
         root_sequence = reference_data["root_sequence"]["nuc"]
         reference["root_sequence"] = f"{fasta_root_header}\n{root_sequence}"
     except KeyError:

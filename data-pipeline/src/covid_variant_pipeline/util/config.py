@@ -1,6 +1,5 @@
 from dataclasses import InitVar, asdict, dataclass
 from datetime import datetime
-from importlib import resources
 from pprint import pprint
 
 from cloudpathlib import AnyPath
@@ -15,8 +14,6 @@ class Config:
     reference_tree_date: str = None
     now = datetime.now()
     run_time = now.strftime("%Y%m%dT%H%M%S")
-    module_path: AnyPath = AnyPath(resources.files("covid_variant_pipeline"))
-    executable_path: AnyPath = module_path / "bin"
     ncbi_base_url: str = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/virus/genome/download"
     ncbi_package_name: str = "ncbi.zip"
     ncbi_sequence_file: AnyPath = None
@@ -27,8 +24,16 @@ class Config:
     assignment_no_metadata_file: AnyPath = None
     assignment_file: AnyPath = None
 
-    def __post_init__(self, data_path_root, sequence_released_date, reference_tree_as_of_date):
-        self.data_path = data_path_root / self.run_time
+    def __post_init__(
+        self,
+        data_path_root: str | None,
+        sequence_released_date: datetime.date,
+        reference_tree_as_of_date: datetime.date,
+    ):
+        if data_path_root:
+            self.data_path = AnyPath(data_path_root)
+        else:
+            self.data_path = AnyPath(".").home() / "covid_variant" / self.run_time
         self.sequence_released_since_date = sequence_released_date.strftime("%Y-%m-%d")
         self.reference_tree_date = reference_tree_as_of_date.strftime("%Y-%m-%d")
         self.ncbi_sequence_file = self.data_path / "ncbi_dataset/data/genomic.fna"

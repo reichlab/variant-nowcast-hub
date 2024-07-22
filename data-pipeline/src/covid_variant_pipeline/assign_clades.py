@@ -2,12 +2,10 @@ import datetime
 import json
 import os
 import subprocess
-from importlib import resources
 
 import polars as pl
 import rich_click as click
 import structlog
-from cloudpathlib import AnyPath
 
 from covid_variant_pipeline.util.config import Config
 from covid_variant_pipeline.util.reference import get_reference_data
@@ -17,7 +15,6 @@ from covid_variant_pipeline.util.sequence import (
     unzip_sequence_package,
 )
 
-MODULE_PATH = AnyPath(resources.files("covid_variant_pipeline"))
 logger = structlog.get_logger()
 
 
@@ -25,7 +22,7 @@ def setup_config(base_data_dir: str, sequence_released_date: datetime, reference
     """Return an initialized Config class for the pipeline run."""
 
     config = Config(
-        data_path_root=AnyPath(base_data_dir),
+        data_path_root=base_data_dir,
         sequence_released_date=sequence_released_date,
         reference_tree_as_of_date=reference_tree_as_of_date,
     )
@@ -56,7 +53,7 @@ def get_sequence_metadata(config: Config):
     with open(config.ncbi_sequence_metadata_file, "w") as f:
         subprocess.run(
             [
-                f"{config.executable_path}/dataformat",
+                "dataformat",
                 "tsv",
                 "virus-genome",
                 "--inputfile",
@@ -95,7 +92,7 @@ def assign_clades(config: Config):
 
     subprocess.run(
         [
-            f"{config.executable_path}/nextclade",
+            "nextclade",
             "run",
             "--input-tree",
             f"{config.reference_tree_file}",
@@ -162,11 +159,13 @@ def merge_metadata(config: Config) -> pl.DataFrame:
 )
 @click.option(
     "--data-dir",
-    prompt="Directory where the clade assignment file will be saved (do not use ~)",
-    default=str(MODULE_PATH / "data"),
-    help=f"Directory where the clade assignment file will be saved. Default: {str(MODULE_PATH / 'data')}.",
+    prompt="Directory where the clade assignment file will be saved",
+    required=False,
+    prompt_required=False,
+    default=None,
+    help="Directory where the clade assignment file will be saved. Default: [home dir]/covid_variant/",
 )
-def main(sequence_released_since_date: datetime.date, reference_tree_date: datetime.date, data_dir: str):
+def main(sequence_released_since_date: datetime.date, reference_tree_date: datetime.date, data_dir: str | None):
     # TODO: do we need additional date validations (e.g., no future dates)?
 
     config = setup_config(data_dir, sequence_released_since_date, reference_tree_date)

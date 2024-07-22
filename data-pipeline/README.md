@@ -13,9 +13,43 @@ This is _not_ production code. The purpose of the code is to help us see if the 
 We're working with small amounts of data so we can iterate quickly.
 
 
-## Setup
+## Docker Setup
 
-If you'd like to try it out, this section has the setup instructions.
+Use the directions below to run the pipeline in a Docker container.
+
+**Prerequisites**
+
+- Docker
+
+**Setup**
+
+1. Clone this repository and change into the project's data-pipeline directory:
+
+    ```bash
+    cd variant-nowcast-hub/data-pipeline
+    ```
+2. Build the Docker image:
+
+    ```bash
+    docker build --platform=linux/amd64 -t variant-nowcast-hub .
+    ```
+
+3. Run the pipeline, passing in required arguments:
+
+    ```bash
+    docker run --platform linux/amd64 \
+    -v ./data:/home/pipeline-user/covid_variant \
+    variant-nowcast-hub assign_clades \
+    --sequence-released-since-date 2024-07-16 \
+    --reference-tree-date 2024-07-16 \
+    --data-dir /home/pipeline-user
+    ```
+
+The clade assignments will now be in the `./data` directory.
+
+## Local Machine Setup
+
+If you'd like to run or develop outside of Docker, this section has the setup instructions.
 
 **Prerequisites**
 
@@ -23,9 +57,11 @@ Before setting up the project:
 
 - Your machine will need to have an installed version of Python that meets the `requires-python` constraint in [pyproject.toml](pyproject.toml)
 - That version of Python should be set as your current Python interpreter (if you don't already have a preferred Python workflow, [pyenv](https://github.com/pyenv/pyenv) is good tool for managing Python versions on your local machine).
+- You will need to install two CLI tools used by the pipeline, and ensure they're available in your PATH:
+    - [dataformat](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/download-and-install/), to format sequence metadata
+    - [Nextclade](https://docs.nextstrain.org/projects/nextclade/en/stable/user/nextclade-cli/installation/index.html), to assign clades to sequences
 
 In addition, if you're planning to make code changes that require adding or removing project dependencies, you'll need `pip-tools` installed on your machine. ([`pipx`](https://github.com/pypa/pipx) is a handy way to install python packages in a way that makes them available all the time, regardless of whatever virtual environment is currently activated.)
-
 
 **Setup**
 
