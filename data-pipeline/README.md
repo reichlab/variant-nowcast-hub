@@ -38,14 +38,14 @@ Use the directions below to run the pipeline in a Docker container.
 
     ```bash
     docker run --platform linux/amd64 \
-    -v ./data:/home/pipeline-user/covid_variant \
-    variant-nowcast-hub assign_clades \
+    -v $(pwd)/data:/home/pipeline-user/ \
+    variant-nowcast-hub \
     --sequence-released-since-date 2024-07-16 \
     --reference-tree-date 2024-07-16 \
     --data-dir /home/pipeline-user
     ```
 
-The clade assignments will now be in the `./data` directory.
+The clade assignments will now be in the local directory that was mounted to the Docker container via the `-v` flag (in this case, a folder called `data` in the current working directory).
 
 ## Local Machine Setup
 
