@@ -19,13 +19,16 @@ model_tasks <- create_model_tasks(
       create_task_id("location",
                      required = NULL,
                      optional = c("US",
-                                  "01", "02", "04", "05", "06", "08", "09",
-                                  "10", "11", "12", "13", "15", "16", "17", "18", "19",
-                                  "20", "21", "22", "23", "24", "25", "26", "27", "28", "29",
-                                  "30", "31", "32", "33", "34", "35", "36", "37", "38", "39",
-                                  "40", "41", "42", "44", "45", "46", "47", "48", "49",
-                                  "50", "51", "53", "54", "55", "56", "60", "66", "69",
-                                  "72", "74", "78")
+                                  "AL", "AK", "AZ", "AR", "CA", "CO",
+                                  "CT", "DE", "DC", "FL", "GA", "HI",
+                                  "ID", "IL", "IN", "IA", "KS", "KY",
+                                  "LA", "ME", "MD", "MA", "MI", "MN",
+                                  "MS", "MO", "MT", "NE", "NV", "NH",
+                                  "NJ", "NM", "NY", "NC", "ND", "OH",
+                                  "OK", "OR", "PA", "RI", "SC", "SD",
+                                  "TN", "TX", "UT", "VT", "VA", "WA",
+                                  "WV", "WI", "WY", "AS", "GU", "MP",
+                                  "PR", "VI", "UM")
       ),
       create_task_id("variant",
                      ## noting that we could specify them as optional and then infer 0s if missing
@@ -68,13 +71,6 @@ create_round(
   ),
   last_data_date = "2023-01-06"
 )
-<<<<<<< Updated upstream
-||||||| Stash base
-
-
-# TODO: create a sample model-output file for this round
-# https://hubverse-org.github.io/hubData/reference/create_model_out_submit_tmpl.html
-=======
 
 # TODO: create a sample model-output file for this round
 # https://hubverse-org.github.io/hubData/reference/create_model_out_submit_tmpl.html
@@ -83,4 +79,3 @@ create_round(
 
 # TODO: create a sample model-output file for this round
 # https://hubverse-org.github.io/hubData/reference/create_model_out_submit_tmpl.html
->>>>>>> Stashed changes
