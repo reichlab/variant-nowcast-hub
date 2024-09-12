@@ -29,7 +29,9 @@ jobs:
 
       - name: Create clade list 🦠
         run: |
+          ls -la auxiliary-data/modeled-clades/
           uv run src/get_clades_to_model.py
+          ls -la auxiliary-data/modeled-clades/
 
       - name: Add new round to hub tasks.json 📝
         run: |
@@ -39,5 +41,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr create --head "new_round_$(date +%Y-%m-%d)" --title "Add new round $(date +%Y-%m-%d)" --body "This PR was created via GitHub Actions: generate clade list and new round config." --base main
+          ls -la auxiliary-data/modeled-clades/
+          # gh pr create --head "new_round_$(date +%Y-%m-%d)" --title "Add new round $(date +%Y-%m-%d)" --body "This PR was created via GitHub Actions: generate clade list and new round config." --base main
 
