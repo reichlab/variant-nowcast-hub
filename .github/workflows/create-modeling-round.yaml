@@ -11,7 +11,7 @@ permissions:
     pull-requests: write
 
 jobs:
-  run-checks:
+  create-modeling-round:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout 🛎️
@@ -29,9 +29,7 @@ jobs:
 
       - name: Create clade list 🦠
         run: |
-          ls -la auxiliary-data/modeled-clades/
           uv run src/get_clades_to_model.py
-          ls -la auxiliary-data/modeled-clades/
 
       - name: Add new round to hub tasks.json 📝
         run: |
@@ -41,6 +39,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ls -la auxiliary-data/modeled-clades/
-          # gh pr create --head "new_round_$(date +%Y-%m-%d)" --title "Add new round $(date +%Y-%m-%d)" --body "This PR was created via GitHub Actions: generate clade list and new round config." --base main
+          git checkout -b new_round_$(date +%Y-%m-%d)
+          gh pr create \
+            --head new_round_$(date +%Y-%m-%d) \
+            --base main \
+            --title "Add new round $(date +%Y-%m-%d)" \
+            --body "This PR was created via GitHub Actions: generate clade list and new round config."
 
