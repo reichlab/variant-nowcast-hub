@@ -1,6 +1,7 @@
 name: Create new modeling round
 
 on:
+  push:
   schedule:
     - cron: "0 03 * * 1" # every Monday at 3 AM UTC
   workflow_dispatch:
