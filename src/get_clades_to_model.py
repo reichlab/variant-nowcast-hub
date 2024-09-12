@@ -3,7 +3,7 @@
 
 def main():
     clade_list = ["A", "B", "C"]
-    clade_file = "src/2024-09-01.txt"
+    clade_file = "auxiliary-data/modeled-clades/2024-09-01.txt"
     with open(clade_file, "w") as f:
         for clade in clade_list:
             f.write(f"{clade}\n")

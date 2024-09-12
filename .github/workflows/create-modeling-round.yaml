@@ -1,7 +1,10 @@
-name: run-code-checks
+name: Create new modeling round
 
 on:
   push:
+    paths:
+      - auxiliary-data/modeled-clades/*.txt
+      - .github/workflows/create-modeling-round.yaml
   workflow_dispatch:
 
 permissions:
