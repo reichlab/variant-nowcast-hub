@@ -1,0 +1,26 @@
+name: run-code-checks
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  run-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Install uv 🌈
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: "0.4.9"
+
+      - name: Set up Python 🐍
+        uses: actions/setup-python@v5
+        with:
+            python-version-file: "src/.python-version"
+
+      - name: Create clade list 🦠
+        run: |
+          uv run src/get_clades_to_model.py
