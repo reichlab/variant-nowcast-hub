@@ -4,6 +4,9 @@ on:
   push:
   workflow_dispatch:
 
+permissions:
+    pull-requests: write
+
 jobs:
   run-checks:
     runs-on: ubuntu-latest
@@ -24,3 +27,14 @@ jobs:
       - name: Create clade list 🦠
         run: |
           uv run src/get_clades_to_model.py
+
+      - name: Add new round to hub tasks.json 📝
+        run: |
+          echo "Not implemented yet"
+
+      - name: Create PR for new modeling round 🚀
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create --title "Add new round $(date +%Y-%m-%d)" --body "This PR was created via GitHub Actions: generate clade list and new round config." --base main
+
