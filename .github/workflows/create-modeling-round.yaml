@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
+    contents: write
     pull-requests: write
 
 jobs:
@@ -39,10 +40,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git checkout -b new_round_$(date +%Y-%m-%d)
+          git checkout -b new_round_$(date +%Y-%m-%d-%H%M%S)
+          git push -u origin new_round_$(date +%Y-%m-%d-%H%M%S)
           gh pr create \
-            --head new_round_$(date +%Y-%m-%d) \
             --base main \
-            --title "Add new round $(date +%Y-%m-%d)" \
+            --title "Add new round $(date +%Y-%m-%d-%H%M%S)" \
             --body "This PR was created via GitHub Actions: generate clade list and new round config."
 
