@@ -1,6 +1,7 @@
 name: Create new modeling round
 
 on:
+  push:
   schedule:
     - cron: "0 03 * * 1" # every Monday at 3 AM UTC
   workflow_dispatch:
@@ -37,9 +38,12 @@ jobs:
         run: |
           uv run src/get_clades_to_model.py
 
-      - name: Add new round to hub tasks.json 📝
+      - name: Set up R 📊
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Generate new round config 📝
         run: |
-          echo "Not implemented yet"
+          Rscript src/make_round_config.R
 
       - name: Get current date and time 🕰️
         run: |
