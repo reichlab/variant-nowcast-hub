@@ -2,38 +2,40 @@
 
 library(hubUtils)
 
-this_round_date <-  "2023-01-05"  ## for all rounds, should be the same day of week
+this_round_date <- "2023-01-05" ## for all rounds, should be the same day of week
 
 model_tasks <- create_model_tasks(
   create_model_task(
     task_ids = create_task_ids(
       create_task_id("nowcast_date",
-                     required = this_round_date,
-                     optional = NULL
+        required = this_round_date,
+        optional = NULL
       ),
       create_task_id("target_date",
-                     required = NULL,
-                     ## making this to be nowcast_date and the three prior weeks
-                     optional = as.character(as.Date(this_round_date) - c(0, 7, 14, 21))
+        required = NULL,
+        ## making this to be nowcast_date and the three prior weeks
+        optional = as.character(as.Date(this_round_date) - c(0, 7, 14, 21))
       ),
       create_task_id("location",
-                     required = NULL,
-                     optional = c("US",
-                                  "AL", "AK", "AZ", "AR", "CA", "CO",
-                                  "CT", "DE", "DC", "FL", "GA", "HI",
-                                  "ID", "IL", "IN", "IA", "KS", "KY",
-                                  "LA", "ME", "MD", "MA", "MI", "MN",
-                                  "MS", "MO", "MT", "NE", "NV", "NH",
-                                  "NJ", "NM", "NY", "NC", "ND", "OH",
-                                  "OK", "OR", "PA", "RI", "SC", "SD",
-                                  "TN", "TX", "UT", "VT", "VA", "WA",
-                                  "WV", "WI", "WY", "AS", "GU", "MP",
-                                  "PR", "VI", "UM")
+        required = NULL,
+        optional = c(
+          "US",
+          "AL", "AK", "AZ", "AR", "CA", "CO",
+          "CT", "DE", "DC", "FL", "GA", "HI",
+          "ID", "IL", "IN", "IA", "KS", "KY",
+          "LA", "ME", "MD", "MA", "MI", "MN",
+          "MS", "MO", "MT", "NE", "NV", "NH",
+          "NJ", "NM", "NY", "NC", "ND", "OH",
+          "OK", "OR", "PA", "RI", "SC", "SD",
+          "TN", "TX", "UT", "VT", "VA", "WA",
+          "WV", "WI", "WY", "AS", "GU", "MP",
+          "PR", "VI", "UM"
+        )
       ),
       create_task_id("variant",
-                     ## noting that we could specify them as optional and then infer 0s if missing
-                     required = c("XBB.1"), ## some character strings of variant names,
-                     optional = NULL
+        ## noting that we could specify them as optional and then infer 0s if missing
+        required = c("XBB.1"), ## some character strings of variant names,
+        optional = NULL
       )
     ),
     output_type = create_output_type(
