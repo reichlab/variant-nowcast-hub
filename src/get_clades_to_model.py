@@ -17,6 +17,7 @@ To run the script manually:
 1. Install uv on your machine: https://docs.astral.sh/uv/getting-started/installation/
 2. From the root of this repo: uv run src/get_clades_to_model.py
 """
+# "virus_clade_utils@git+https://github.com/reichlab/virus-clade-utils/",
 
 # /// script
 # dependencies = [
@@ -57,6 +58,7 @@ def main(round_id: str, clade_output_path: Path):
     """Get a list of clades to model and save to the hub's auxiliary-data folder."""
 
     clade_list = get_clade_list.main()
+    clade_list.sort()
     logger.info(f"Clade list: {clade_list}")
 
     clade_file = clade_output_path / f"{round_id}.txt"
