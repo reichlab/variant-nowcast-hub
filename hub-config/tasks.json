@@ -1,6 +1,10 @@
 {
-    "schema_version": "https://raw.githubusercontent.com/Infectious-Disease-Modeling-Hubs/schemas/main/v2.0.0/tasks-schema.json",
-    "rounds": [
+  "schema_version": "https://raw.githubusercontent.com/hubverse-org/schemas/main/v3.0.1/tasks-schema.json",
+  "rounds": [
+    {
+      "round_id_from_variable": true,
+      "round_id": "nowcast_date",
+      "model_tasks": [
         {
             "round_id_from_variable": true,
             "round_id": "origin_date",
