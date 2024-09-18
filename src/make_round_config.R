@@ -2,8 +2,6 @@
 ## This script is part of a "round open" process run via a scheduled GitHub action and
 ## should be run from the hub's root directory.
 
-renv::activate(src)
-
 library(hubAdmin)
 library(hubUtils)
 library(tools)
