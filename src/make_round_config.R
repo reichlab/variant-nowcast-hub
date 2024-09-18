@@ -1,14 +1,15 @@
 ## Add a new round to the hub's task config (hub-config/tasks.json)
 ## This script is part of a "round open" process run via a scheduled GitHub action and
-## should be run from the hub's root directory.
+## should be run from the hub's src/ directory.
 
 library(hubAdmin)
 library(hubUtils)
 library(tools)
 
-get_clade_file_info <- function(directory = "auxiliary-data/modeled-clades") {
+get_clade_file_info <- function(hub_dir) {
   # the round_id is the date of the most recent "clades to model"
   # file in auxiliary-data/modeled-clades
+  directory <- file.path(hub_dir, "auxiliary-data", "modeled-clades")
   clades_file_list <- sort(list.files(path = directory, full.names = TRUE), decreasing = TRUE)
   latest_clades_file <- clades_file_list[1]
   clade_file_info <- list(clade_file = latest_clades_file, round_id = file_path_sans_ext(basename(latest_clades_file)))
@@ -23,7 +24,7 @@ get_clade_list <- function(filename) {
 
 create_new_round <- function() {
   # create a new round object
-  this_round_clade_file <- get_clade_file_info()
+  this_round_clade_file <- get_clade_file_info(dirname(getwd()))
   this_round_clade_list <- sort(get_clade_list(this_round_clade_file$clade_file))
   this_round_date <- this_round_clade_file$round_id
   if (isFALSE(weekdays(as.Date(this_round_date)) == "Wednesday")) {
@@ -101,9 +102,10 @@ create_new_round <- function() {
 }
 
 write_and_validate_task_config <- function(task_config, round_id) {
-  hubAdmin::write_config(task_config, overwrite = TRUE, silent = TRUE)
+  hub_dir <- dirname(getwd())
+  hubAdmin::write_config(task_config, hub_path = hub_dir, overwrite = TRUE, silent = TRUE)
   valid_task_config <- hubAdmin::validate_config(
-    hub_path = ".",
+    hub_path = hub_dir,
     config = c("tasks"),
     schema_version = "from_config",
     branch = "main"
