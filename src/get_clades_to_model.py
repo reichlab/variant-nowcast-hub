@@ -17,7 +17,6 @@ To run the script manually:
 1. Install uv on your machine: https://docs.astral.sh/uv/getting-started/installation/
 2. From the root of this repo: uv run src/get_clades_to_model.py
 """
-# "virus_clade_utils@git+https://github.com/reichlab/virus-clade-utils/",
 
 # /// script
 # dependencies = [
