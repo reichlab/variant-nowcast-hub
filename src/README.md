@@ -1,7 +1,16 @@
-# Generating list of clades to model (WIP)
+# Variant Nowcast Hub Scripts
 
-Follow the steps below to generate a list of clades to model for a specific round_id. The output will be 
-a list of clades that is written to `auxiliary-data/modeled-clades/[round_id].txt`.
+The `src/` directory contains scripts that support this hub's operations. The scripts are designed to be run by scheduled
+GitHub workflows on a Linux-based runner (_i.e._, they have not been tested in a Windows environment).
+
+The sections below contain information about the scripts and how to run them manually.
+
+## Generating list of clades to model
+
+`get_clades_to_model.py` generates a list of clades to model for the hub's upcoming round (the first Wednesday following
+the run date). The script writes the clade list and accompanying metadata to `auxiliary-data/modeled-clades/[round_id].txt`.
+
+To run the script manually:
 
 1. Make sure that `uv` is installed on your machine:
 
@@ -17,4 +26,22 @@ a list of clades that is written to `auxiliary-data/modeled-clades/[round_id].tx
     uv run src/get_clades_to_model.py
     ```
 
-**TODO:** per the related [GitHub issue](https://github.com/reichlab/variant-nowcast-hub/issues/26), we want to generate a PR with the newly generated list of clades.
+## Adding a new modeling round to the hub
+
+`make_round_config.R` reads in the most recent clade list (see above) and uses it to generate a new modeling round, which is
+then appended to the hub's existing `hub-config/tasks.json` file.
+
+To run the script manually:
+
+1. Make sure that `renv` is installed on your machine.
+2. Open an R console and `setwd()` to this repo's `src/` directory.
+3. Activate the project's r environment:
+
+    ```r
+    renv::activate()
+    ```
+4. Run the following command:
+
+    ```r
+    source("make_round_config.R")
+    ```
