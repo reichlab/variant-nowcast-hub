@@ -9,13 +9,13 @@
           "task_ids": {
             "nowcast_date": {
               "required": [
-                "2024-09-11"
+                "2024-09-25"
               ],
               "optional": null
             },
             "target_date": {
               "required": null,
-              "optional": ["2024-09-11", "2024-09-04", "2024-08-28", "2024-08-21"]
+              "optional": ["2024-09-25", "2024-09-18", "2024-09-11", "2024-09-04"]
             },
             "location": {
               "required": null,
