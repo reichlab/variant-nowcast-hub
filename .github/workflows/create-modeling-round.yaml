@@ -43,15 +43,9 @@ jobs:
 
       - name: Create clade list and update tasks.json 🦠
         run: |
-          # uv run src/get_clades_to_model.py
+          uv run get_clades_to_model.py
           Rscript make_round_config.R
         working-directory: src
-
-
-      # - name: Generate new round config 📝
-      #   run: |
-      #     chmod u+x src/create_round.sh
-      #     src/create_round.sh
 
       - name: Get current date and time 🕰️
         run: |
