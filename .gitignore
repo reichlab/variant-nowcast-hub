@@ -3,7 +3,10 @@
 .RData
 .Ruserdata
 **/*.Rproj
+**/renv/
 
+# we don't need to track the Python lockfile because
+# uv run creates a transient, isolated environment
 **/uv.lock
 
 .pre-commit-config.yaml
