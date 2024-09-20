@@ -190,7 +190,7 @@ append_round <- function(old_task_config, new_round) {
 
 new_round <- create_new_round()
 
-existing_task_config <- try(hubUtils::read_config(".", config = c("tasks")), silent = TRUE)
+existing_task_config <- try(hubUtils::read_config(dirname(getwd()), config = c("tasks")), silent = TRUE)
 if (inherits(existing_task_config, "try-error")) {
   print("Existing config not found, creating a new tasks.json")
   new_task_config <- hubAdmin::create_config(hubAdmin::create_rounds(new_round))
