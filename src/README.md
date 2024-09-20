@@ -31,17 +31,37 @@ To run the script manually:
 `make_round_config.R` reads in the most recent clade list (see above) and uses it to generate a new modeling round, which is
 then appended to the hub's existing `hub-config/tasks.json` file.
 
-To run the script manually:
+To run the script manually (RStudio users):
 
 1. Make sure that `renv` is installed on your machine.
-2. Open an R console and `setwd()` to this repo's `src/` directory.
-3. Activate the project's r environment:
+2. Open an RStudio `variant-nowcast-hub` project. The project's default working directory should be set to the root of the repo.
+3. Activate the renv project's R environment, directly referencing the `src` directory:
 
     ```r
-    renv::activate()
+    renv::activate("src")
     ```
-4. Run the following command:
+4. Run the make_round_config script:
 
     ```r
     source("make_round_config.R")
     ```
+
+
+To run the script manually (without RStudio):
+
+1. Make sure that `renv` is installed on your machine.
+2. Open an R console and `setwd()` to this repo's `src/` directory.
+3. Install the project's dependencies from the renv lockfile:
+
+    ```r
+    renv::init()
+    ```
+
+4. R will ask how to handle the existing lockfile. Choose `Restore the project from the lockfile`.
+5. Restart the R session.
+6. Run the make_round_config script:
+
+    ```r
+    source("make_round_config.R")
+    ```
+
