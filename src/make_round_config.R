@@ -1,14 +1,28 @@
 ## Add a new round to the hub's task config (hub-config/tasks.json)
 ## This script is part of a "round open" process run via a scheduled GitHub action and
 ## should be run from the hub's src/ directory.
+##
+## The script will create a new round and add it to the hub's existing task config (tasks.json).
+## If tasks.json does not exist, the script will create one and add the new round.
+## In this hub, each round uses a different list of clades to model, and that information is
+## stored in auxiliary-data/modeled-clades. This directory contains a file for each round, so
+## the code below finds the most recent file in it and uses the filename to determine the round_id.
 
 library(hubAdmin)
 library(hubUtils)
 library(tools)
 
-get_clade_file_info <- function(hub_dir) {
-  # the round_id is the date of the most recent "clades to model"
-  # file in auxiliary-data/modeled-clades
+#' Get the hub's latest clade file
+#'
+#' @description
+#' `get_latest_clade_file` finds the hub's most recent "list of clades to
+#' model" and returns its filename and the round_id derived from the filename.
+#'
+#' @param hub_dir Character vector. The full path the the hub's root directory.
+#' @returns A list with two elements: `clade_file` is the full path to the hub's
+#'   latest clade file, and `round_id` is the round_id of the modeling round
+#'   that will predict the clades in `clade_file`.
+get_latest_clade_file <- function(hub_dir) {
   directory <- file.path(hub_dir, "auxiliary-data", "modeled-clades")
   clades_file_list <- sort(list.files(path = directory, full.names = TRUE), decreasing = TRUE)
   latest_clades_file <- clades_file_list[1]
@@ -16,15 +30,28 @@ get_clade_file_info <- function(hub_dir) {
   return(clade_file_info)
 }
 
+#' Return the clades that modelers will predict in the new round
+#'
+#' @description
+#' `get_clade_list` reads the hub's latest clade file and returns a list
+#' of the SARS-CoV-2 clades that will be required in the round's variant task_id.
+#'
+#' @param filename Character vector. Full path to the hub's latest clade file.
+#' @returns A list with one element that contains the clades to be modeled.
 get_clade_list <- function(filename) {
-  # get a list of the clades to be modeled in this round
   clade_list <- readLines(filename)
   return(clade_list)
 }
 
+#' Create a new round object
+#'
+#' @description
+#' `create_new_round` creates a new Hubverse round object based on the hub's
+#' most recently-created list of clades to model.
+#'
+#' @returns A round object.
 create_new_round <- function() {
-  # create a new round object
-  this_round_clade_file <- get_clade_file_info(dirname(getwd()))
+  this_round_clade_file <- get_latest_clade_file(dirname(getwd()))
   this_round_clade_list <- sort(get_clade_list(this_round_clade_file$clade_file))
   this_round_date <- this_round_clade_file$round_id
   if (isFALSE(weekdays(as.Date(this_round_date)) == "Wednesday")) {
@@ -101,6 +128,11 @@ create_new_round <- function() {
   return(round)
 }
 
+#' Write and validate task config
+#'
+#' @description
+#' `write_and_validate_task_config` writes a task config to the hub (tasks.json)
+#' and validates it, returning an error if the config is invalid.
 write_and_validate_task_config <- function(task_config, round_id) {
   hub_dir <- dirname(getwd())
   hubAdmin::write_config(task_config, hub_path = hub_dir, overwrite = TRUE, silent = TRUE)
@@ -116,10 +148,17 @@ write_and_validate_task_config <- function(task_config, round_id) {
   }
 }
 
+#' Coerce a list to a round object
+#'
+#' @description
+#' `coerce_to_round` converts a list of round information to a round object,
+#'   using attributes of the newly-created round as needed.
+#'
+#' @param existing_round List. A single hub round, in list form.
+#' @param new_round A Hubverse round created via hubAdmin::create_new_round().
+#' @returns A Hubverse round.
 coerce_to_round <- function(existing_round, new_round) {
-  # take round info from an existing hub tasks.config (as
-  # read by read_config()) and coerce it to a round object
-  # that will be recognized by hubAdmin's create_rounds()
+  .Deprecated("hubAdmin::append_round()")
   class(existing_round) <- c("round", "list")
   attr(existing_round, "round_id") <- attr(new_round, "round_id")
   attr(existing_round, "schema_id") <- attr(new_round, "schema_id")
@@ -128,8 +167,20 @@ coerce_to_round <- function(existing_round, new_round) {
   return(existing_round)
 }
 
+#' Create a new task_config that includes existing rounds and a new round
+#'
+#' @description
+#' `append_to_round` coerces the hub's existing rounds to a list of rounds,
+#'   appends the new round to the list, and uses the result to create a new
+#'   task config.
+#'
+#' @param old_task_config List. A hub task config in list form, as created by
+#'   hubAdmin::read_config().
+#' @param new_round A Hubverse round created via hubAdmin::create_new_round().
+#' @returns A Hubverse task config that represents the hub's existing rounds
+#'   plus a newly-created round.
 append_round <- function(old_task_config, new_round) {
-  # add a new round to the hub's existing task config
+  .Deprecated("hubAdmin::append_round()")
   existing_round_list <- lapply(old_task_config$rounds, coerce_to_round, new_round)
   round_list <- append(existing_round_list, list(new_round), 0)
   rounds <- do.call(hubAdmin::create_rounds, round_list)
