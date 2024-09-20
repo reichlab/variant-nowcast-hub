@@ -19,7 +19,7 @@ Submissions are due at 8pm ET every Wednesday. This time was chosen to give mode
 ### Processed datasets, selecting variant clades
 Early Monday morning (~3am ET) prior to a Wednesday on which submissions are due, the hub generates a plain text file whose sole contents are a list of  [NextClade clade names](https://clades.nextstrain.org/about) that will be accepted in submission files for the upcoming deadline. The plain text file will live in the `auxiliary-data/modeled-clades/` directory of the repository and will be named "YYYY-MM-DD.txt" where "YYYY-MM-DD" is the date of the Wednesday on which submissions are due.
 
-<!-- TODO: consider revising based on Spencer's concern.-->
+<!-- TODO: consider revising based on Spencer's concern. CDC bases things on the last 3 weeks. could only include one from the last week if it hits some minimum sample size threshold. -->
 Each week the hub designates up to nine NextStrain clades with the highest reported prevalence of at least 1% across the US in any of the three complete MMWR weeks preceding the Wednesday submission date. Any clades with prevalence of less than 1% are grouped into an “other” category for which predictions of combined prevalence are also collected. No more than 10 clades (including “other”) are selected in a given week.
 
 This clade selection is based on the [NextStrain USA sequence count file based on US data from GenBank](https://data.nextstrain.org/files/workflows/forecasts-ncov/open/nextstrain_clades/usa.tsv.gz), using [this script](https://github.com/reichlab/virus-clade-utils/blob/main/src/virus_clade_utils/get_clade_list.py). The NextStrain file with counts is [typically updated daily in the late evening US eastern time](https://github.com/nextstrain/forecasts-ncov/actions/workflows/update-ncov-open-clade-counts.yaml) (it is only updated when new data are available). The hub pulls the most recent version of the file when the workflow runs each week. The precise lineage assignment model (sometimes referred to as a “reference tree”) that was used as well as the version of raw sequence data is be stored as metadata, to facilitate reproducibility and evaluation. 
@@ -31,7 +31,9 @@ Genomic sequences tend to be reported weeks after being collected. Therefore, re
 
 
 ### Model output format
-This hub follows (hubverse)[https://hubverse.io/] data standards. Submissions must contain mean outputs, and can optionally include sample-based model outputs. We use the term “model task” below to refer to a prediction for a specific clade, location and horizon. For example, if mean model outputs are submitted, there will be one value between 0 and 1 for each model task. The submitted values for all clades must sum to 1 for a given state and horizon.
+This hub follows (hubverse)[https://hubverse.io/] data standards. Submissions must contain mean outputs, 
+<!-- TODO: or be transparent that we will compute the mean based on samples if they don't submit it-->
+and can optionally include sample-based model outputs. We use the term “model task” below to refer to a prediction for a specific clade, location and horizon. For example, if mean model outputs are submitted, there will be one value between 0 and 1 for each model task. The submitted values for all clades must sum to 1 for a given state and horizon.
 <!-- TODO: within a given tolerance for the sum above? -->
 As we will describe in further detail below, the target for prediction is the proportion of circulating viral genomes for a given location and target date amongst infected individuals that are sequenced for SARS-CoV-2.
 
@@ -48,7 +50,7 @@ While the hub requires predictive means to be submitted, to be included in the h
 Several features of these data in particular make evaluations tricky. 
 
 1. Data for some model tasks may be partially observed at the time nowcasts and forecasts are made. The hub encourages teams to submit predictions of “true” underlying clade probabilities that will vary more or less smoothly, if sometimes steeply, over time. When some observations are partially observed at the time of nowcast submissions, it could be to the modeler’s advantage to predict a value that is close to the frequency observed at the time the forecast is made, thus deviating from the underlying (likely smooth) function the model would predict in the absence of data. To incentivize “honest” nowcasts that do not shift predictions for time-points with partial observations, we will only evaluate locations and dates for which no data have yet been reported at the time the clade list is generated in Monday. 
-<!-- TODO: check the above statement is true - is it the Monday date after which no reported data is considered, or a Wednesday? -->
+<!-- TODO: check the above statement is true - is it the Monday date after which no reported data is considered, or a Wednesday? change to have the run after the forecast deadline. on Wednesday, store a list of locations and dates that will be scored.  -->
 One implication of this decision is that different numbers of days may be evaluated for some locations when compared with others.
 
 2. The reference phylogenetic tree that defines clades changes over time. Nowcasts and forecasts will be evaluated against whatever sequence data is available 90 days after the deadline that a set of predictions were submitted for. Additionally, those sequences will be assigned a clade based on the reference tree that was used to generate the list of predicted clades on the Monday prior to the submission date. This means that new clades that emerge in the time since the predictions were made will still be classified as they would have been when predictions were made.
@@ -80,6 +82,7 @@ These count forecasts $\hat C^{(1)}, …, \hat C^{(100)}$ will be scored on the 
 One possible problem with this evaluation approach is that there is an element of stochasticity to the scores, as the scores are computed using counts based on random draws from a multinomial distribution. We have conducted simulation studies that indicate that the chances of one model that is truly closer to the truth than another would be given a worse score, due to the randomness of the multinomial draws or the Monte Carlo error present due to only having 100 samples of the posterior distribution, is low, although non-zero.
 One alternative would be to perform exact, or approximations to exact, energy score calculations, but this may be infeasible due to the size of the sample space.
 Another alternative could be to use the log-score to evaluate the predictive distribution.
+<!-- distribution of brier scores -->
 
 ### Score aggregation
 
