@@ -15,7 +15,7 @@ on the following Wednesday.
 
 To run the script manually:
 1. Install uv on your machine: https://docs.astral.sh/uv/getting-started/installation/
-2. From the repo's /src directory: uv run get_clades_to_model.py
+2. From the root of this repo: uv run src/get_clades_to_model.py
 """
 
 # /// script
