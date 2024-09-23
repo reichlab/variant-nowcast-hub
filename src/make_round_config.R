@@ -135,7 +135,7 @@ create_new_round <- function() {
 #' `write_and_validate_task_config` writes a task config to the hub (tasks.json)
 #' and validates it, returning an error if the config is invalid.
 write_and_validate_task_config <- function(task_config, round_id) {
-  hub_dir <- dirname(getwd())
+  hub_dir <- here::here()
   hubAdmin::write_config(task_config, hub_path = hub_dir, overwrite = TRUE, silent = TRUE)
   valid_task_config <- hubAdmin::validate_config(
     hub_path = hub_dir,
