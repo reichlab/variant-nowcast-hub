@@ -52,7 +52,7 @@ get_clade_list <- function(filename) {
 #'
 #' @returns A round object.
 create_new_round <- function() {
-  this_round_clade_file <- get_latest_clade_file(dirname(getwd()))
+  this_round_clade_file <- get_latest_clade_file(here::here())
   this_round_clade_list <- sort(get_clade_list(this_round_clade_file$clade_file))
   this_round_date <- this_round_clade_file$round_id
   if (isFALSE(weekdays(as.Date(this_round_date)) == "Wednesday")) {
