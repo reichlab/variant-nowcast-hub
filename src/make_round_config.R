@@ -50,9 +50,10 @@ get_clade_list <- function(filename) {
 #' `create_new_round` creates a new Hubverse round object based on the hub's
 #' most recently-created list of clades to model.
 #'
+#' @param hub_root Character vector. The full path to the hub's root directory.
 #' @returns A round object.
-create_new_round <- function() {
-  this_round_clade_file <- get_latest_clade_file(here::here())
+create_new_round <- function(hub_root) {
+  this_round_clade_file <- get_latest_clade_file(hub_root)
   this_round_clade_list <- sort(get_clade_list(this_round_clade_file$clade_file))
   this_round_date <- this_round_clade_file$round_id
   if (isFALSE(weekdays(as.Date(this_round_date)) == "Wednesday")) {
@@ -134,11 +135,10 @@ create_new_round <- function() {
 #' @description
 #' `write_and_validate_task_config` writes a task config to the hub (tasks.json)
 #' and validates it, returning an error if the config is invalid.
-write_and_validate_task_config <- function(task_config, round_id) {
-  hub_dir <- here::here()
-  hubAdmin::write_config(task_config, hub_path = hub_dir, overwrite = TRUE, silent = TRUE)
+write_and_validate_task_config <- function(task_config, round_id, hub_root) {
+  hubAdmin::write_config(task_config, hub_path = hub_root, overwrite = TRUE, silent = TRUE)
   valid_task_config <- hubAdmin::validate_config(
-    hub_path = hub_dir,
+    hub_path = hub_root,
     config = c("tasks"),
     schema_version = "from_config",
     branch = "main"
@@ -189,9 +189,11 @@ append_round <- function(old_task_config, new_round) {
   return(new_task_config)
 }
 
-new_round <- create_new_round()
+# This script runs from the hub's src/ directory, so the hub root is one level up
+hub_root <- dirname(here::here())
+new_round <- create_new_round(hub_root)
 
-existing_task_config <- try(hubUtils::read_config(dirname(getwd()), config = c("tasks")), silent = TRUE)
+existing_task_config <- try(hubUtils::read_config(hub_root, config = c("tasks")), silent = TRUE)
 if (inherits(existing_task_config, "try-error")) {
   print("Existing config not found, creating a new tasks.json")
   new_task_config <- hubAdmin::create_config(hubAdmin::create_rounds(new_round))
