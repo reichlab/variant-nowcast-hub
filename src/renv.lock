@@ -361,6 +361,16 @@
       ],
       "Hash": "3470c2eb1123db6a2c54ec812de38284"
     },
+    "here": {
+      "Package": "here",
+      "Version": "1.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "rprojroot"
+      ],
+      "Hash": "24b224366f9c2e7534d2344d10d59211"
+    },
     "highr": {
       "Package": "highr",
       "Version": "0.11",
@@ -450,14 +460,14 @@
     },
     "hubUtils": {
       "Package": "hubUtils",
-      "Version": "0.1.7",
+      "Version": "0.1.7.9000",
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteUsername": "hubverse-org",
       "RemoteRepo": "hubUtils",
       "RemoteRef": "main",
-      "RemoteSha": "09caabb233c68157d5f030996e7a4f5c5110b004",
+      "RemoteSha": "a58fda970b91b0193b6d151e27eaa25f3a3813e1",
       "Requirements": [
         "R",
         "checkmate",
@@ -476,7 +486,7 @@
         "tibble",
         "utils"
       ],
-      "Hash": "0f4dd3e8d816f5858fb81fe4fb5a73cb"
+      "Hash": "079152c33907f1d06542cf1d7888e1c5"
     },
     "ini": {
       "Package": "ini",
@@ -750,6 +760,16 @@
         "yaml"
       ],
       "Hash": "062470668513dcda416927085ee9bdc7"
+    },
+    "rprojroot": {
+      "Package": "rprojroot",
+      "Version": "2.0.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "4c8415e0ec1e29f3f4f6fc108bef0144"
     },
     "sass": {
       "Package": "sass",
