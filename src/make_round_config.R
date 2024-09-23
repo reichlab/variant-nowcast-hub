@@ -11,6 +11,7 @@
 library(hubAdmin)
 library(hubUtils)
 library(tools)
+library(here)
 
 #' Get the hub's latest clade file
 #'
