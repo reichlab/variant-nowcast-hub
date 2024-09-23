@@ -19,6 +19,7 @@ To run the script manually:
 """
 
 # /// script
+# requires-python = ">=3.11"
 # dependencies = [
 #   "virus_clade_utils@git+https://github.com/reichlab/virus-clade-utils/",
 # ]
