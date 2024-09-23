@@ -8,10 +8,11 @@
 ## stored in auxiliary-data/modeled-clades. This directory contains a file for each round, so
 ## the code below finds the most recent file in it and uses the filename to determine the round_id.
 
+library(cli)
+library(here)
 library(hubAdmin)
 library(hubUtils)
 library(tools)
-library(here)
 
 #' Get the hub's latest clade file
 #'
@@ -144,8 +145,8 @@ write_and_validate_task_config <- function(task_config, round_id, hub_root) {
     branch = "main"
   )
   if (isFALSE(valid_task_config)) {
-    print(valid_task_config)
-    stop("Generated task config is invalid for round: ", round_id)
+    cli::cli_alert_danger("Generated task config (tasks.json) is invalid")
+    stop()
   }
 }
 
@@ -195,16 +196,16 @@ new_round <- create_new_round(hub_root)
 
 existing_task_config <- try(hubUtils::read_config(hub_root, config = c("tasks")), silent = TRUE)
 if (inherits(existing_task_config, "try-error")) {
-  print("Existing config not found, creating a new tasks.json")
+  cli::cli_alert_info("Existing config not found, creating a new tasks.json")
   new_task_config <- hubAdmin::create_config(hubAdmin::create_rounds(new_round))
 } else {
-  print("Existing config found, adding a new round")
+  cli::cli_alert_info("Existing config found, adding a new round")
   new_task_config <- append_round(existing_task_config, new_round)
 }
 
-write_and_validate_task_config(new_task_config, this_round_date)
-print("New round added to tasks.json")
-print(new_round)
+write_and_validate_task_config(new_task_config, this_round_date, hub_root)
+cli::cli_h1("New round added to tasks.json")
+cli::cli_alert_success(new_round)
 
 
 # TODO: create a sample model-output file for this round
