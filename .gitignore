@@ -3,7 +3,8 @@
 .RData
 .Ruserdata
 **/*.Rproj
-**/renv/
+!src/variant-nowcast-hub.Rproj
+
 
 # we don't need to track the Python lockfile because
 # uv run creates a transient, isolated environment
