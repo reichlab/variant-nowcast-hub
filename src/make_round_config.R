@@ -8,11 +8,13 @@
 ## stored in auxiliary-data/modeled-clades. This directory contains a file for each round, so
 ## the code below finds the most recent file in it and uses the filename to determine the round_id.
 
+here::i_am("src/make_round_config.R")
 library(cli)
 library(here)
 library(hubAdmin)
 library(hubUtils)
 library(tools)
+
 
 #' Get the hub's latest clade file
 #'
@@ -190,8 +192,7 @@ append_round <- function(old_task_config, new_round) {
   return(new_task_config)
 }
 
-# This script runs from the hub's src/ directory, so the hub root is one level up
-hub_root <- dirname(here::here())
+hub_root <- here::here()
 new_round <- create_new_round(hub_root)
 
 existing_task_config <- try(hubUtils::read_config(hub_root, config = c("tasks")), silent = TRUE)
