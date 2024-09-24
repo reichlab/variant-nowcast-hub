@@ -96,6 +96,12 @@ create_new_round <- function(hub_root) {
         )
       ),
       output_type = hubAdmin::create_output_type(
+        hubAdmin::create_output_type_mean(
+          is_required = FALSE,
+          value_type = "double",
+          value_minimum = 0L,
+          value_maximum = 1L
+        ),
         hubAdmin::create_output_type_sample(
           is_required = FALSE,
           output_type_id_type = "character",
