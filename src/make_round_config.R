@@ -13,6 +13,7 @@ library(cli)
 library(here)
 library(hubAdmin)
 library(hubUtils)
+library(lobstr)
 library(tools)
 
 
@@ -206,7 +207,7 @@ if (inherits(existing_task_config, "try-error")) {
 
 write_and_validate_task_config(new_task_config, this_round_date, hub_root)
 cli::cli_h1("New round added to tasks.json")
-cli::cli_alert_success(new_round)
+cli::cli_alert_success(lobstr::tree(new_round))
 
 
 # TODO: create a sample model-output file for this round
