@@ -33,14 +33,14 @@ then appended to the hub's existing `hub-config/tasks.json` file.
 
 To run the script manually (RStudio users):
 
-1. Make sure that `renv` is installed on your machine.
-2. Open `src/make_round_config.R` in RStudio _OR_ open the `src/variant-nowcast-hub.Rproj` project in RStudio.
-3. If prompted by `renv` that some of the packages in `renv.lock` are not installed:
+
+1. Open `src/make_round_config.R` in RStudio _OR_ open the `src/variant-nowcast-hub.Rproj` project in RStudio.
+2. If prompted by `renv` that some of the packages in `renv.lock` are not installed:
 
     ```r
     renv::restore()
     ```
-4. Run the make_round_config script:
+3. Run the make_round_config script:
 
     ```r
     source("make_round_config.R")
@@ -49,9 +49,8 @@ To run the script manually (RStudio users):
 
 To run the script manually (without RStudio):
 
-1. Make sure that `renv` is installed on your machine.
-2. Open an R session and set the working directory to the repo's `src` directory.
-3. Make sure that the required packages are installed:
+1. Open an R session and set the working directory to the repo's `src` directory.
+2. If prompted by `renv` that some packages in `renv.lock` are not installed:
 
     ```r
     renv::restore()
