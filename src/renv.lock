@@ -4,7 +4,7 @@
     "Repositories": [
       {
         "Name": "CRAN",
-        "URL": "https://packagemanager.posit.co/cran/latest"
+        "URL": "https://cloud.r-project.org"
       }
     ]
   },
@@ -247,7 +247,7 @@
       "Package": "evaluate",
       "Version": "0.24.0",
       "Source": "Repository",
-      "Repository": "CRAN",
+      "Repository": "RSPM",
       "Requirements": [
         "R",
         "methods"
@@ -439,7 +439,7 @@
       "Package": "httr2",
       "Version": "1.0.2",
       "Source": "Repository",
-      "Repository": "CRAN",
+      "Repository": "RSPM",
       "Requirements": [
         "R",
         "R6",
@@ -458,7 +458,7 @@
     },
     "hubAdmin": {
       "Package": "hubAdmin",
-      "Version": "1.1.1",
+      "Version": "1.2.0",
       "Source": "Repository",
       "Repository": "https://hubverse-org.r-universe.dev",
       "Requirements": [
@@ -478,7 +478,7 @@
         "tibble",
         "utils"
       ],
-      "Hash": "f950fd235b92a8a68e857e4c6e4653dd"
+      "Hash": "080bd7d78a5e358db497265e00c069ee"
     },
     "hubUtils": {
       "Package": "hubUtils",
@@ -489,7 +489,7 @@
       "RemoteUsername": "hubverse-org",
       "RemoteRepo": "hubUtils",
       "RemoteRef": "main",
-      "RemoteSha": "a58fda970b91b0193b6d151e27eaa25f3a3813e1",
+      "RemoteSha": "087ac71673a88f6496bd425db6e28a3eff4eb511",
       "Requirements": [
         "R",
         "checkmate",
@@ -508,7 +508,7 @@
         "tibble",
         "utils"
       ],
-      "Hash": "079152c33907f1d06542cf1d7888e1c5"
+      "Hash": "b75b61265c56f3e006974436bd786bd2"
     },
     "ini": {
       "Package": "ini",
