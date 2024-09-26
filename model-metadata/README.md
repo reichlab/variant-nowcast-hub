@@ -63,7 +63,7 @@ A list of funding source(s) for the team or members of the team, including any s
 
 ### methods
 
-A summary of the methods used by this model (5000 character limit). Among other details, this should include details about the joint dependence structure of the model, and across what variables the model draws joint distributions, e.g., across horizons but not horizons and locations.
+A summary of the methods used by this model (5000 character limit). Among other information, this should include details about the joint dependence structure of the model, and across what variables the model draws joint distributions, e.g., across horizons but not horizons and locations.
 
 ### methods_url
 
