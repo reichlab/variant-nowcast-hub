@@ -11,7 +11,7 @@ While SARS-CoV-2 variant dynamics received most attention from the scientific co
 
 ## Submitting to the hub
 
-**How to submit**: Any team wishing to submit a set of nowcasts to the hub may submit a pull request to this repository with a valid submission file in parquet format. The submission file must be located in `model-output/<team_abbr>-<model_abbr>/` (where `<team_abbr>` and `<model_abbr>` are the abbreviated names of your team and your model, respectively, that match the fields in your model metadata file), and the submission file must be named `YYYY-MM-DD-<team>-<model>.parquet` where `YYYY-MM-DD` is the date of the Wednesday on which the submission is due. Teams must also submit a model metadata file (see details [below](#model-metadata)). 
+**How to submit**: Any team wishing to submit a set of nowcasts to the hub may submit a pull request to this repository with a valid submission file in parquet format. The submission file must be located in `model-output/<team_abbr>-<model_abbr>/` (where `<team_abbr>` and `<model_abbr>` are the abbreviated names of your team and your model, respectively, that match the fields in your model metadata file), and the submission file must be named `YYYY-MM-DD-<team>-<model>.parquet` where `YYYY-MM-DD` is the date of the Wednesday on which the submission is due. Teams must also submit a model metadata file (see details [on the Model Metadata README page](https://github.com/reichlab/variant-nowcast-hub/blob/main/model-metadata/README.md)). 
 
 **Deadline**: Submissions are due at 8pm ET every Wednesday. This time was chosen to give modelers time in the beginning of the week to run and adjust models and stakeholders time at the end of the week to incorporate preliminary results into discussions or decision making.
 
@@ -41,8 +41,6 @@ We note that sample IDs present in the `output_type_id` column of submissions ar
 
 To be included in the hub ensemble model, samples must be submitted and the mean forecast for the hub ensemble will be obtained as a summary of sample predictions.
 
-## <a name="model-metadata"></a>Model metadata
-TODO
 
 ## Data created and stored by the hub
 
@@ -52,7 +50,7 @@ Early Monday morning (~3am ET) prior to a Wednesday on which submissions are due
 1. `clades`: an array of [NextClade clade names](https://clades.nextstrain.org/about) that will be accepted in submission files for the upcoming deadline.
 2. `meta`: metadata relevant to the upcoming round, including links to the Nextstrain sequence information and reference tree used to generate the above `clades` array.
 
-The JSON file will live in the `auxiliary-data/modeled-clades/` directory of the repository and will be named “YYYY-MM-DD.json” where “YYYY-MM-DD” is the date of the Wednesday on which submissions are due
+The JSON file will live in the `auxiliary-data/modeled-clades/` directory of the repository and will be named “YYYY-MM-DD.json” where “YYYY-MM-DD” is the date of the Wednesday on which submissions are due.
 
 This clade selection is based on the ["full open" NextStrain sequence metadata files](https://docs.nextstrain.org/projects/ncov/en/latest/reference/remote_inputs.html#remote-inputs-open-files), in particular [this file](https://data.nextstrain.org/files/ncov/open/metadata.tsv.zst) which is loaded and analyzed using [this script](https://github.com/reichlab/virus-clade-utils/blob/main/src/virus_clade_utils/get_clade_list.py). The NextStrain files are [typically updated daily in the late evening US eastern time](https://github.com/nextstrain/forecasts-ncov/actions/workflows/update-ncov-open-clade-counts.yaml) (it is only updated when new data are available). The hub pulls the most recent version of the file when the workflow runs each week. The precise lineage assignment model (sometimes referred to as a “reference tree”) that was used as well as the version of raw sequence data is stored as metadata, to facilitate reproducibility and evaluation. 
 

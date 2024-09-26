@@ -1,13 +1,9 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "Schema for Modeling Hub model metadata",
-    "description": "This is the schema for model metadata files, please refer to https://github.com/covid19-forecast-hub-europe/covid19-forecast-hub-europe/wiki/Metadata for more information.",
+    "title": "Schema for SARS-CoV-2 Variant Nowcast Hub model metadata",
+    "description": "This is the schema for model metadata files, please refer to https://github.com/reichlab/variant-nowcast-hub/blob/main/README.md#model-metadata for more information.",
     "type": "object",
     "properties": {
-        "schema_version": {
-            "type": "string",
-            "format": "uri"
-        },
         "team_name": {
             "description": "The name of the team submitting the model",
             "type": "string"
@@ -29,7 +25,7 @@
             "maxLength": 16
         },
         "model_version": {
-            "description": "Identifier of the version of the model",
+            "description": "Identifier of the version of the model, if multiple versions are present.",
             "type": "string"
         },
         "model_contributors": {
@@ -43,19 +39,21 @@
                     "affiliation": {
                         "type": "string"
                     },
-                    "orcid": {
-                        "type": "string",
-                        "pattern": "^\\d{4}\\-\\d{4}\\-\\d{4}\\-[\\dX]{4}$"
-                    },
                     "email": {
                         "type": "string",
                         "format": "email"
                     },
-                    "twitter": {
-                        "type": "string"
-                    },
-                    "additionalProperties": false
-                }
+                    "orcid": {
+                        "type": "string",
+                        "pattern": "^\\d{4}\\-\\d{4}\\-\\d{4}\\-[\\dX]{4}$"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "name",
+                    "affiliation",
+                    "email"
+                ]
             }
         },
         "website_url": {
@@ -84,48 +82,48 @@
         "citation": {
             "description": "One or more citations for this model",
             "type": "string",
-            "examples": "Gibson GC , Reich NG , Sheldon D. Real-time mechanistic bayesian forecasts of Covid-19 mortality. medRxiv. 2020. https://doi.org/10.1101/2020.12.22.20248736"
+            "examples": ["Gibson GC , Reich NG , Sheldon D. Real-time mechanistic bayesian forecasts of Covid-19 mortality. medRxiv. 2020. https://doi.org/10.1101/2020.12.22.20248736"]
         },
         "team_funding": {
             "description": "Any information about funding source for the team or members of the team.",
             "type": "string",
-            "examples": "National Institutes of General Medical Sciences (R01GM123456). The content is solely the responsibility of the authors and does not necessarily represent the official views of NIGMS."
+            "examples": ["National Institutes of General Medical Sciences (R01GM123456). The content is solely the responsibility of the authors and does not necessarily represent the official views of NIGMS."]
         },
-        "model_details": {
-            "description": "Structured information about the model",
-            "type": "object",
-            "properties": {
-                "data_inputs": {
-                    "description": "List or description of data inputs used by the model",
-                    "type": "string"
-                },
-                "methods": {
-                    "description": "A brief (200 char.) description of the methods used by this model",
-                    "type": "string",
-                    "maxLength": 200
-                },
-                "methods_long": {
-                    "description": "A full description of the methods used by this model.",
-                    "type": "string"
-                }
-            },
-            "additionalProperties": false,
-            "required": ["data_inputs", "methods"]
+        "methods": {
+            "description": "A summary of the methods used by this model (5000 character limit). Among other details, this should include details about the joint dependence structure of the model, and across what variables the model draws joint distributions, e.g., across horizons but not horizons and locations.",
+            "type": "string",
+            "maxLength": 5000
+        },
+        "methods_url": {
+            "description": "A link to a complete write-up of the model specification, with mathematical details. This could be a peer-reviewed article, preprint, or an unpublished PDF or webpage stored at a public url somewhere.",
+            "type": "uri"
+        },
+        "data_sources": {
+            "description": "List or description of data inputs used by the model. For example:  NextStrain, GISAID for sequences outside of the U.S., wastewater variant proportions, etc....",
+            "type": "string"
+        },
+        "ensemble_of_models": {
+            "description": "Indicator for whether this model is an ensemble of any separate component models",
+            "type": "boolean"
         },
         "ensemble_of_hub_models": {
-            "description": "Indicator for whether this model is an ensemble of other Hub models",
+            "description": "Indicator for whether this model is an ensemble specifically of other models submitted to this Hub",
             "type": "boolean"
         }
     },
-    "additionalProperties": true,
+    "additionalProperties": false,
     "required": [
-        "schema_version",
         "team_name",
         "team_abbr",
         "model_name",
         "model_abbr",
         "model_contributors",
         "license",
-        "model_details"
+        "methods",
+        "methods_long",
+        "methods_url",
+        "data_sources",
+        "ensemble_of_models",
+        "ensemble_of_hub_models"
     ]
 }
