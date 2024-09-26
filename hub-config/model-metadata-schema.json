@@ -90,12 +90,16 @@
             "examples": ["National Institutes of General Medical Sciences (R01GM123456). The content is solely the responsibility of the authors and does not necessarily represent the official views of NIGMS."]
         },
         "methods": {
-            "description": "A brief (200 char.) description of the methods used by this model",
+            "description": "A summary of the methods used by this model (5000 character limit). Among other details, this should include details about the joint dependence structure of the model, and across what variables the model draws joint distributions, e.g., across horizons but not horizons and locations.",
             "type": "string",
-            "maxLength": 200
+            "maxLength": 5000
         },
-        "methods_long": {
-            "description": "A full description of the methods used by this model. Among other details, this should include details about the joint dependence structure of the model, and across what variables the model draws joint distributions, e.g., across horizons but not horizons and locations.",
+        "methods_url": {
+            "description": "A link to a complete write-up of the model specification, with mathematical details. This could be a peer-reviewed article, preprint, or an unpublished PDF or webpage stored at a public url somewhere.",
+            "type": "uri"
+        },
+        "data_sources": {
+            "description": "List or description of data inputs used by the model. For example:  NextStrain, GISAID for sequences outside of the U.S., wastewater variant proportions, etc....",
             "type": "string"
         },
         "ensemble_of_models": {
@@ -117,6 +121,8 @@
         "license",
         "methods",
         "methods_long",
+        "methods_url",
+        "data_sources",
         "ensemble_of_models",
         "ensemble_of_hub_models"
     ]
