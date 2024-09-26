@@ -155,6 +155,8 @@ write_and_validate_task_config <- function(task_config, round_id, hub_root) {
   )
   if (isFALSE(valid_task_config)) {
     cli::cli_alert_danger("Generated task config (tasks.json) is invalid")
+    cli::cli_h1("Invalid task config")
+    lobstr::tree(task_config)
     stop()
   }
 }
@@ -169,7 +171,6 @@ write_and_validate_task_config <- function(task_config, round_id, hub_root) {
 #' @param new_round A Hubverse round created via hubAdmin::create_new_round().
 #' @returns A Hubverse round.
 coerce_to_round <- function(existing_round, new_round) {
-  .Deprecated("hubAdmin::append_round()")
   class(existing_round) <- c("round", "list")
   attr(existing_round, "round_id") <- attr(new_round, "round_id")
   attr(existing_round, "schema_id") <- attr(new_round, "schema_id")
@@ -191,10 +192,21 @@ coerce_to_round <- function(existing_round, new_round) {
 #' @returns A Hubverse task config that represents the hub's existing rounds
 #'   plus a newly-created round.
 append_round <- function(old_task_config, new_round) {
-  .Deprecated("hubAdmin::append_round()")
   existing_round_list <- lapply(old_task_config$rounds, coerce_to_round, new_round)
-  round_list <- append(existing_round_list, list(new_round), 0)
-  rounds <- do.call(hubAdmin::create_rounds, round_list)
+  round_list <- append(existing_round_list, list(new_round))
+  tryCatch(
+    {
+      rounds <- do.call(hubAdmin::create_rounds, round_list)
+    },
+    error = function(err)
+    {
+      cli::cli_alert_danger(
+        "Error calling hubAdmin::create_rounds (likely because the new round object failed validation)")
+        cli::cli_h1("Error")
+      print(err)
+      stop()
+    }
+  )
   new_task_config <- hubAdmin::create_config(rounds)
   return(new_task_config)
 }
@@ -214,12 +226,3 @@ if (inherits(existing_task_config, "try-error")) {
 write_and_validate_task_config(new_task_config, this_round_date, hub_root)
 cli::cli_h1("New round added to tasks.json")
 cli::cli_alert_success(lobstr::tree(new_round))
-
-
-# TODO: create a sample model-output file for this round
-# https://hubverse-org.github.io/hubData/reference/create_model_out_submit_tmpl.html
-# create_config function?
-
-
-# TODO: create a sample model-output file for this round
-# https://hubverse-org.github.io/hubData/reference/create_model_out_submit_tmpl.html
