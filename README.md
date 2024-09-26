@@ -27,19 +27,72 @@ Genomic sequences tend to be reported weeks after being collected. Therefore, re
 ### Model output format
 This hub follows [hubverse](https://hubverse.io/) data standards. Submissions must include either mean outputs, or sample-based model outputs. If sample-based model outputs are submitted and means are not, modelers should assume that these samples may be used to compute a mean prediction which may be scored. 
 
-We use the term “model task” below to refer to a prediction for a specific clade, location and horizon. For example, if mean model outputs are submitted, there will be one value between 0 and 1 for each model task. The submitted values for all clades must sum to 1 (within +/- 0.001) for a given location and horizon.
+We use the term “model task” below to refer to a prediction for a specific clade, location and target date. For example, if mean model outputs are submitted, there will be one value between 0 and 1 for each model task. The submitted values for all clades must sum to 1 (within +/- 0.001) for a given location and target date.
 As we will describe in further detail below, the target for prediction is the proportion of circulating viral genomes for a given location and target date amongst infected individuals that are sequenced for SARS-CoV-2.
 
-To submit probabilistic predictions, a [sample format](https://hubverse.io/en/latest/user-guide/sample-output-type.html) is used to encode samples from the predictive distribution for each model task. The hub requires exactly 100 samples for each model task. One key advantage to submitting sample-based output is that dependence can be encoded across horizons (corresponding to trajectories of variant prevalence over time), or even across locations (see details in [Hubverse sample model-output specifications](https://hubverse.io/en/latest/user-guide/sample-output-type.html#compound-modeling-tasks)). For this hub, we require that samples be submitted in such a way as to imply that they are structured into trajectories across clades and horizons. (See following section for how variants are classified into clade categories.) In particular, a common sample ID will be used in multiple rows of the submission file with different combinations of clade and horizon. This means that 
+To submit probabilistic predictions, a [sample format](https://hubverse.io/en/latest/user-guide/sample-output-type.html) is used to encode samples from the predictive distribution for each model task. The hub requires exactly 100 samples for each model task. One key advantage to submitting sample-based output is that dependence can be encoded across horizons (corresponding to trajectories of variant prevalence over time), or even across locations (see details in [Hubverse sample model-output specifications](https://hubverse.io/en/latest/user-guide/sample-output-type.html#compound-modeling-tasks)). For this hub, we require that samples be submitted in such a way as to imply that they are structured into trajectories across clades and horizons. (See following section for how variants are classified into clade categories.) In particular, a common sample ID will be used in multiple rows of the submission file with different combinations of clade and target date. This means that 
 
-1. at each location and horizon a common sample ID (in the `ouput_type_id` column) ensures that the clade proportions sum to 1, and
-2. for each location and clade, common sample IDs across horizons allows us to draw trajectories by clade.
+1. at each location and target date a common sample ID (in the `ouput_type_id` column) ensures that the clade proportions sum to 1, and
+2. for each location and clade, common sample IDs across `target_date` values allows us to draw trajectories by clade.
 
-This specification corresponds to a hubverse-style “compound modeling task” that includes the following fields: "reference_date", "location". Samples then capture dependence across the complementary set of task ids: “horizon”, “clade”.
+This specification corresponds to a hubverse-style "compound modeling task" that includes the following fields: `nowcast_date`, `location`. Samples then capture dependence across the complementary set of task ids: `target_date`, `variant`.
 
-We note that sample IDs present in the `output_type_id` column of submissions are not necessarily inherent properties of how the samples are generated, as they can be changed post-hoc by a modeler. For example, some models may make nowcasts independently by horizon but the samples could be tied together either randomly or via some other correlation structure or secondary model to assign sample IDs that are consistent across horizons. As another example, some models may make forecasts that have joint dependence structure across locations as well as horizons. Sample IDs can be shared across locations as well, but this is not required for the submission to pass validation.
+We note that sample IDs present in the `output_type_id` column of submissions are not necessarily inherent properties of how the samples are generated, as they can be changed post-hoc by a modeler. For example, some models may make nowcasts independently by target date but the samples could be tied together either randomly or via some other correlation structure or secondary model to assign sample IDs that are consistent across target dates. As another example, some models may make forecasts that have joint dependence structure across locations as well as target dates. Sample IDs can be shared across locations as well, but this is not required for the submission to pass validation.
 
 To be included in the hub ensemble model, samples must be submitted and the mean forecast for the hub ensemble will be obtained as a summary of sample predictions.
+
+### Tabular data format
+
+Submissions must be submitted as `.parquet` files and must follow a specific tabular data format. Every submission file must contain the following columns
+
+ - `nowcast_date`: the date of the Wednesday submission deadline, in `YYYY-MM-DD` format.
+ - `target_date`: the date that a specific nowcast prediction is made for, in `YYYY-MM-DD` format.
+ - `location`: the two-letter abbreviation for a US state, including DC and PR for Washington DC and Puerto Rico.
+ - `variant`: the label for a Nextstrain clade (or "other"), as defined on a per-round basis in [these files](https://github.com/reichlab/variant-nowcast-hub/tree/main/auxiliary-data/modeled-clades).
+ - `output_type`: the type of output represented by this row, one of either `mean` or `sample`.
+ - `output_type_id`: either `NA` for `mean` rows or, for `sample` rows, an alphanumeric sample ID value that links together rows from the same predictive sample from the model.
+ - `value`: the predicted proportion (between 0 and 1 inclusive) for the combination of `target_date`, `location` and `variant`.
+ 
+Here are a few example rows, showing `mean` values for ten unique modeling tasks (a modeling task is a unique combination of `location`, `target_date` and `variant`):
+
+| `nowcast_date` | `target_date` | `location` | `variant`   | `output_type` | `output_type_id` | `value` |
+|----------------|---------------|------------|-------------|---------------|------------------|---------|
+| 2024-09-25     | 2024-09-23    | MA         | 24A         | mean          | NA               | 0.1     |
+| 2024-09-25     | 2024-09-23    | MA         | 24B         | mean          | NA               | 0.2     |
+| 2024-09-25     | 2024-09-23    | MA         | 24C         | mean          | NA               | 0.05    |
+| 2024-09-25     | 2024-09-23    | MA         | recombinant | mean          | NA               | 0.6     |
+| 2024-09-25     | 2024-09-23    | MA         | other       | mean          | NA               | 0.05    |
+| 2024-09-25     | 2024-09-24    | MA         | 24A         | mean          | NA               | 0.12    |
+| 2024-09-25     | 2024-09-24    | MA         | 24B         | mean          | NA               | 0.18    |
+| 2024-09-25     | 2024-09-24    | MA         | 24C         | mean          | NA               | 0.02    |
+| 2024-09-25     | 2024-09-24    | MA         | recombinant | mean          | NA               | 0.6     |
+| 2024-09-25     | 2024-09-24    | MA         | other       | mean          | NA               | 0.08    |
+
+Here are a few example rows, showing two predictive samples for ten unique modeling tasks. The samples that share the same value in the `output_type_id` column are assumed to be drawn from the same predictive sample from the model:
+
+| `nowcast_date` | `target_date` | `location` | `variant`   | `output_type` | `output_type_id` | `value` |
+|----------------|---------------|------------|-------------|---------------|------------------|---------|
+| 2024-09-25     | 2024-09-23    | MA         | 24A         | sample        | MA00             | 0.1     |
+| 2024-09-25     | 2024-09-23    | MA         | 24B         | sample        | MA00             | 0.2     |
+| 2024-09-25     | 2024-09-23    | MA         | 24C         | sample        | MA00             | 0.05    |
+| 2024-09-25     | 2024-09-23    | MA         | recombinant | sample        | MA00             | 0.6     |
+| 2024-09-25     | 2024-09-23    | MA         | other       | sample        | MA00             | 0.05    |
+| 2024-09-25     | 2024-09-24    | MA         | 24A         | sample        | MA00             | 0.12    |
+| 2024-09-25     | 2024-09-24    | MA         | 24B         | sample        | MA00             | 0.18    |
+| 2024-09-25     | 2024-09-24    | MA         | 24C         | sample        | MA00             | 0.02    |
+| 2024-09-25     | 2024-09-24    | MA         | recombinant | sample        | MA00             | 0.6     |
+| 2024-09-25     | 2024-09-24    | MA         | other       | sample        | MA00             | 0.08    |
+| 2024-09-25     | 2024-09-23    | MA         | 24A         | sample        | MA01             | 0.1     |
+| 2024-09-25     | 2024-09-23    | MA         | 24B         | sample        | MA01             | 0.2     |
+| 2024-09-25     | 2024-09-23    | MA         | 24C         | sample        | MA01             | 0.05    |
+| 2024-09-25     | 2024-09-23    | MA         | recombinant | sample        | MA01             | 0.6     |
+| 2024-09-25     | 2024-09-23    | MA         | other       | sample        | MA01             | 0.05    |
+| 2024-09-25     | 2024-09-24    | MA         | 24A         | sample        | MA01             | 0.12    |
+| 2024-09-25     | 2024-09-24    | MA         | 24B         | sample        | MA01             | 0.18    |
+| 2024-09-25     | 2024-09-24    | MA         | 24C         | sample        | MA01             | 0.02    |
+| 2024-09-25     | 2024-09-24    | MA         | recombinant | sample        | MA01             | 0.6     |
+| 2024-09-25     | 2024-09-24    | MA         | other       | sample        | MA01             | 0.08    |
+
 
 
 ## Data created and stored by the hub
