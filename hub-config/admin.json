@@ -1,12 +1,24 @@
 {
-    "schema_version": "https://raw.githubusercontent.com/Infectious-Disease-Modeling-Hubs/schemas/main/v2.0.0/admin-schema.json",
-    "name": "COVID-19 Variant Nowcast Hub",
-    "maintainer": "Reich Lab",
+    "schema_version": "https://raw.githubusercontent.com/Infectious-Disease-Modeling-Hubs/schemas/main/v3.0.1/admin-schema.json",
+    "name": "SARS-CoV-2 Variant Nowcast Hub",
+    "maintainer": "Reich Lab @ UMass-Amherst",
     "contact": {
         "name": "Nick Reich",
         "email": "nick@umass.edu"
     },
-    "repository_url": "https://github.com/reichlab/variant-nowcast-hub",
+    "repository": {
+        "host": "github",
+        "owner": "reichlab",
+        "name": "variant-nowcast-hub"
+    },
     "file_format": ["parquet"],
-    "timezone": "US/Eastern"
+    "timezone": "US/Eastern",
+    "cloud": {
+        "enabled": false,
+        "host": {
+            "name": "aws",
+            "storage_service": "s3",
+            "storage_location": "variant-nowcast-hub"
+        }
+    }
 }
