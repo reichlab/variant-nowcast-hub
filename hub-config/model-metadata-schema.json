@@ -6,22 +6,24 @@
     "properties": {
         "team_name": {
             "description": "The name of the team submitting the model",
-            "type": "string"
+            "type": "string",
+            "maxLength": 50
         },
         "team_abbr": {
             "description": "Abbreviated name of the team submitting the model",
             "type": "string",
-            "pattern": "^[a-zA-Z0-9_+]+$",
+            "pattern": "^[a-zA-Z0-9_]+$",
             "maxLength": 16
         },
         "model_name": {
             "description": "The name of the model",
-            "type": "string"
+            "type": "string",
+            "maxLength": 50
         },
         "model_abbr": {
             "description": "Abbreviated name of the model",
             "type": "string",
-            "pattern": "^[a-zA-Z0-9_+]+$",
+            "pattern": "^[a-zA-Z0-9_]+$",
             "maxLength": 16
         },
         "model_version": {
@@ -96,7 +98,8 @@
         },
         "methods_url": {
             "description": "A link to a complete write-up of the model specification, with mathematical details. This could be a peer-reviewed article, preprint, or an unpublished PDF or webpage stored at a public url somewhere.",
-            "type": "uri"
+            "type": "string",
+            "format": "uri"
         },
         "data_sources": {
             "description": "List or description of data inputs used by the model. For example:  NextStrain, GISAID for sequences outside of the U.S., wastewater variant proportions, etc....",
@@ -119,8 +122,8 @@
         "model_abbr",
         "model_contributors",
         "license",
+        "team_funding",
         "methods",
-        "methods_long",
         "methods_url",
         "data_sources",
         "ensemble_of_models",

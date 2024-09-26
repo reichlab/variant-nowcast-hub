@@ -1,42 +1,37 @@
 # Model metadata
 
-
-<mark style="background-color: #FFE331">**Below is a template of the README.md file for the model-metadata folder of your hub. Italics in brackets are placeholders for information about your hub. **</mark>
-
-
-This folder contains metadata files for the models submitting to the  *[hub name]*. The specification for these files has been adapted to be consistent with [model metadata guidelines in the hubverse documentation](https://hubdocs.readthedocs.io/en/latest/user-guide/model-metadata.html).
+This folder contains metadata files for the models submitting to the  *SARS-CoV-2 Variant Nowcast Hub*. The specification for these files has been adapted to be consistent with [model metadata guidelines in the hubverse documentation](https://hubdocs.readthedocs.io/en/latest/user-guide/model-metadata.html).
 
 Each model is required to have metadata in 
 [yaml format](https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html).
 
-These instructions provide detail about the [data
+These instructions provide details about the [data
 format](#Data-format) as well as [validation](#Data-validation) that
 you can do prior to a pull request with a metadata file.
 
 # Data format
 
-## Required variables
+## Required fields
 
 This section describes each of the variables (keys) in the yaml document.
 Please order the variables in this order.
 
 ### team_name
-The name of your team that is less than 50 characters.
+The name of your team that no more than 50 characters long.
 
 ### team_abbr
-The name of your team that is less than 16 characters.
+An abbreviation of your team name that is up to 16 characters long, consisting entirely of alphanumeric characters or underscores, with no other characters allowed.
 
 ### model_name
-The name of your model that is less than 50 characters.
+The name of your model that no more than 50 characters long.
 
 ### model_abbr
-An abbreviated name for your model that is less than 16 alphanumeric characters. 
+An abbreviation of your model name that is up to 16 characters long, consisting entirely of alphanumeric characters or underscores, with no other characters allowed.
 
 ### model_contributors
 
-A list of all individuals involved in the forecasting effort.
-A names, affiliations, and email address is required for each contributor. Individuals may also include an optional orcid identifiers.
-All email addresses provided will be added to an email distribution list for model contributors.
+A list of all individuals involved in the submission of this model.
+A name, affiliation, and email address is required for each contributor. Individuals may also include an optional orcid identifier.
 
 The syntax of this field should be 
 ```
@@ -58,27 +53,25 @@ model_contributors: [
 
 ### license
 
-One of the [accepted licenses](https://github.com/cdcepi/FluSight-forecast-hub/blob/673e983fee54f3a21448071ac46a9f78d27dd164/hub-config/model-metadata-schema.json#L69-L75).
+One of the [accepted licenses](https://github.com/reichlab/variant-nowcast-hub/blob/main/hub-config/model-metadata-schema.json#L72).
 
-We encourage teams to submit as a "cc-by-4.0" to allow the broadest possible uses
-including private vaccine production (which would be excluded by the "cc-by-nc-4.0" license). 
+We encourage teams to submit as a "cc-by-4.0" to allow the broadest possible uses including uses such as private vaccine production (which would be excluded by the "cc-by-nc-4.0" license). 
 
-### designated_model 
+### team_funding 
 
-A team-specified boolean indicator (`true` or `false`) for whether the model should be considered eligible for inclusion in a Hub ensemble and public visualization. A team may specify up to two models as a designated_model for inclusion. Models which have a designated_model value of 'False' will still be included in internal forecasting hub evaluations.
-
-### data_inputs
-
-List or description of the data sources used to inform the model. Particularly those used beyond the target data of confirmed influenza hospital admissions.
+A list of funding source(s) for the team or members of the team, including any specific acknowledgment that would be natural to include in a publication. For example, "National Institutes of General Medical Sciences (R01GM123456). The content is solely the responsibility of the authors and does not necessarily represent the official views of NIGMS." If no funding supported the modeling effort, then just an acknowledgment such as "No funding declared." should be included.
 
 ### methods
 
-A brief description of your forecasting methodology that is less than 200 
-characters.
+A summary of the methods used by this model (5000 character limit). Among other information, this should include details about the joint dependence structure of the model, and across what variables the model draws joint distributions, e.g., across horizons but not horizons and locations.
 
-### methods_long
+### methods_url
 
-A full description of the methods used by this model. Among other details, this should include whether spatial correlation is considered and how the model accounts for uncertainty. If the model is modified, this field can also be used to provide the date of the modification and a description of the change.
+A link to a complete write-up of the model specification, with mathematical details. This could be a peer-reviewed article, preprint, or an unpublished PDF or webpage stored at a public url somewhere.
+
+### data_sources
+
+List or description of data inputs used by the model. For example:  NextStrain, GISAID for sequences outside of the U.S., wastewater variant proportions, etc...
 
 ### ensemble_of_models
 
@@ -86,9 +79,9 @@ A boolean value (`true` or `false`) that indicates whether a model is an ensembl
 
 ### ensemble_of_hub_models
 
-A boolean value (`true` or `false`) that indicates whether a model is an ensemble specifically of other models submited to the FluSight forecasting hub.
+A boolean value (`true` or `false`) that indicates whether a model is an ensemble specifically of other models submited to this hub.
 
-## Optional
+## Optional fields
 
 ### model_version
 An identifier of the version of the model
@@ -105,11 +98,8 @@ A github (or similar) repository url containing code for the model.
 
 ### citation
 
-One or more citations to manuscripts or preprints with additional model details. For example, "Gibson GC , Reich NG , Sheldon D. Real-time mechanistic bayesian forecasts of Covid-19 mortality. medRxiv. 2020. https://doi.org/10.1101/2020.12.22.20248736".
+One or more citations to manuscripts or preprints with additional model details. For example, "Gibson GC , Reich NG , Sheldon D. Real-time mechanistic bayesian forecasts of COVID-19 mortality. medRxiv. 2020. https://doi.org/10.1101/2020.12.22.20248736".
 
-### team_funding 
-
-Any information about funding source(s) for the team or members of the team that would be natural to include on any resulting FluSight publications. For example, "National Institutes of General Medical Sciences (R01GM123456). The content is solely the responsibility of the authors and does not necessarily represent the official views of NIGMS."
 
 # Data validation
 
@@ -144,5 +134,3 @@ If all is well, you should see output similar to the following:
 ```
 
 If there are any errors, you will see a message describing the problem.
-
-<mark style="background-color: #FFE331">**As an example, here is a link to the [Flusight-Forecast_Hub model-metadata README](https://github.com/cdcepi/FluSight-forecast-hub/blob/master/model-metadata/README.md).**</mark>
