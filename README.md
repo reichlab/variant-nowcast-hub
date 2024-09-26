@@ -9,14 +9,14 @@ Collaborative and open forecast hubs have emerged as a valuable way to centraliz
 
 While SARS-CoV-2 variant dynamics received most attention from the scientific community in 2021 and 2022, SARS-CoV-2 genomic sequences continue to be generated, and trends in variant frequencies will continue to impact transmission across the US and the world. From a modeling perspective, there is less consensus about a standard way to represent model outputs for multivariate variant frequency predictions than there is for other outcomes. Therefore, a key reason for building and launching this nowcast hub is to help learn about the right way to evaluate and communicate variant dynamics in a collaborative modeling effort, potentially not just for SARS-CoV-2 but also for other rapidly evolving pathogens.
 
-## What will modelers be asked to predict?
-We ask modeling teams to submit predictions of frequencies of the predominant SARS-CoV-2 clades in the United States, at a daily timescale and the geographic resolution of all 50 United States plus Washington DC and Puerto Rico. We will not solicit estimates for the U.S., in part because evaluating this quantity is not straightforward due to the heterogeneity in levels of infections and sequencing across locations. Details about these choices follow in subsections below. The hub will solicit predictions of frequencies (i.e., numbers between 0 and 1) associated with each clade or group of clades, for a particular location and a particular day.
-
-### Submitting to the hub
+## Submitting to the hub
 
 **How to submit**: Any team wishing to submit a set of nowcasts to the hub may submit a pull-request to this repository with a valid submission file in parquet format. The submission file must be located in `model-output/<team>-<model>/` (where `<team>` and `<model>` are the abbreviated names of your team and your model, respectively), and the submission file must be named `YYYY-MM-DD-<team>-<model>.parquet` where `YYYY-MM-DD` is the date of the Wednesday on which the submission is due. Teams must also submit a model metadata file (see details [below](#model-metadata)). 
 
 **Deadline**: Submissions are due at 8pm ET every Wednesday. This time was chosen to give modelers time in the beginning of the week to run and adjust models and stakeholders time at the end of the week to incorporate preliminary results into discussions or decision making.
+
+## What will modelers be asked to predict?
+We ask modeling teams to submit predictions of frequencies of the predominant SARS-CoV-2 clades in the United States, at a daily timescale and the geographic resolution of all 50 United States plus Washington DC and Puerto Rico. We will not solicit estimates for the U.S., in part because evaluating this quantity is not straightforward due to the heterogeneity in levels of infections and sequencing across locations. Details about these choices follow in subsections below. The hub will solicit predictions of frequencies (i.e., numbers between 0 and 1) associated with each clade or group of clades, for a particular location and a particular day.
 
 ### Predicted clades
 Each week the hub designates up to nine NextStrain clades with the highest reported prevalence of at least 1% across the US in any of the three complete [USA/CDC epidemiological weeks](https://ndc.services.cdc.gov/wp-content/uploads/MMWR_Week_overview.pdf) (a.k.a. MMWR weeks) preceding the Wednesday submission date. Any clades with prevalence of less than 1% are grouped into an “other” category for which predictions of combined prevalence are also collected. No more than 10 clades (including “other”) are selected in a given week. For details on the workflow that generates this list each week, see the [clade list section](#clade-list) below.
