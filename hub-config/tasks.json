@@ -21,7 +21,7 @@
               "required": null,
               "optional": ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "PR"]
             },
-            "variant": {
+            "clade": {
               "required": ["24A", "24B", "24C", "other", "recombinant"],
               "optional": null
             }
@@ -57,8 +57,8 @@
           },
           "target_metadata": [
             {
-              "target_id": "variant prop",
-              "target_name": "Daily nowcasted variant proportions",
+              "target_id": "clade prop",
+              "target_name": "Daily nowcasted clade proportions",
               "target_units": "proportion",
               "target_keys": null,
               "target_type": "compositional",
@@ -94,7 +94,7 @@
               "required": null,
               "optional": ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "PR"]
             },
-            "variant": {
+            "clade": {
               "required": ["24A", "24B", "24C", "other", "recombinant"],
               "optional": null
             }
@@ -130,8 +130,8 @@
           },
           "target_metadata": [
             {
-              "target_id": "variant prop",
-              "target_name": "Daily nowcasted variant proportions",
+              "target_id": "clade prop",
+              "target_name": "Daily nowcasted clade proportions",
               "target_units": "proportion",
               "target_keys": null,
               "target_type": "compositional",
@@ -167,7 +167,7 @@
               "required": null,
               "optional": ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "PR"]
             },
-            "variant": {
+            "clade": {
               "required": ["24A", "24B", "24C", "other", "recombinant"],
               "optional": null
             }
@@ -203,8 +203,8 @@
           },
           "target_metadata": [
             {
-              "target_id": "variant prop",
-              "target_name": "Daily nowcasted variant proportions",
+              "target_id": "clade prop",
+              "target_name": "Daily nowcasted clade proportions",
               "target_units": "proportion",
               "target_keys": null,
               "target_type": "compositional",

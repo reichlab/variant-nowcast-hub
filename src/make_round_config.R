@@ -39,7 +39,7 @@ get_latest_clade_file <- function(hub_dir) {
 #'
 #' @description
 #' `get_clade_list` reads the hub's latest clade file and returns a list
-#' of the SARS-CoV-2 clades that will be required in the round's variant task_id.
+#' of the SARS-CoV-2 clades that will be required in the round's clade task_id.
 #'
 #' @param filename Character vector. Full path to the hub's latest clade file.
 #' @returns A list with one element that contains the clades to be modeled.
@@ -90,7 +90,7 @@ create_new_round <- function(hub_root) {
             "WV", "WI", "WY", "PR"
           )
         ),
-        hubAdmin::create_task_id("variant",
+        hubAdmin::create_task_id("clade",
           required = this_round_clade_list,
           optional = NULL
         )
@@ -115,8 +115,8 @@ create_new_round <- function(hub_root) {
       ),
       target_metadata = hubAdmin::create_target_metadata(
         hubAdmin::create_target_metadata_item(
-          target_id = "variant prop",
-          target_name = "Daily nowcasted variant proportions",
+          target_id = "clade prop",
+          target_name = "Daily nowcasted clade proportions",
           target_units = "proportion",
           target_keys = NULL,
           target_type = "compositional",
