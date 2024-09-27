@@ -74,7 +74,7 @@ create_new_round <- function(hub_root) {
         hubAdmin::create_task_id("target_date",
           required = NULL,
           ## target date is nowcast_date and the three prior weeks
-          optional = as.character(as.Date(this_round_date) - c(0, 7, 14, 21))
+          optional = as.character(seq(as.Date(this_round_date) - 31, as.Date(this_round_date) + 10, by = "day"))
         ),
         hubAdmin::create_task_id("location",
           required = NULL,
@@ -106,8 +106,8 @@ create_new_round <- function(hub_root) {
           is_required = FALSE,
           output_type_id_type = "character",
           max_length = 15L,
-          min_samples_per_task = 1L,
-          max_samples_per_task = 500L,
+          min_samples_per_task = 100L,
+          max_samples_per_task = 100L,
           value_type = "double",
           value_minimum = 0L,
           value_maximum = 1L,
@@ -116,12 +116,12 @@ create_new_round <- function(hub_root) {
       target_metadata = hubAdmin::create_target_metadata(
         hubAdmin::create_target_metadata_item(
           target_id = "variant prop",
-          target_name = "Weekly nowcasted variant proportions",
+          target_name = "Daily nowcasted variant proportions",
           target_units = "proportion",
           target_keys = NULL,
           target_type = "compositional",
           is_step_ahead = TRUE,
-          time_unit = "week"
+          time_unit = "day"
         )
       )
     )
@@ -133,7 +133,7 @@ create_new_round <- function(hub_root) {
     model_tasks = model_tasks,
     submissions_due = list(
       relative_to = "nowcast_date",
-      start = -7L,
+      start = -2L,
       end = 1L
     )
   )
