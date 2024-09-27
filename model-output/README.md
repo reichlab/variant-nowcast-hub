@@ -1,12 +1,11 @@
 # Model outputs folder
 
-<mark style="background-color: #FFE331">**Below is a template of the README.md file for the model-ouput folder of your hub. Italics in brackets are placeholders for information about your hub. **</mark>
-
-This folder contains a set of subdirectories, one for each model, that contains submitted model output files for that model. The structure of these directories and their contents follows [the model output guidelines in our documentation](https://hubdocs.readthedocs.io/en/latest/user-guide/model-output.html). Documentation for hub submissions specifically is provided below. 
+This folder contains a set of subdirectories, one for each model, that contains submitted model output files for that model. The structure of these directories and their contents follows [the model output guidelines in our documentation](https://hubverse.io/en/latest/user-guide/model-output.html). Documentation for hub submissions specifically is provided below. 
 
 # Data submission instructions
 
-All forecasts should be submitted directly to the [model-output/](./)
+All model output files should be submitted directly to a team's subdirectory
+within the the [model-output/](./)
 folder. Data in this directory should be added to the repository through
 a pull request so that automatic data validation checks are run.
 
@@ -18,40 +17,83 @@ that each model should provide in the model-metadata folder.
 
 *Table of Contents*
 
--   [What is a forecast](#What-is-a-forecast)
--   [Target data](#Target-data)
+-   [Model output details](#Model-output-details)
+-   [Submission file format](#Submission-file-format)
 -   [Data formatting](#Data-formatting)
--   [Forecast file format](#Forecast-file-format)
--   [Forecast data validation](#Forecast-validation)
+-   [Model output validation](#Model-output-validation)
 -   [Weekly ensemble build](#Weekly-ensemble-build)
 -   [Policy on late submissions](#policy-on-late-or-updated-submissions)
 
-## What is a forecast 
 
-Models are asked to make specific quantitative forecasts about data that
-will be observed in the future. These forecasts are interpreted as
-"unconditional" predictions about the future. That is, they are not
-predictions only for a limited set of possible future scenarios in which
-a certain set of conditions (e.g. vaccination uptake is strong, or new
-social-distancing mandates are put in place) hold about the future --
-rather, they should characterize uncertainty across all reasonable
-future scenarios. In practice, all forecasting models make some
-assumptions about how current trends in data may change and impact the
-forecasted outcome; some teams select a "most likely" scenario or
-combine predictions across multiple scenarios that may occur. Forecasts
-submitted to this repository will be evaluated against observed data.
+## Model output details
+This hub follows [hubverse](https://hubverse.io/) data standards. Submissions must include either mean outputs, or sample-based model outputs. If sample-based model outputs are submitted and means are not, modelers should assume that these samples may be used to compute a mean prediction which may be scored. 
 
-We note that other modeling efforts, such as the [Influenza Scenario
-Modeling Hub](https://fluscenariomodelinghub.org/), have been
-launched to collect and aggregate model outputs from "scenario
-projection" models. These models create longer-term projections under a
-specific set of assumptions about how the main drivers of the pandemic
-(such as non-pharmaceutical intervention compliance, or vaccination
-uptake) may change over time.
+We use the term “model task” below to refer to a prediction for a specific clade, location and target date. For example, if mean model outputs are submitted, there will be one value between 0 and 1 for each model task. The submitted values for all clades must sum to 1 (within +/- 0.001) for a given location and target date.
+As we will describe in further detail below, the target for prediction is the proportion of circulating viral genomes for a given location and target date amongst infected individuals that are sequenced for SARS-CoV-2.
 
-## Target Data 
+To submit probabilistic predictions, a [sample format](https://hubverse.io/en/latest/user-guide/sample-output-type.html) is used to encode samples from the predictive distribution for each model task. The hub requires exactly 100 samples for each model task. One key advantage to submitting sample-based output is that dependence can be encoded across horizons (corresponding to trajectories of variant prevalence over time), or even across locations (see details in [Hubverse sample model-output specifications](https://hubverse.io/en/latest/user-guide/sample-output-type.html#compound-modeling-tasks)). For this hub, we require that samples be submitted in such a way as to imply that they are structured into trajectories across clades and horizons. (See following section for how variants are classified into clade categories.) In particular, a common sample ID will be used in multiple rows of the submission file with different combinations of clade and target date. This means that 
 
-*[insert description target data]* 
+1. at each location and target date a common sample ID (in the `ouput_type_id` column) ensures that the clade proportions sum to 1, and
+2. for each location and clade, common sample IDs across `target_date` values allows us to draw trajectories by clade.
+
+This specification corresponds to a hubverse-style "compound modeling task" that includes the following fields: `nowcast_date`, `location`. Samples then capture dependence across the complementary set of task ids: `target_date`, `clade`.
+
+We note that sample IDs present in the `output_type_id` column of submissions are not necessarily inherent properties of how the samples are generated, as they can be changed post-hoc by a modeler. For example, some models may make nowcasts independently by target date but the samples could be tied together either randomly or via some other correlation structure or secondary model to assign sample IDs that are consistent across target dates. As another example, some models may make forecasts that have joint dependence structure across locations as well as target dates. Sample IDs can be shared across locations as well, but this is not required for the submission to pass validation.
+
+To be included in the hub ensemble model, samples must be submitted and the mean forecast for the hub ensemble will be obtained as a summary of sample predictions.
+
+## Submission file format
+
+Submissions must be submitted as `.parquet` files and must follow a specific tabular data format. Every submission file must contain the following columns
+
+ - `nowcast_date`: the date of the Wednesday submission deadline, in `YYYY-MM-DD` format.
+ - `target_date`: the date that a specific nowcast prediction is made for, in `YYYY-MM-DD` format.
+ - `location`: the two-letter abbreviation for a US state, including DC and PR for Washington DC and Puerto Rico.
+ - `clade`: the label for a Nextstrain clade (or "other"), as defined on a per-round basis in [these files](https://github.com/reichlab/variant-nowcast-hub/tree/main/auxiliary-data/modeled-clades).
+ - `output_type`: the type of output represented by this row, one of either `mean` or `sample`.
+ - `output_type_id`: either `NA` for `mean` rows or, for `sample` rows, an alphanumeric sample ID value that links together rows from the same predictive sample from the model.
+ - `value`: the predicted proportion (between 0 and 1 inclusive) for the combination of `target_date`, `location` and `clade`.
+ 
+Here are a few example rows, showing `mean` values for ten unique modeling tasks (a modeling task is a unique combination of `location`, `target_date` and `clade`):
+
+| `nowcast_date` | `target_date` | `location` | `clade`   | `output_type` | `output_type_id` | `value` |
+|----------------|---------------|------------|-------------|---------------|------------------|---------|
+| 2024-09-25     | 2024-09-23    | MA         | 24A         | mean          | NA               | 0.1     |
+| 2024-09-25     | 2024-09-23    | MA         | 24B         | mean          | NA               | 0.2     |
+| 2024-09-25     | 2024-09-23    | MA         | 24C         | mean          | NA               | 0.05    |
+| 2024-09-25     | 2024-09-23    | MA         | recombinant | mean          | NA               | 0.6     |
+| 2024-09-25     | 2024-09-23    | MA         | other       | mean          | NA               | 0.05    |
+| 2024-09-25     | 2024-09-24    | MA         | 24A         | mean          | NA               | 0.12    |
+| 2024-09-25     | 2024-09-24    | MA         | 24B         | mean          | NA               | 0.18    |
+| 2024-09-25     | 2024-09-24    | MA         | 24C         | mean          | NA               | 0.02    |
+| 2024-09-25     | 2024-09-24    | MA         | recombinant | mean          | NA               | 0.6     |
+| 2024-09-25     | 2024-09-24    | MA         | other       | mean          | NA               | 0.08    |
+
+Here are a few example rows, showing two predictive samples for ten unique modeling tasks. The samples that share the same value in the `output_type_id` column are assumed to be drawn from the same predictive sample from the model:
+
+| `nowcast_date` | `target_date` | `location` | `clade`   | `output_type` | `output_type_id` | `value` |
+|----------------|---------------|------------|-------------|---------------|------------------|---------|
+| 2024-09-25     | 2024-09-23    | MA         | 24A         | sample        | MA00             | 0.1     |
+| 2024-09-25     | 2024-09-23    | MA         | 24B         | sample        | MA00             | 0.2     |
+| 2024-09-25     | 2024-09-23    | MA         | 24C         | sample        | MA00             | 0.05    |
+| 2024-09-25     | 2024-09-23    | MA         | recombinant | sample        | MA00             | 0.6     |
+| 2024-09-25     | 2024-09-23    | MA         | other       | sample        | MA00             | 0.05    |
+| 2024-09-25     | 2024-09-24    | MA         | 24A         | sample        | MA00             | 0.12    |
+| 2024-09-25     | 2024-09-24    | MA         | 24B         | sample        | MA00             | 0.18    |
+| 2024-09-25     | 2024-09-24    | MA         | 24C         | sample        | MA00             | 0.02    |
+| 2024-09-25     | 2024-09-24    | MA         | recombinant | sample        | MA00             | 0.6     |
+| 2024-09-25     | 2024-09-24    | MA         | other       | sample        | MA00             | 0.08    |
+| 2024-09-25     | 2024-09-23    | MA         | 24A         | sample        | MA01             | 0.1     |
+| 2024-09-25     | 2024-09-23    | MA         | 24B         | sample        | MA01             | 0.2     |
+| 2024-09-25     | 2024-09-23    | MA         | 24C         | sample        | MA01             | 0.05    |
+| 2024-09-25     | 2024-09-23    | MA         | recombinant | sample        | MA01             | 0.6     |
+| 2024-09-25     | 2024-09-23    | MA         | other       | sample        | MA01             | 0.05    |
+| 2024-09-25     | 2024-09-24    | MA         | 24A         | sample        | MA01             | 0.12    |
+| 2024-09-25     | 2024-09-24    | MA         | 24B         | sample        | MA01             | 0.18    |
+| 2024-09-25     | 2024-09-24    | MA         | 24C         | sample        | MA01             | 0.02    |
+| 2024-09-25     | 2024-09-24    | MA         | recombinant | sample        | MA01             | 0.6     |
+| 2024-09-25     | 2024-09-24    | MA         | other       | sample        | MA01             | 0.08    |
+
 
 
 ## Data formatting 
@@ -68,8 +110,8 @@ Each model that submits forecasts for this project will have a unique subdirecto
 
 where
 
--   `team` is the team name and
--   `model` is the name of your model.
+-   `team` is the `team_abbr` field from the model metadata file and
+-   `model` is the `model_abbr` field from the model matadata file.
 
 Both team and model should be less than 15 characters and not include
 hyphens or other special characters, with the exception of "\_".
@@ -89,9 +131,9 @@ Details on the content and formatting of metadata files are provided in the [mod
 
 
 
-### Forecasts
+### Submission files
 
-Each forecast file should have the following
+Each submission file should have the following
 format
 
     YYYY-MM-DD-team-model.csv
@@ -101,114 +143,14 @@ where
 -   `YYYY` is the 4 digit year,
 -   `MM` is the 2 digit month,
 -   `DD` is the 2 digit day,
--   `team` is the team name, and
--   `model` is the name of your model.
+-   `team` is the `team_abbr`, and
+-   `model` is the `model_abbr`.
 
-The date YYYY-MM-DD is the [`reference_date`](#reference_date). This should be the Saturday following the submission date.
+The date YYYY-MM-DD is the [`nowcast_date`](#nowcast_date). This should be the Wednesday submission deadline for each round.
 
 The `team` and `model` in this file must match the `team` and `model` in
-the directory this file is in. Both `team` and `model` should be less
-than 15 characters, alpha-numeric and underscores only, with no spaces
-or hyphens. 
+the directory this file is in. 
 
-## Forecast file format 
-
-The file must be a comma-separated value (csv) file with the following
-columns (in any order):
-
--   `reference_date`
--   `target`
--   `horizon`
--   `target_end_date`
--   `location`
--   `output_type`
--   `output_type_id`
--   `value`
-
-No additional columns are allowed.
-
-The value in each row of the file is a quantile for a particular combination of location, date, and horizon. 
-
-### `reference_date` 
-
-Values in the `reference_date` column must be a date in the ISO format
-
-    YYYY-MM-DD
-
-This is the date from which all forecasts should be considered. This date is the Saturday following the submission Due Date, corresponding to the last day of the epiweek when submissions are made. The `reference_date` should be the same as the date in the filename but is included here to facilitate validation and analysis. 
-
-### `target`
-
-Values in the `target` column must be a character (string) and be one of
-the following specific targets:
-
--   *`[insert target] `* 
--   *`[insert target] `*
-
-
-### `horizon`
-Values in the `horizon` column indicate the number of *[insert temporal period]*  between the `reference_date` and the `target_end_date`.  This should be a number between *[insert range of horizons]* , where for example a `horizon` of 0 indicates that the prediction is a nowcast for the *[insert temporal period]* of submission and a `horizon` of 1 indicates that the prediction is a forecast for the *[insert temporal period]* after submission. 
-
-### `target_end_date`
-
-Values in the `target_end_date` column must be a date in the format
-
-    YYYY-MM-DD
-    
-This is the last date of the forecast target's *[insert temporal period]*. This will be the date of the Saturday at the end of the forecasted *[insert temporal period]* Within each row of the submission file, the `target_end_date` should be equal to the `reference_date` + `horizon`* (*[# days in temporal period]* days).
-
-
-### `location`
-
-Values in the `location` column must be one of the "locations" in
-this *[insert name of location information file]* (*[insert url for location information file]* ) which
-includes *[describe what location information files included]* 
-
-### `output_type`
-
-<mark style="background-color: #FFE331">**Modify depending on which type of output_type you are collecting.**</mark>
-
-Values in the `output_type` column are either
-
--   "quantile" or
--   "pmf".
-
-This value indicates whether that row corresponds to a quantile forecast for *[insert target]* or the probability mass function (pmf) of a categorical forecast for *[insert target]*. 
-
-### `output_type_id`
-Values in the `output_type_id` column specify identifying information for the output type.
-
-#### quantile output
-<mark style="background-color: #FFE331">**Modify depending on which type of output_type you are collecting.**</mark>
-
-When the predictions are quantiles, values in the `output_type_id` column are a quantile probability level in the format
-
-    0.###
-
- This value indicates the quantile probability level for for the
-`value` in this row.
-
-Teams must provide the following *[insert # quantiles]* quantiles:
-
-*[insert quantiles]*
-
-R: *[insert r code for defining quantiles]*
-Python: *[insert Python code for defining quantiles]*
-
-#### pmf output
-<mark style="background-color: #FFE331">**Modify depending on which type of output_type you are collecting.**</mark>
-
- *[Describe pmf output]*
-
-
-### `value`
-<mark style="background-color: #FFE331">**Modify depending on which type of output_type you are collecting.**</mark>
-
-Values in the `value` column are non-negative numbers indicating the "quantile" or "pmf" prediction for this row. For a "quantile" prediction, `value` is the inverse of the cumulative distribution function (CDF) for the target, location, and quantile associated with that row. For example, the 2.5 and 97.5 quantiles for a given target and location should capture 95% of the predicted values and correspond to the central 95% Prediction Interval. 
-
-### Example tables
-
- *[Insert example tables]*
 
 ## Forecast validation 
 
@@ -222,25 +164,15 @@ Actions](https://docs.github.com/en/actions) which runs the tests
 present in [the hubValidations
 package](https://github.com/Infectious-Disease-Modeling-Hubs/hubValidations). The
 intent for these tests are to validate the requirements above. Please
-[let us know]( *[Insert url to your hub's issues]*) if you are facing issues while running the tests.
-
-### Local forecast validation
-
-Optionally, you may validate a forecast file locally before submitting it to the hub in a pull request. Note that this is not required, since the validations will also run on the pull request. To run the validations locally, follow these steps:
-
- *[Add description for local forecast validation]*
+[let us know]( https://github.com/reichlab/variant-nowcast-hub/issues/new) if you are facing issues while running the tests.
 
 
 ## Weekly ensemble build 
 
-Every  *[day and time]*, we will generate a  *[hub name]* ensemble  *[Insert target]* using valid forecast submissions in the current week by the *[day and time]* deadline. Some or all participant forecasts may be combined into an ensemble forecast to be published in real-time along with the participant forecasts. In addition, some or all forecasts may be displayed alongside the output of a baseline model for comparison.
+Every Wednesday evening, we will generate an ensemble using valid submissions in the current week by the deadline. Some or all participant forecasts may be combined into an ensemble forecast to be published in real-time along with the participant forecasts. In addition, some or all forecasts may be displayed alongside the output of a baseline model for comparison.
 
 
 ## Policy on late or updated submissions 
 
-In order to ensure that forecasting is done in real-time, all forecasts are required to be submitted to this repository by *[day and time]* each week. We do not accept late forecasts.
+In order to ensure that forecasting is done in real-time, all forecasts are required to be submitted to this repository by Wednesday at 8pm ET each week. We do not accept late forecasts.
 
-## Evaluation criteria
-Forecasts will be evaluated using a variety of metrics, including *[describe how they will be evaluated]*
-
-<mark style="background-color: #FFE331">**As an example, here is a link to the [Flusight-Forecast_Hub model-output README](https://github.com/cdcepi/FluSight-forecast-hub/blob/master/model-output/README.md).**</mark>
