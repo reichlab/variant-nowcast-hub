@@ -1,5 +1,5 @@
-24C
 24A
-recombinant
 24B
+24C
+recombinant
 other

@@ -175,4 +175,3 @@ Every Wednesday evening, we will generate an ensemble using valid submissions in
 ## Policy on late or updated submissions 
 
 In order to ensure that forecasting is done in real-time, all forecasts are required to be submitted to this repository by Wednesday at 8pm ET each week. We do not accept late forecasts.
-
