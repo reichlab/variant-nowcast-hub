@@ -11,7 +11,7 @@ While SARS-CoV-2 variant dynamics received most attention from the scientific co
 
 ## Submitting to the hub
 
-**How to submit**: Any team wishing to submit a set of nowcasts to the hub may submit a pull request to this repository with a valid submission file in parquet format. The submission file must be located in `model-output/<team_abbr>-<model_abbr>/` (where `<team_abbr>` and `<model_abbr>` are the abbreviated names of your team and your model, respectively, that match the fields in your model metadata file), and the submission file must be named `YYYY-MM-DD-<team_abbr>-<model_abbr>.parquet` where `YYYY-MM-DD` is the date of the Wednesday on which the submission is due. Teams must also submit a model metadata file (see details [on the Model Metadata README page](https://github.com/reichlab/variant-nowcast-hub/blob/main/model-metadata/README.md)). 
+**How to submit**: Any team wishing to submit a set of nowcasts to the hub may submit a pull request to this repository with a valid submission file in parquet format. Further details about how to submit are provided on the [model-output README page](https://github.com/reichlab/variant-nowcast-hub/blob/main/model-output/README.md).
 
 **Deadline**: Submissions are due at 8pm ET every Wednesday. This time was chosen to give modelers time in the beginning of the week to run and adjust models and stakeholders time at the end of the week to incorporate preliminary results into discussions or decision making.
 
