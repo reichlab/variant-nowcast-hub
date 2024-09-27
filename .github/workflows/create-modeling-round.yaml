@@ -10,7 +10,7 @@ permissions:
     pull-requests: write
 
 jobs:
-  create-modeling-round:
+  create-clade-modeling-round:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout 🛎️
@@ -33,16 +33,19 @@ jobs:
         with:
             python-version-file: "src/.python-version"
 
-      - name: Create clade list 🦠
-        run: |
-          uv run src/get_clades_to_model.py
-
       - name: Set up R 📊
         uses: r-lib/actions/setup-r@v2
 
-      - name: Generate new round config 📝
+      - name: Set up renv 📦
+        uses: r-lib/actions/setup-renv@v2
+        with:
+          working-directory: src
+
+      - name: Create clade list and update tasks.json 🦠
         run: |
-          Rscript src/make_round_config.R
+          uv run get_clades_to_model.py
+          Rscript make_round_config.R
+        working-directory: src
 
       - name: Get current date and time 🕰️
         run: |
@@ -57,9 +60,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b new_round_"$PR_DATETIME"
           git add auxiliary-data/modeled-clades/
+          git add hub-config/
           git commit -m "Add new round $PR_DATETIME"
           git push -u origin new_round_"$PR_DATETIME"
           gh pr create \
             --base main \
             --title "Add new round $PR_DATETIME" \
-            --body "This PR was created via GitHub Actions: generate clade list and new round config."
+            --body "This PR was created via GitHub Actions: generate clade list and add new round to tasks.json."

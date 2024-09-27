@@ -58,6 +58,7 @@ def main(round_id: str, clade_output_path: Path):
     """Get a list of clades to model and save to the hub's auxiliary-data folder."""
 
     clade_list = get_clade_list.main()
+    clade_list.sort()
     logger.info(f"Clade list: {clade_list}")
 
     clade_file = clade_output_path / f"{round_id}.txt"
