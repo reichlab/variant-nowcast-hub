@@ -1,0 +1,5 @@
+default:
+    validate_model_data:
+      location_sum_one:
+        fn: "location_sum_one"
+        source: "src/validations/R/location_sum_one.R"
