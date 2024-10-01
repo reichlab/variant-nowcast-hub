@@ -16,15 +16,14 @@ model_contributors: [
   }
 ]
 
-license: "cc-by-4.0"
+license: "CC-BY-4.0"
 
-designated_model: false 
-
-data_inputs: "Description of data sources used" 
+team_funding: "funding"
 
 methods: "Brief description of your forecasting methodology"
 
-methods_long: "methods"
+methods_url: "https://www.google.com"
+data_sources: "Description of data sources used" 
 
 ensemble_of_models: false  
 
