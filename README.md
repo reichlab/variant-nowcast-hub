@@ -1,45 +1,28 @@
-# *SARS-CoV-2 Variant Nowcast Hub*
+# *United States SARS-CoV-2 Variant Nowcast Hub*
 
 **Submissions accepted** every Wednesday by 8pm ET, starting October 9, 2024
 
 ## Introduction
-This document provides guidelines for the SARS-CoV-2 Variant Nowcast Hub, which is planned to launch on October 9, 2024. This modeling hub has been designed by researchers from the [US CDC Center of Forecasting and Outbreak Analytics (CFA)](https://www.cdc.gov/forecast-outbreak-analytics/index.html) and [the Reich Lab at UMass Amherst](https://reichlab.io/), in consultation with folks from [the NextStrain project](https://nextstrain.org/). (An early draft of the guidelines, including comments, can be found [here](https://github.com/reichlab/variant-nowcast-hub/discussions/18).) 
+This document provides guidelines for the United States SARS-CoV-2 Variant Nowcast Hub, which is planned to launch on October 9, 2024. This modeling hub has been designed by researchers from the [US CDC Center of Forecasting and Outbreak Analytics (CFA)](https://www.cdc.gov/forecast-outbreak-analytics/index.html) and [the Reich Lab at UMass Amherst](https://reichlab.io/), in consultation with folks from [the NextStrain project](https://nextstrain.org/). (An early draft of the guidelines, including comments, can be found [here](https://github.com/reichlab/variant-nowcast-hub/discussions/18).) 
 
 Collaborative and open forecast hubs have emerged as a valuable way to centralize and coordinate predictive modeling efforts for public health. In realms where multiple teams are tackling the same problem using different data inputs and/or modeling methodologies, a hub can standardize targets in ways that facilitate model comparison and the integration of outputs from multiple models into public health practice. This hub uses the open-source architecture and data standards developed by the [hubverse](https://hubverse.io/).
 
 While SARS-CoV-2 variant dynamics received most attention from the scientific community in 2021 and 2022, SARS-CoV-2 genomic sequences continue to be generated, and trends in variant frequencies will continue to impact transmission across the US and the world. From a modeling perspective, there is less consensus about a standard way to represent model outputs for multivariate variant frequency predictions than there is for other outcomes. Therefore, a key reason for building and launching this nowcast hub is to help learn about the right way to evaluate and communicate variant dynamics in a collaborative modeling effort, potentially not just for SARS-CoV-2 but also for other rapidly evolving pathogens.
 
-## What will modelers be asked to predict?
-We ask modeling teams to submit predictions of frequencies of the predominant SARS-CoV-2 clades in the United States, at a daily timescale and the geographic resolution of all 50 United States plus Washington DC and Puerto Rico. We will not solicit estimates for the U.S., in part because evaluating this quantity is not straightforward due to the heterogeneity in levels of infections and sequencing across locations. Details about these choices follow in subsections below. The hub will solicit predictions of frequencies (i.e., numbers between 0 and 1) associated with each clade or group of clades, for a particular location and a particular day.
+## Submitting to the hub
 
-### Submitting to the hub
-
-**How to submit**: Any team wishing to submit a set of nowcasts to the hub may submit a pull-request to this repository with a valid submission file in parquet format. The submission file must be located in `model-output/<team>-<model>/` (where `<team>` and `<model>` are the abbreviated names of your team and your model, respectively), and the submission file must be named `YYYY-MM-DD-<team>-<model>.parquet` where `YYYY-MM-DD` is the date of the Wednesday on which the submission is due. Teams must also submit a model metadata file (see details [on the Model Metadata README page](https://github.com/reichlab/variant-nowcast-hub/blob/main/model-metadata/README.md)). 
+**How to submit**: Any team wishing to submit a set of nowcasts to the hub may submit a pull request to this repository with a valid submission file in parquet format. Further details about how to submit are provided on the [model-output README page](https://github.com/reichlab/variant-nowcast-hub/blob/main/model-output/README.md).
 
 **Deadline**: Submissions are due at 8pm ET every Wednesday. This time was chosen to give modelers time in the beginning of the week to run and adjust models and stakeholders time at the end of the week to incorporate preliminary results into discussions or decision making.
+
+## What will modelers be asked to predict?
+We ask modeling teams to submit predictions of frequencies of the predominant SARS-CoV-2 clades in the US, at a daily timescale and the geographic resolution of all 50 United States plus Washington DC and Puerto Rico. We will not solicit estimates for the US, in part because evaluating this quantity is not straightforward due to the heterogeneity in levels of infections and sequencing across locations. Details about these choices follow in subsections below. The hub will solicit predictions of frequencies (i.e., numbers between 0 and 1) associated with each clade or group of clades, for a particular location and a particular day.
 
 ### Predicted clades
 Each week the hub designates up to nine NextStrain clades with the highest reported prevalence of at least 1% across the US in any of the three complete [USA/CDC epidemiological weeks](https://ndc.services.cdc.gov/wp-content/uploads/MMWR_Week_overview.pdf) (a.k.a. MMWR weeks) preceding the Wednesday submission date. Any clades with prevalence of less than 1% are grouped into an “other” category for which predictions of combined prevalence are also collected. No more than 10 clades (including “other”) are selected in a given week. For details on the workflow that generates this list each week, see the [clade list section](#clade-list) below.
 
 ### Prediction horizon
 Genomic sequences tend to be reported weeks after being collected. Therefore, recent data is subject to quite a lot of backfill. For this reason, the hub collects "nowcasts" (predictions for data relevant to times prior to the current time, but not yet observed) and some "forecasts" (predictions for future observations). Counting the Wednesday submission date as a prediction horizon of zero, we collect daily-level predictions for 10 days into the future (the Saturday that ends the epidemic week after the Wednesday submission) and -31 days into the past (the Sunday that starts the epidemic week four weeks prior to the Wednesday submission date). Overall, six weeks (42 days) of predicted values are solicited each week.
-
-### Model output format
-This hub follows [hubverse](https://hubverse.io/) data standards. Submissions must include either mean outputs, or sample-based model outputs. If sample-based model outputs are submitted and means are not, modelers should assume that these samples may be used to compute a mean prediction which may be scored. 
-
-We use the term “model task” below to refer to a prediction for a specific clade, location and horizon. For example, if mean model outputs are submitted, there will be one value between 0 and 1 for each model task. The submitted values for all clades must sum to 1 (within +/- 0.001) for a given location and horizon.
-As we will describe in further detail below, the target for prediction is the proportion of circulating viral genomes for a given location and target date amongst infected individuals that are sequenced for SARS-CoV-2.
-
-To submit probabilistic predictions, a [sample format](https://hubverse.io/en/latest/user-guide/sample-output-type.html) is used to encode samples from the predictive distribution for each model task. The hub requires exactly 100 samples for each model task. One key advantage to submitting sample-based output is that dependence can be encoded across horizons (corresponding to trajectories of variant prevalence over time), or even across locations (see details in [Hubverse sample model-output specifications](https://hubverse.io/en/latest/user-guide/sample-output-type.html#compound-modeling-tasks)). For this hub, we require that samples be submitted in such a way as to imply that they are structured into trajectories across clades and horizons. (See following section for how variants are classified into clade categories.) This means that 
-
-a) at each location and horizon a common sample ID (in the `ouput_type_id` column) ensures that the clade proportions sum to 1, and
-b) for each location and clade, common sample IDs across horizons allows us to draw trajectories by clade.
-
-This specification corresponds to a hubverse-style “compound modeling task” that includes the following fields: "reference_date", "location". Samples then capture dependence across the complementary set of task ids: “horizon”, “clade”.
-
-We note that sample IDs present in the `output_type_id` column of submissions are not necessarily inherent properties of how the samples are generated, as they can be changed post-hoc by a modeler. For example, some models may make nowcasts independently by horizon but the samples could be tied together either randomly or via some other correlation structure or secondary model to assign sample IDs that are consistent across horizons. As another example, some models may make forecasts that have joint dependence structure across locations as well as horizons. Sample IDs can be shared across locations as well, but this is not required for the submission to pass validation.
-
-To be included in the hub ensemble model, samples must be submitted and the mean forecast for the hub ensemble will be obtained as a summary of sample predictions.
 
 
 ## Data created and stored by the hub
@@ -78,7 +61,7 @@ One implication of this decision is that different numbers of days may be evalua
 
 ### Notation
 
-We will collect nowcasts for $\theta$, a $K$-vector, where $K$ is the number of clades we are interested in, and whose $k$th element, $\theta_k$ , is the true proportion of all current SARS-CoV-2 infections which are clade $k$. We observe $C = (C_1, … , C_K)$, the vector of observed counts for each of the $K$ clades of interest for a particular location and target date, and let $N = \sum_k C_k$ be the total number of sequences collected for that date and location (for simplicity here, we are omitting subscripts for date and location). Variation in $C$ depends on the total number of sequenced specimens, $N$. Thus, accurate nowcasts of the observed $C$ would require teams to model and forecast $N$, which is not of epidemiological interest.
+We will collect nowcasts for $\theta$, a $K$-vector, where $K$ is the number of clades we are interested in, and whose $k^{th}$ element, $\theta_k$ , is the true proportion of all current SARS-CoV-2 infections which are clade $k$. We observe $C = (C_1, … , C_K)$, the vector of observed counts for each of the $K$ clades of interest for a particular location and target date, and let $N = \sum_k C_k$ be the total number of sequences collected for that date and location (for simplicity here, we are omitting subscripts for date and location). Variation in $C$ depends on the total number of sequenced specimens, $N$. Thus, accurate nowcasts of the observed $C$ would require teams to model and forecast $N$, which is not of epidemiological interest.
 
 ### Point forecast evaluation
 
