@@ -1,0 +1,32 @@
+# Data format
+
+team_name: "sample"  
+
+team_abbr: "sample"    
+
+model_name: "model" 
+
+model_abbr: "model"      
+
+model_contributors: [
+  {
+    "name": "test",
+    "affiliation": "uni",
+    "email": "modeler1@example.com",
+  }
+]
+
+license: "cc-by-4.0"
+
+designated_model: false 
+
+data_inputs: "Description of data sources used" 
+
+methods: "Brief description of your forecasting methodology"
+
+methods_long: "methods"
+
+ensemble_of_models: false  
+
+ensemble_of_hub_models: false  
+
