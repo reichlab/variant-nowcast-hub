@@ -7,12 +7,13 @@ clade_prop_sum_one <- function(tbl, file_path) {
     details <- NULL
     error_object <- NULL
   } else {
-    bad_msg <- c("The following tasks had values that did not sum to one:",
+    n <- nrow(error_object)
+    bad_msg <- c("There were {.strong {.val {n}} tasks with values that did not sum to one}:",
       cheap_kable(error_object)
     )
     # Wrapping 
     # https://cli.r-lib.org/reference/inline-markup.html#wrapping
-    details <- paste(bad_msg, collapse = "\f")
+    details <- cli::format_inline(paste(bad_msg, collapse = "\f"))
   }
 
   hubValidations::capture_check_cnd(
