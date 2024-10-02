@@ -22,7 +22,7 @@ clade_prop_sum_one <- function(tbl, file_path) {
     file_path = file_path,
     msg_subject = "All clade proportions in {.var value} columns",
     msg_verbs = c("", "do not"),
-    msg_attribute = "sum to 1 for each unique modeling task.",
+    msg_attribute = "{.emph sum to one} for each unique modeling task.",
     error_object = error_object,
     details = details
   )
