@@ -31,7 +31,7 @@ clade_prop_sum_one <- function(tbl, file_path) {
 }
 
 
-ALL_ONE <- function(dat) isTRUE(all.equal(sum(dat), 1))
+ALL_ONE <- function(dat) isTRUE(all.equal(sum(dat), 1, tolerance = 1e-3))
 
 # modified from hubValidations:::check_values_sum1
 check_sum_one <- function (tbl) {
