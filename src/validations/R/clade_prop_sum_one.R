@@ -8,7 +8,7 @@ clade_prop_sum_one <- function(tbl, file_path) {
     error_object <- NULL
   } else {
     n <- nrow(error_object)
-    bad_msg <- c("There were {.strong {.val {n}} tasks with values that did not sum to one}:",
+    bad_msg <- c("\fThere {?was/were} {.strong {.val {n}} task{?s} with values that did not sum to one}:",
       cheap_kable(error_object)
     )
     # Wrapping 
