@@ -1,0 +1,45 @@
+team_name: "UMass Amherst"
+team_abbr: "UMass"
+model_name: "Hierarchical Multinomial Logistic Regression"
+model_abbr: "HMLR"
+model_version: "1.0"
+model_contributors: [
+  {
+    "name": "Isaac MacArthur",
+    "affiliation": "Department of Mathematics and Statistics, University of Massachussetts Amherst",
+    "email": "imacarthur@umass.edu"
+  },
+  {
+    "name": "Evan L. Ray",
+    "affiliation": "Department of Biostatistics and Epidemiology, University of Massachussetts Amherst",
+    "email": "elray@umass.edu"
+  },
+  {
+    "name": "Nick G. Reich",
+    "affiliation": "Department of Biostatistics and Epidemiology, University of Massachussetts Amherst",
+    "email": "nick@umass.edu"
+  },
+  {
+    "name": "Benjamin W. Rogers",
+    "affiliation": "Department of Biostatistics and Epidemiology, University of Massachussetts Amherst",
+    "email": "bwrogers@umass.edu"
+  },
+  {
+    "name": "Thomas Robacker",
+    "affiliation": "Department of Mathematics and Statistics, University of Massachussetts Amherst",
+    "email": "trobacker@umass.edu"
+  },
+  {
+    "name": "Maryclare Griffin",
+    "affiliation": "Department of Mathematics and Statistics, University of Massachussetts Amherst",
+    "email": "maryclaregri@umass.edu"
+  },
+]
+license: "CC-BY-4.0"
+team_funding: "This work has been supported by the National Institutes of General Medical Sciences (R35GM119582) and the US Centers for Disease Control and Prevention’s Center for Forecasting and Outbreak Analytics (NU38FT000008). The content is solely the responsibility of the authors and does not necessarily represent the official views of NIGMS, the National Institutes of Health, or CDC."
+methods: "A Bayesian hierarchical multinomial logistic regression model for nowcasting COVID variants. Regression coefficents are modeled hierarchically across variants and locations."
+methods_url: "https://github.com/IsaacMacarthur/Umass-Virus_modeling-code/blob/main/Model%20Details.pdf"
+data_sources: "NextStrain"
+ensemble_of_models: false
+ensemble_of_hub_models: false
+repo_url: "https://github.com/IsaacMacarthur/Umass-Virus_modeling-code/tree/main"
