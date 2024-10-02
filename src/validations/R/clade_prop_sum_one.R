@@ -8,8 +8,10 @@ clade_prop_sum_one <- function(tbl, file_path) {
     error_object <- NULL
   } else {
     n <- nrow(error_object)
-    bad_msg <- c("\fThere {?was/were} {.strong {.val {n}} task{?s} with values that did not sum to one}:",
-      cheap_kable(error_object)
+    bad_msg <- c(
+      "\fThere {?was/were} {.strong {.val {n}} task{?s} with values that did not sum to one}:",
+      if (n > 10) "\f{.emph (showing first 10 rows)}",
+      cheap_kable(head(error_object, 10))
     )
     # Wrapping 
     # https://cli.r-lib.org/reference/inline-markup.html#wrapping
@@ -83,14 +85,52 @@ make_table_like <- function(vec) {
 test <- function() {
   good_tbl <- example_tbl()
   bad_tbl <- example_tbl(make_it_bad = TRUE)
+
+  # basic error tests
   stopifnot(
-    "oops: good data has an error" = is.null(check_sum_one(good_tbl)),
-    "oops: bad data does not error" = is.data.frame(check_sum_one(bad_tbl)),
-    "oops: bad data has wrong number of errors" = nrow(check_sum_one(bad_tbl)) == 2,
-    "oops: main validation returns incorrect class" = inherits(clade_prop_sum_one(good_tbl, "test"), "check_success"),
-    "oops: main validation returns incorrect class" = inherits(clade_prop_sum_one(bad_tbl, test), "check_failure"),
+    "good data has an error" = is.null(check_sum_one(good_tbl)),
+    "bad data does not error" = is.data.frame(check_sum_one(bad_tbl)),
+    "bad data has wrong number of errors" = nrow(check_sum_one(bad_tbl)) == 2,
+    "main validation returns incorrect class" = inherits(clade_prop_sum_one(good_tbl, "test"), "check_success"),
+    "main validation returns incorrect class" = inherits(clade_prop_sum_one(bad_tbl, "test"), "check_failure"),
+    "main validation does not return table" = is.data.frame(clade_prop_sum_one(bad_tbl, "test")$error_object),
+    "main validation does not correct number of rows" = nrow(clade_prop_sum_one(bad_tbl, "test")$error_object) == 2,
     TRUE
   )
+
+  # value tests
+  A <- B <- C <- good_tbl
+  A$location <- "A"
+  B$location <- "B"
+  C$location <- "C"
+  big_bad <- dplyr::bind_rows(A, B, C)
+  big_bad$value <- big_bad$value + 0.5
+  # tests for the objects
+  good_res <- clade_prop_sum_one(good_tbl, "test")
+  bad_res <- clade_prop_sum_one(bad_tbl, "test")
+  big_bad_res <- clade_prop_sum_one(big_bad, "test")
+
+  # capture the results of the print method
+  good_out <- capture.output(good_res)
+  bad_out <- capture.output(bad_res)
+  big_bad_out <- capture.output(big_bad_res)
+  expect_rows <- function(output, n) {
+    if (n > 0) {
+      n <- n + 2 # account for header
+    }
+    sum(grepl("^[|]", output)) == n
+  }
+  print(big_bad_res)
+  stopifnot(
+    "good output has non-null error object" = is.null(good_res$error_object),
+    "output table is shown for good data" = expect_rows(good_out, 0),
+    "bad output table has wrong number of rows" = expect_rows(bad_out, 2),
+    "bad output table has expected rows" = nrow(bad_res$error_object) == 2,
+    "big bad output table has wrong number of rows" = expect_rows(big_bad_out, 10),
+    "big bad output table has expected rows" = nrow(big_bad_res$error_object) == 12,
+    TRUE
+  )
+  
 }
 
 example_tbl <- function(make_it_bad = FALSE) {
