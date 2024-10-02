@@ -84,11 +84,14 @@ make_table_like <- function(vec) {
 
 test <- function() {
   good_tbl <- example_tbl()
+  okay_tbl <- good_tbl
+  okay_tbl$value[30] <- okay_tbl$value[30] + 9e-4
   bad_tbl <- example_tbl(make_it_bad = TRUE)
 
   # basic error tests
   stopifnot(
     "good data has an error" = is.null(check_sum_one(good_tbl)),
+    "data within tolerance has an error" = is.null(check_sum_one(okay_tbl)),
     "bad data does not error" = is.data.frame(check_sum_one(bad_tbl)),
     "bad data has wrong number of errors" = nrow(check_sum_one(bad_tbl)) == 2,
     "main validation returns incorrect class" = inherits(clade_prop_sum_one(good_tbl, "test"), "check_success"),
@@ -120,7 +123,6 @@ test <- function() {
     }
     sum(grepl("^[|]", output)) == n
   }
-  print(big_bad_res)
   stopifnot(
     "good output has non-null error object" = is.null(good_res$error_object),
     "output table is shown for good data" = expect_rows(good_out, 0),
