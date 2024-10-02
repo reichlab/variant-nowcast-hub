@@ -13,6 +13,7 @@ library(cli)
 library(here)
 library(hubAdmin)
 library(hubUtils)
+library(jsonlite)
 library(lobstr)
 library(tools)
 
@@ -35,18 +36,6 @@ get_latest_clade_file <- function(hub_dir) {
   return(clade_file_info)
 }
 
-#' Return the clades that modelers will predict in the new round
-#'
-#' @description
-#' `get_clade_list` reads the hub's latest clade file and returns a list
-#' of the SARS-CoV-2 clades that will be required in the round's clade task_id.
-#'
-#' @param filename Character vector. Full path to the hub's latest clade file.
-#' @returns A list with one element that contains the clades to be modeled.
-get_clade_list <- function(filename) {
-  clade_list <- readLines(filename)
-  return(clade_list)
-}
 
 #' Create a new round object
 #'
@@ -58,7 +47,7 @@ get_clade_list <- function(filename) {
 #' @returns A round object.
 create_new_round <- function(hub_root) {
   this_round_clade_file <- get_latest_clade_file(hub_root)
-  this_round_clade_list <- sort(get_clade_list(this_round_clade_file$clade_file))
+  this_round_clade_list <- fromJSON(this_round_clade_file$clade_file)$clades
   this_round_date <- this_round_clade_file$round_id
   if (isFALSE(weekdays(as.Date(this_round_date)) == "Wednesday")) {
     stop("The latest clade_file does not have a Wednesday date: ", this_round_clade_file)
