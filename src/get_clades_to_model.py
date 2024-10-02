@@ -25,6 +25,7 @@ To run the script manually:
 # ]
 # ///
 
+import json
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -57,15 +58,20 @@ def get_next_wednesday(starting_date: datetime) -> str:
 def main(round_id: str, clade_output_path: Path):
     """Get a list of clades to model and save to the hub's auxiliary-data folder."""
 
+    round_data = {}
+
     clade_list = get_clade_list.main()
     clade_list.sort()
+    clade_list.append("other")
+    round_data["clades"] = clade_list
     logger.info(f"Clade list: {clade_list}")
 
-    clade_file = clade_output_path / f"{round_id}.txt"
+    round_data["clade_list"] = clade_list
+    round_data["meta"] = {}
+
+    clade_file = clade_output_path / f"{round_id}.json"
     with open(clade_file, "w") as f:
-        for clade in clade_list:
-            f.write(f"{clade}\n")
-        f.write("other\n")
+        json.dump(round_data, f, indent=4)
 
     logger.info(f"Clade list saved: {clade_file}")
 
