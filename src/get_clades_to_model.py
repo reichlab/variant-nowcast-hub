@@ -21,15 +21,17 @@ To run the script manually:
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#   "virus_clade_utils@git+https://github.com/reichlab/virus-clade-utils/",
+#   "virus_clade_utils@git+https://github.com/reichlab/virus-clade-utils@bsweger/get_nextstrain_ncov_metadata",
 # ]
 # ///
 
 import json
 import logging
+from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from virus_clade_utils.cladetime import CladeTime  # type: ignore
 from virus_clade_utils import get_clade_list  # type: ignore
 
 # Log to stdout
@@ -58,16 +60,22 @@ def get_next_wednesday(starting_date: datetime) -> str:
 def main(round_id: str, clade_output_path: Path):
     """Get a list of clades to model and save to the hub's auxiliary-data folder."""
 
-    round_data = {}
+    round_data: defaultdict[str, dict] = defaultdict(dict)
 
+    # Get the clade list
     clade_list = get_clade_list.main()
     clade_list.sort()
     clade_list.append("other")
     round_data["clades"] = clade_list
     logger.info(f"Clade list: {clade_list}")
 
-    round_data["clade_list"] = clade_list
-    round_data["meta"] = {}
+    # Get metadata about the Nextstrain ncov pipeline run that
+    # the clade list is based on
+    ct = CladeTime()
+    ncov_meta = ct.ncov_metadata
+    ncov_meta["metadata_version_url"] = ct.url_ncov_metadata
+    round_data["meta"]["ncov"] = ncov_meta
+    logger.info(f"Ncov metadata: {ncov_meta}")
 
     clade_file = clade_output_path / f"{round_id}.json"
     with open(clade_file, "w") as f:
