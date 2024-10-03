@@ -8,7 +8,7 @@ The sections below contain information about the scripts and how to run them man
 ## Generating list of clades to model
 
 `get_clades_to_model.py` generates a list of clades to model for the hub's upcoming round (the first Wednesday following
-the run date). The script writes the clade list and accompanying metadata to `auxiliary-data/modeled-clades/[round_id].txt`.
+the run date). The script writes the clade list and accompanying metadata to `auxiliary-data/modeled-clades/[round_id].json`.
 
 To run the script manually:
 
@@ -61,4 +61,25 @@ To run the script manually (without RStudio):
      source("make_round_config.R")
     ```
 
+## Creating a list of sequences collected by location and date
+
+For each location used by this hub, `get_location_date_counts.py` generates a daily count of Sars-Cov-2 genome sequences collected.
+The output includes counts for each of the 31 days prior to the latest round's nowcast date (_i.e._, the round_id)
+This script writes its output to `auxiliary-data/unscore-location-dates/[round_id].csv`.
+
+To run the script manually:
+
+1. Make sure that `uv` is installed on your machine:
+
+    ```bash
+    brew install uv
+    ```
+
+    (see [`uv` documentation](https://docs.astral.sh/uv/getting-started/installation/#installing-uv) for a full list of installation options)
+
+2. From the root of the repo, run the following command:
+
+    ```bash
+    uv run src/get_location_date_counts.py
+    ```
 
