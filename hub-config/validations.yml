@@ -1,0 +1,5 @@
+default:
+  validate_model_data:
+    clade_prop_sum_one:
+      fn: "clade_prop_sum_one"
+      source: "src/validations/R/clade_prop_sum_one.R"
