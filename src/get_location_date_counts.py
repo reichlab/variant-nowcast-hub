@@ -19,6 +19,7 @@ To run the script manually:
 # ]
 # ///
 
+import logging
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -28,6 +29,16 @@ import polars as pl
 from virus_clade_utils.cladetime import CladeTime  # type: ignore
 from virus_clade_utils.util.sequence import filter_covid_genome_metadata  # type: ignore
 
+# Log to stdout
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+formatter = logging.Formatter(
+    "%(asctime)s -  %(levelname)s - %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p"
+)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
 
 def main(round_id: str, output_path: Path):
     # Round closing time is 8 PM US/Eastern on the day the round closes
@@ -36,9 +47,15 @@ def main(round_id: str, output_path: Path):
     )
     round_close_time = round_close_time.replace(tzinfo=ZoneInfo("US/Eastern"))
 
+    logger.info(f"Getting location/date counts for round {round_id}")
     location_date_df = get_location_date_counts(round_close_time, output_path)
+
+    logger.info(f"Testing location/date counts for round {round_id}")
     test_counts(round_close_time, location_date_df)
-    location_date_df.write_csv(output_path / f"{round_id}.csv")
+
+    output_file = output_path / f"{round_id}.csv"
+    location_date_df.write_csv(output_file)
+    logger.info(f"Location/date counts saved to {output_file}")
 
 
 def get_location_date_counts(
