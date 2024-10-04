@@ -55,16 +55,16 @@ sim_model_output <- function(locations = c("AL", "AZ", "CA", "CO", "DE"),
           clade_col <- c(clade_col, clade)
           value_col <- c(value_col, as.vector(props[, clade]))
           
-          # Specific date for nowcast
-          nowcast_date_col <- rep(nowcast_date, length(target_date_col))
-          
-          # Just sample output for now
-          output_type_col <- rep("sample", length(target_date_col))
-          
         }
       }
     }
   }
+  
+  # Specific date for nowcast
+  nowcast_date_col <- rep(nowcast_date, length(target_date_col))
+  
+  # Just sample output for now
+  output_type_col <- rep("sample", length(target_date_col))
   
   # Create data frame for convenient output
   df <- data.frame(nowcast_date =  as.Date(nowcast_date_col),
