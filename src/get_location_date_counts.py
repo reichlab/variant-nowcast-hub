@@ -22,6 +22,7 @@ To run the script manually:
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import polars as pl
 from virus_clade_utils.cladetime import CladeTime  # type: ignore
@@ -29,8 +30,13 @@ from virus_clade_utils.util.sequence import filter_covid_genome_metadata  # type
 
 
 def main(round_id: str, output_path: Path):
-    # Get a CladeTime object for the most recent Nextstrain sequence metadata
-    ct = CladeTime()
+    # Get a CladeTime object for the Nextstrain sequence metadata as of the round's
+    # closing time (8 PM US/Eastern on the day the round closes)
+    round_close_time = datetime.strptime(round_id, "%Y-%m-%d").replace(
+        hour=20, minute=0, second=0
+    )
+    round_close_time = round_close_time.replace(tzinfo=ZoneInfo("US/Eastern"))
+    ct = CladeTime(sequence_as_of=round_close_time.astimezone(ZoneInfo("UTC")))
 
     # CladeTime objects provide a Polars LazyFrame reference to
     # Nextstrain's SARS-CoV-2 Genbank sequence metadata.
