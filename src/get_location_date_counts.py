@@ -100,7 +100,7 @@ def get_location_date_counts(
 
     # Pivot to make each date a column
     pivot = (
-        grouped_all.collect()
+        grouped_all.collect(streaming=True)
         .pivot(
             "date",
             index="location",
@@ -124,7 +124,7 @@ def test_counts(round_close_time: datetime, computed_counts: pl.DataFrame):
     # with a collection date in the 31 days prior to round_close
     begin_date = round_close_time.date() - timedelta(days=31)
     test_data = filter_covid_genome_metadata(ct.sequence_metadata)
-    test_data = test_data.filter(pl.col("date") >= begin_date).collect()
+    test_data = test_data.filter(pl.col("date") >= begin_date).collect(streaming=True)
 
     # For the Polars dataframe computed in main(), count the number of cells
     # reporting 1 or more sequences for a specific location/date combination
