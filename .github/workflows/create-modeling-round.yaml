@@ -23,15 +23,10 @@ jobs:
               hub-config/
               src/
 
-      - name: Install uv 🌈
+      - name: Install uv 🐍
         uses: astral-sh/setup-uv@v2
         with:
           version: "0.4.9"
-
-      - name: Set up Python 🐍
-        uses: actions/setup-python@v5
-        with:
-            python-version-file: "src/.python-version"
 
       - name: Set up R 📊
         uses: r-lib/actions/setup-r@v2
