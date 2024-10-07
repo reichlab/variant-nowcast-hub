@@ -96,23 +96,14 @@ def get_location_date_counts(
     )
 
     # Add rows that for states and dates that didn't appear in the past 31 days
-    grouped_all = dates_and_locations.join(grouped, on=["location", "date"], how="left")
-
-    # Pivot to make each date a column
-    pivot = (
-        grouped_all.collect(streaming=True)
-        .pivot(
-            "date",
-            index="location",
-            values="count",
-            aggregate_function="sum",
-            sort_columns=True,
-        )
+    grouped_all = (
+        dates_and_locations.join(grouped, on=["location", "date"], how="left")
         .fill_null(strategy="zero")
         .sort("location")
+        .rename({"date": "target_date"})
     )
 
-    return pivot
+    return grouped_all.collect(streaming=True)
 
 
 def test_counts(round_close_time: datetime, computed_counts: pl.DataFrame):
@@ -126,15 +117,7 @@ def test_counts(round_close_time: datetime, computed_counts: pl.DataFrame):
     test_data = filter_covid_genome_metadata(ct.sequence_metadata)
     test_data = test_data.filter(pl.col("date") >= begin_date).collect(streaming=True)
 
-    # For the Polars dataframe computed in main(), count the number of cells
-    # reporting 1 or more sequences for a specific location/date combination
-    date_location_count = 0
-    for column in computed_counts.drop("location"):
-        date_location_count += computed_counts.filter(column > 0).height
-
-    # Above count should match the number of unique location/date
-    # combinations in the test data
-    assert test_data.unique(["date", "location"]).height == date_location_count
+    assert test_data.height == computed_counts["count"].sum()
 
 
 if __name__ == "__main__":
