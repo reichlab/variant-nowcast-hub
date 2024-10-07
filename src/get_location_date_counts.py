@@ -132,6 +132,6 @@ if __name__ == "__main__":
     round_id = date_files[0].split(".")[0]
 
     output_path = (
-        Path(__file__).parents[1] / "auxiliary-data" / "unscore-location-dates"
+        Path(__file__).parents[1] / "auxiliary-data" / "unscored-location-dates"
     )
     main(round_id, output_path)

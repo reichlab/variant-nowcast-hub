@@ -48,7 +48,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b new_location_date_sequence_counts_"$PR_DATETIME"
-          git add auxiliary-data/unscore-location-dates/
+          git add auxiliary-data/unscored-location-dates/
           git commit -m "Add sequence counts by location & date $PR_DATETIME"
           git push -u origin new_location_date_sequence_counts_"$PR_DATETIME"
           gh pr create \

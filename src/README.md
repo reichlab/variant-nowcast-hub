@@ -65,7 +65,7 @@ To run the script manually (without RStudio):
 
 For each location used by this hub, `get_location_date_counts.py` generates a daily count of Sars-Cov-2 genome sequences collected.
 The output includes counts for each of the 31 days prior to the latest round's nowcast date (_i.e._, the round_id)
-This script writes its output to `auxiliary-data/unscore-location-dates/[round_id].csv`.
+This script writes its output to `auxiliary-data/unscored-location-dates/[round_id].csv`.
 
 To run the script manually:
 
