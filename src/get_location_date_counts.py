@@ -1,9 +1,9 @@
 """
 Aggregate clade counts by location and collection date and save the result to the hub's auxiliary-data folder.
 
-This uses the virus-clade-utils package's CladeTime object, which provides a wrapper around GenBank-based
+This uses the cladetime package's CladeTime class, which provides a wrapper around GenBank-based
 Sars-CoV-2 files provided by NextStrain.
-https://github.com/reichlab/virus-clade-utils
+https://github.com/reichlab/cladetime
 
 The script is scheduled to run every Wednesday, after a modeling round closes.
 
@@ -15,8 +15,7 @@ To run the script manually:
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#   "virus_clade_utils@git+https://github.com/reichlab/virus-clade-utils",
-#   "matplotlib",
+#   "cladetime@git+https://github.com/reichlab/cladetime",
 # ]
 # ///
 
@@ -27,8 +26,8 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import polars as pl
-from virus_clade_utils.cladetime import CladeTime  # type: ignore
-from virus_clade_utils.util.sequence import filter_covid_genome_metadata  # type: ignore
+from cladetime import CladeTime  # type: ignore
+from cladetime.util.sequence import filter_covid_genome_metadata  # type: ignore
 
 # Log to stdout
 logger = logging.getLogger(__name__)

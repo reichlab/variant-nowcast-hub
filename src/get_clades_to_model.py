@@ -1,9 +1,9 @@
 """
 Create a list of Sars-CoV-2 clades to model and saves it to the hub's auxiliary-data folder.
 
-This script wraps the virus-clade-utils package, which generates the clade list using the
+This script wraps the cladetime package, which generates the clade list using the
 latest GenBank-based Sars-CoV-2 sequence metadata from Nextstrain.
-https://github.com/reichlab/virus-clade-utils
+https://github.com/reichlab/cladetime
 
 Current parameters for the clade list:
     threshold = .01,
@@ -21,7 +21,7 @@ To run the script manually:
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#   "virus_clade_utils@git+https://github.com/reichlab/virus-clade-utils",
+#   "cladetime@git+https://github.com/reichlab/cladetime",
 # ]
 # ///
 
@@ -31,8 +31,8 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from virus_clade_utils.cladetime import CladeTime  # type: ignore
-from virus_clade_utils import get_clade_list  # type: ignore
+from cladetime import CladeTime  # type: ignore
+from cladetime import get_clade_list  # type: ignore
 
 # Log to stdout
 logger = logging.getLogger(__name__)
