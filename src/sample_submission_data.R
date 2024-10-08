@@ -5,6 +5,6 @@ source('src/sim_model_output.R')
 df_sim <- sim_model_output()
 
 # Note: make sure to point to the correct path for your data, defaults to folder 'model-output'
-arrow::write_parquet(df_sim, "./2024-10-02-umass-validtestsubmission.parquet")
-hubValidations::validate_model_data("./variant-nowcast-hub", 
+arrow::write_parquet(df_sim, "auxiliary-data/example-files/2024-10-02-umass-validtestsubmission.parquet")
+hubValidations::validate_model_data(".",
                                     "2024-10-02-umass-validtestsubmission.parquet")
