@@ -1,5 +1,5 @@
 ## Script that generates sample submission data to pass validation checks
-require(arrow) # for parquet writing
+library("arrow") # for parquet writing
 source('sim_model_output.R')
 # Function found in /src to generate data frame
 df_sim <- sim_model_output()
