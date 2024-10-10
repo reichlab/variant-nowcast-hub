@@ -12,7 +12,7 @@ permissions:
     pull-requests: write
 
 jobs:
-  create-clade-modeling-round:
+  create-location-date-sequence-counts:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout 🛎️
