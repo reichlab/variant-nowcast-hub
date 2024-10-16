@@ -4,15 +4,15 @@
 
 #' Simulate data in appropriate model_output format
 #' 
-#' @returns Data frame in required model-output format
+#' @return Data frame in required model-output format
 #'    of simulated data for variant nowcasting.
-#' @locations Vector of location abbreviations e.g. c("MA", ...)
-#' @alpha Parameters for rdirichlet for length(test_clades)
-#' @test_clades Clades for the weekly forecasts
-#' @target_date Forecast dates
-#' @nowcast_date Nowcast date
-#' @n_samp Number of samples per location (100 required, available for testing)
-#' @seed Set random seed value for RNG
+#' @param locations Vector of location abbreviations e.g. c("MA", ...)
+#' @param alpha Parameters for rdirichlet for length(test_clades)
+#' @param test_clades Clades for the weekly forecasts
+#' @param target_date Forecast dates
+#' @param nowcast_date Nowcast date
+#' @param n_samp Number of samples per location (100 required, available for testing)
+#' @param seed Set random seed value for RNG
 sim_model_output <- function(locations = c("AL", "AZ", "CA", "CO", "DE"), 
                              alpha = c(3,3,2,2,1,1),
                              test_clades = c("24A", "24B", "24C", "24E", "recombinant", "other"),
