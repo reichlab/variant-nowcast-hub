@@ -21,8 +21,9 @@ sim_model_output <- function(locations = c("AL", "AZ", "CA", "CO", "DE"),
                              n_samp = 100,
                              seed = 42
 ){
-  require(brms) # for data simulation
-  set.seed(seed)
+  # set the `seed` and then resets it to the state of the RNG before this ran
+  # https://withr.r-lib.org/reference/with_seed.html
+  withr::local_seed(seed)
   
   # more QA to come e.g. n_samp positive integer, etc.
   
@@ -38,7 +39,7 @@ sim_model_output <- function(locations = c("AL", "AZ", "CA", "CO", "DE"),
     for(date in target_date){
       for(sample_pt in 0:(n_samp-1)) {
         # Create random proportions with prob alpha for each sample point
-        props <- rdirichlet(1, alpha = alpha)
+        props <- brms::rdirichlet(1, alpha = alpha)
         colnames(props) <- test_clades # attach name of clades
         
         for(clade in test_clades){
