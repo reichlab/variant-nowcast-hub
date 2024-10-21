@@ -15,9 +15,9 @@ model_contributors:
     },
     {
       "name": "Yinan Feng",
-      "affiliation": "School of Data Science and Society, University of North Carolina at Chapel Hill",
-      "email": "contributor2@example.com",
-      "orcid": "5678-5678-5678-5678"
+      "affiliation": "Department of Computer Science, University of North Carolina at Chapel Hill",
+      "email": "ynf@unc.edu",
+      "orcid": "0000-0002-7299-5559"
     },
     {
       "name": "Youzuo Lin",
