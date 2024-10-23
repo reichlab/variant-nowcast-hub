@@ -22,6 +22,7 @@ To run the script manually:
 # requires-python = ">=3.11"
 # dependencies = [
 #   "cladetime@git+https://github.com/reichlab/cladetime",
+#   "polars",
 # ]
 # ///
 
@@ -31,8 +32,9 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import polars as pl
 from cladetime import CladeTime  # type: ignore
-from cladetime import get_clade_list  # type: ignore
+from cladetime.util.sequence import filter_covid_genome_metadata, get_clade_counts  # type: ignore
 
 # Log to stdout
 logger = logging.getLogger(__name__)
@@ -57,13 +59,77 @@ def get_next_wednesday(starting_date: datetime) -> str:
     return next_wednesday.strftime("%Y-%m-%d")
 
 
-def main(round_id: str, clade_output_path: Path):
+def get_clades(
+    clade_counts: pl.LazyFrame, threshold: float, threshold_weeks: int, max_clades: int
+) -> list[str]:
+    """Get a list of clades to forecast."""
+
+    # based on the data's most recent date, get the week start three weeks ago (not including this week)
+    max_day = clade_counts.select(pl.max("date")).collect().item()
+    threshold_sundays_ago = max_day - timedelta(
+        days=max_day.weekday() + 7 * (threshold_weeks)
+    )
+
+    # sum over weeks, combine states, and limit to just the past 3 weeks (not including current week)
+    lf = (
+        clade_counts.filter(pl.col("date") >= threshold_sundays_ago)
+        .sort("date")
+        .group_by_dynamic("date", every="1w", start_by="sunday", group_by="clade")
+        .agg(pl.col("count").sum())
+    )
+
+    # create a separate frame with the total counts per week
+    total_counts = lf.group_by("date").agg(pl.col("count").sum().alias("total_count"))
+
+    # join with count data to add a total counts per day column
+    prop_dat = lf.join(total_counts, on="date").with_columns(
+        (pl.col("count") / pl.col("total_count")).alias("proportion")
+    )
+
+    # retrieve list of variants which have crossed the threshold over the past threshold_weeks
+    high_prev_variants = (
+        prop_dat.filter(pl.col("proportion") > threshold)
+        .select("clade")
+        .unique()
+        .collect()
+    )
+
+    # if more than the specified number of clades cross the threshold,
+    # take the clades with the largest counts over the past threshold_weeks
+    # (if there's a tie, take the first clade alphabetically)
+    if len(high_prev_variants) > max_clades:
+        high_prev_variants = (
+            prop_dat.group_by("clade")
+            .agg(pl.col("count").sum())
+            .sort("count", "clade", descending=[True, False])
+            .collect()
+        )
+
+    variants = high_prev_variants.get_column("clade").to_list()[:max_clades]
+
+    return variants
+
+
+def main(
+    round_id: str,
+    clade_output_path: Path,
+    threshold: float = 0.01,
+    threshold_weeks: int = 3,
+    max_clades: int = 9,
+):
     """Get a list of clades to model and save to the hub's auxiliary-data folder."""
 
     round_data: defaultdict[str, dict] = defaultdict(dict)
 
     # Get the clade list
-    clade_list = get_clade_list.main()
+    logger.info("Getting clade list")
+    ct = CladeTime()
+    lf_metadata = ct.sequence_metadata
+    lf_metadata_filtered = filter_covid_genome_metadata(lf_metadata)
+    counts = get_clade_counts(lf_metadata_filtered)
+    clade_list = get_clades(counts, threshold, threshold_weeks, max_clades)
+
+    # Sort clade list and add "other"
     clade_list.sort()
     clade_list.append("other")
     round_data["clades"] = clade_list
@@ -71,7 +137,6 @@ def main(round_id: str, clade_output_path: Path):
 
     # Get metadata about the Nextstrain ncov pipeline run that
     # the clade list is based on
-    ct = CladeTime()
     ncov_meta = ct.ncov_metadata
     ncov_meta["metadata_version_url"] = ct.url_ncov_metadata
     round_data["meta"]["ncov"] = ncov_meta
