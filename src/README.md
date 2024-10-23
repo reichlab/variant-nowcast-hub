@@ -1,7 +1,11 @@
-# Variant Nowcast Hub Scripts
+# For Hub Admins: Variant Nowcast Hub Scripts
 
-The `src/` directory contains scripts that support this hub's operations. The scripts are designed to be run by scheduled
-GitHub workflows on a Linux-based runner (_i.e._, they have not been tested in a Windows environment).
+**The `src/` directory contains scripts used by hub administrators and automated jobs.**
+**Hub participants and modelers don't need these scripts and can ignore everything here.**
+
+
+The scripts are designed to be run by scheduled GitHub workflows on a Linux-based runner
+(_i.e._, they have not been tested in a Windows environment).
 
 The sections below contain information about the scripts and how to run them manually.
 
