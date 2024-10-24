@@ -47,7 +47,7 @@ that describes their model (for example, model name, team name, contributors,
 and data sources). Metadata files live in the `model-metadata`
 folder and use the format `<team name>-<model name>.yml` as their filename.
 
-(Nowcast submissions won't pass the Hub's automated validations without a
+(Nowcast submissions will not pass the Hub's automated validations without a
 corresponding model metadata file.)
 
 The [model-metadata-schema.json](hub-config/model-metadata-schema.json)
