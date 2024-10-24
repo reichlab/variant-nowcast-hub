@@ -20,21 +20,25 @@ the submission process, including an example file.
 
 ### Repository structure
 
-Hubervse-based modeling hubs have the following directory structure. Of these, only `model-metadata`,
-`hub-config`, and `model-output` are relevant to modelers.
+Hubervse-based modeling hubs have the following directory structure. Of these, only 
+`hub-config/tasks.json`, `model-metadata`, and `model-output` are relevant to modelers.
 
-```script
+```
 variant-nowcast-hub/
 ├─ auxiliary-data/
 ├─ hub-config/
 │  ├─ admin.json
 │  ├─ model-metadata-schema.json
-│  ├─ tasks.json      <-- round details, including which clades to model
+│  ├─ tasks.json      <----- 1
 │  ├─ validations.yml
-├─ model-metadata/    <-- modelers create metadata files here
-├─ model-output/      <-- modelers submit nowcasts here
+├─ model-metadata/    <----- 2
+├─ model-output/      <----- 3
 ├─ src/
 ```
+
+ 1. `hub-config/tasks.json` contains round details, including which clades to model
+ 2. modelers submit model metadata in `model-metadata/`
+ 3. modelers submit nowcast in `model-output/`
 
 ### Step one: create model metadata (one-time setup)
 
