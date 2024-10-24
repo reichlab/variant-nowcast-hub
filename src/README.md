@@ -3,6 +3,8 @@
 **The `src/` directory contains scripts used by hub administrators and automated jobs.**
 **Hub participants and modelers don't need these scripts and can ignore everything here.**
 
+Details of these scripts can be found below. All of these scripts assume that your working directory is the `src/` directory. To ensure stability, the R scripts manage their dependencies with [the renv R package](https://rstudio.github.io/renv/). The `variant-hub-admin.Rproj` file allows you to open the `src/` folder as an independent R project from the root of this hub. 
+
 
 The scripts are designed to be run by scheduled GitHub workflows on a Linux-based runner
 (_i.e._, they have not been tested in a Windows environment).
