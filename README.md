@@ -70,7 +70,7 @@ model's folder in [`model-output`](model-output/) and then submit a pull request
 - The clades to model vary from round to round and are listed in the
 [`hub-config/tasks.json`](hub-config/tasks.json) file.
 
-[Additional details about the submission process](model-output/README.md)
+[A detailed description of the submission process](model-output/README.md) outlining specific expectations can be found in the `model-output/` folder.
 
 ## Background
 
