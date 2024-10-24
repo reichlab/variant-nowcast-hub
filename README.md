@@ -74,7 +74,7 @@ model's folder in [`model-output`](model-output/) and then submit a pull request
 
 ## Background
 
-The United States SARS-CoV-2 Variant Nowcast Hub has been designed by researchers from the [US CDC Center of Forecasting and Outbreak Analytics (CFA)](https://www.cdc.gov/forecast-outbreak-analytics/index.html) and [the Reich Lab at UMass Amherst](https://reichlab.io/), in consultation with folks from [the NextStrain project](https://nextstrain.org/). (An early draft of the guidelines, including comments, can be found [here](https://github.com/reichlab/variant-nowcast-hub/discussions/18).)
+The United States SARS-CoV-2 Variant Nowcast Hub has been designed by researchers from the [US CDC Center of Forecasting and Outbreak Analytics (CFA)](https://www.cdc.gov/forecast-outbreak-analytics/index.html) and [the Reich Lab at UMass Amherst](https://reichlab.io/), in consultation with folks from [the NextStrain project](https://nextstrain.org/). (This was generated from [an early draft of the guidelines, including comments](https://github.com/reichlab/variant-nowcast-hub/discussions/18).)
 
 Collaborative and open forecast hubs have emerged as a valuable way to centralize and coordinate predictive modeling efforts for public health. In realms where multiple teams are tackling the same problem using different data inputs and/or modeling methodologies, a hub can standardize targets in ways that facilitate model comparison and the integration of outputs from multiple models into public health practice. This hub uses the open-source architecture and data standards developed by the [hubverse](https://hubverse.io/).
 
