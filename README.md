@@ -11,7 +11,7 @@ The Hub is built on open source software and data standards developed by the
 ## Modelers guide to using this hub
 
 This section provides a high-level getting started guide for modelers who want
-to submit the United States SARS-CoV-2 Variant Nowcast Hub.
+to submit their nowcasts to the United States SARS-CoV-2 Variant Nowcast Hub.
 
 - See [Background](#background) for details about what modelers will be asked
 to predict and how the hub will evaluation submissions.
