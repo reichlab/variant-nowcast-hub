@@ -51,9 +51,9 @@ file describes the content of the model metadata file, including required fields
 [Existing model-metdata files](model-metadata/) serve as good as examples.
 Submit model metadata as a pull request to the repository.
 
-**Tip:** There's a GitHub approval process for first-time contributors, so
-creating a pull request for the metadata file **before** submitting nowcasts
-ensures that modelers won't need to wait for approval later in the round.
+> [!TIP] There's a GitHub approval process for first-time contributors, so
+> **creating a pull request for the metadata file before submitting nowcasts**
+> ensures that modelers won't need to wait for approval later in the round.
 
 ### Step two: submit nowcasts
 
