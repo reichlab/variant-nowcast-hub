@@ -20,10 +20,10 @@ the submission process, including an example file.
 
 ### Repository structure
 
-Hubervse-based modeling hubs have the following directory structure. Of these, only 
+Hubervse-based modeling hubs have the following directory structure. Of these, only
 `hub-config/tasks.json`, `model-metadata`, and `model-output` are relevant to modelers.
 
-```
+```text
 variant-nowcast-hub/
 ├─ auxiliary-data/
 ├─ hub-config/
@@ -86,7 +86,8 @@ While SARS-CoV-2 variant dynamics received most attention from the scientific co
 
 ## What will modelers be asked to predict?
 
-We ask modeling teams to submit predictions of frequencies of the predominant SARS-CoV-2 clades in the US, at a daily timescale and the geographic resolution of all 50 United States plus Washington DC and Puerto Rico. We will not solicit estimates for the US, in part because evaluating this quantity is not straightforward due to the heterogeneity in levels of infections and sequencing across locations. Details about these choices follow in subsections below. The hub will solicit predictions of frequencies (i.e., numbers between 0 and 1) associated with each clade or group of clades, for a particular location and a particular day.
+We ask modeling teams to predict frequencies of the predominant SARS-CoV-2 clades in the US, at a daily timescale and the geographic resolution of all 50 United States plus Washington, DC and Puerto Rico (or a subset of these geographies—submissions do not need to include all states).
+We will not solicit estimates for the US as a whole, in part because evaluating this quantity is not straightforward due to the heterogeneity in levels of infections and sequencing across locations. Details about these choices follow in subsections below. The hub will solicit predictions of frequencies (_i.e._, numbers between 0 and 1) associated with each clade or group of clades, for a particular location and a particular day.
 
 ### Predicted clades
 
