@@ -56,7 +56,7 @@ ensemble_of_hub_models: false  # Set to true if it is an ensemble of hub-submitt
 # Optional fields
 model_version: "1.0"  # Optional version identifier
 
-repo_url: "" # Optional repository URL
+repo_url: "https://github.com/breesie/variant-nowcast-hub" # Optional repository URL
 
 citation:
 - "Wadford et al. Implementation of California COVIDNet - a multi-sector collaboration for statewide SARS-CoV-2 genomic surveillance. Front Public Health. 2023 Oct 23;11:1249614. doi: 10.3389/fpubh.2023.1249614. PMID: 37937074; PMCID: PMC10627185."
