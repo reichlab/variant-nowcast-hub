@@ -1,33 +1,106 @@
 # *United States SARS-CoV-2 Variant Nowcast Hub*
 
-**Submissions accepted** every Wednesday by 8pm ET, starting October 9, 2024
+This document provides guidelines for the United States SARS-CoV-2 Variant
+Nowcast Hub, which launched on October 9, 2024.
 
-## Introduction
-This document provides guidelines for the United States SARS-CoV-2 Variant Nowcast Hub, which is planned to launch on October 9, 2024. This modeling hub has been designed by researchers from the [US CDC Center of Forecasting and Outbreak Analytics (CFA)](https://www.cdc.gov/forecast-outbreak-analytics/index.html) and [the Reich Lab at UMass Amherst](https://reichlab.io/), in consultation with folks from [the NextStrain project](https://nextstrain.org/). (An early draft of the guidelines, including comments, can be found [here](https://github.com/reichlab/variant-nowcast-hub/discussions/18).)
+The Hub is built on open source software and data standards developed by the
+[Hubverse](https://hubverse.io/). We welcome nowcast submissions from all modelers.
 
-Collaborative and open forecast hubs have emerged as a valuable way to centralize and coordinate predictive modeling efforts for public health. In realms where multiple teams are tackling the same problem using different data inputs and/or modeling methodologies, a hub can standardize targets in ways that facilitate model comparison and the integration of outputs from multiple models into public health practice. This hub uses the open-source architecture and data standards developed by the [hubverse](https://hubverse.io/).
+**Submissions accepted** every Wednesday by 8pm ET, starting October 9, 2024.
 
-While SARS-CoV-2 variant dynamics received most attention from the scientific community in 2021 and 2022, SARS-CoV-2 genomic sequences continue to be generated, and trends in variant frequencies will continue to impact transmission across the US and the world. From a modeling perspective, there is less consensus about a standard way to represent model outputs for multivariate variant frequency predictions than there is for other outcomes. Therefore, a key reason for building and launching this nowcast hub is to help learn about the right way to evaluate and communicate variant dynamics in a collaborative modeling effort, potentially not just for SARS-CoV-2 but also for other rapidly evolving pathogens.
+## Modelers guide to using this hub
 
-## Submitting to the hub
+This section provides a high-level getting started guide for modelers who want
+to submit their nowcasts to the United States SARS-CoV-2 Variant Nowcast Hub.
 
-**How to submit**: Any team wishing to submit a set of nowcasts to the hub may submit a pull request to this repository with a valid submission file in parquet format. Further details about how to submit are provided on the [model-output README page](https://github.com/reichlab/variant-nowcast-hub/blob/main/model-output/README.md).
+- See [Background](#background) for details about what modelers will be asked
+to predict and how the hub will evaluation submissions.
+- See the [model-output `README`](model-output/README.md) more details about
+the submission process, including an example file.
 
-**Deadline**: Submissions are due at 8pm ET every Wednesday. This time was chosen to give modelers time in the beginning of the week to run and adjust models and stakeholders time at the end of the week to incorporate preliminary results into discussions or decision making.
+### Repository structure
+
+Hubervse-based modeling hubs have the following directory structure. Of these, only
+`hub-config/tasks.json`, `model-metadata`, and `model-output` are relevant to modelers.
+
+```text
+variant-nowcast-hub/
+├─ auxiliary-data/
+├─ hub-config/
+│  ├─ admin.json
+│  ├─ model-metadata-schema.json
+│  ├─ tasks.json      <----- 1
+│  ├─ validations.yml
+├─ model-metadata/    <----- 2
+├─ model-output/      <----- 3
+├─ src/
+```
+
+ 1. `hub-config/tasks.json` contains round details, including which clades to model
+ 2. modelers submit model metadata in `model-metadata/`
+ 3. modelers submit nowcast in `model-output/`
+
+### Step one: create model metadata (one-time setup)
+
+Before submitting their first predictions, modelers must create a metadata file
+that describes their model (for example, model name, team name, contributors,
+and data sources). Metadata files live in the `model-metadata`
+folder and use the format `<team name>-<model name>.yml` as their filename.
+
+(Nowcast submissions will not pass the Hub's automated validations without a
+corresponding model metadata file.)
+
+The [model-metadata-schema.json](hub-config/model-metadata-schema.json)
+file describes the content of the model metadata file, including required fields.
+[Existing model-metdata files](model-metadata/) serve as good as examples.
+Submit model metadata as a pull request to the repository.
+
+> [!TIP] There's a GitHub approval process for first-time contributors, so
+> **creating a pull request for the metadata file before submitting nowcasts**
+> ensures that modelers won't need to wait for approval later in the round.
+
+### Step two: submit nowcasts
+
+The SARS-CoV-2 Variant Nowcast Hub opens a new modeling round each week and
+accepts submissions until 8 PM Eastern every Wednesday.
+
+The process for submitting a set of nowcasts is to add a file named
+`<round submission date as YYYY-MM-DD>-<team name>-<model-name>.parquet` to the
+model's folder in [`model-output`](model-output/) and then submit a pull request.
+
+- Submissions must be in parquet format,
+- Submissions will follow the standard
+[Hubverse model output format](https://hubverse.io/en/latest/user-guide/model-output.html#model-output).
+- The clades to model vary from round to round and are listed in the
+[`hub-config/tasks.json`](hub-config/tasks.json) file.
+
+[A detailed description of the submission process](model-output/README.md) outlining specific expectations can be found in the `model-output/` folder.
+
+## Background
+
+The United States SARS-CoV-2 Variant Nowcast Hub has been designed by researchers from the [US CDC Center of Forecasting and Outbreak Analytics (CFA)](https://www.cdc.gov/forecast-outbreak-analytics/index.html) and [the Reich Lab at UMass Amherst](https://reichlab.io/), in consultation with folks from [the NextStrain project](https://nextstrain.org/). (This was generated from [an early draft of the guidelines, including comments](https://github.com/reichlab/variant-nowcast-hub/discussions/18).)
+
+Collaborative and open forecast hubs have emerged as a valuable way to centralize and coordinate predictive modeling efforts for public health. In realms where multiple teams are tackling the same problem using different data inputs and/or modeling methodologies, **a hub can standardize targets in ways that facilitate model comparison and the integration of outputs from multiple models into public health practice**. This hub uses the open-source architecture and data standards developed by the [hubverse](https://hubverse.io/).
+
+While SARS-CoV-2 variant dynamics received most attention from the scientific community in 2021 and 2022, SARS-CoV-2 genomic sequences continue to be generated, and trends in variant frequencies will continue to impact transmission across the US and the world. From a modeling perspective, there is less consensus about a standard way to represent model outputs for multivariate variant frequency predictions than there is for other outcomes. Therefore, **a key reason for building and launching this nowcast hub is to help learn about the right way to evaluate and communicate variant dynamics in a collaborative modeling effort**, potentially not just for SARS-CoV-2 but also for other rapidly evolving pathogens.
 
 ## What will modelers be asked to predict?
-We ask modeling teams to submit predictions of frequencies of the predominant SARS-CoV-2 clades in the US, at a daily timescale and the geographic resolution of all 50 United States plus Washington DC and Puerto Rico. We will not solicit estimates for the US, in part because evaluating this quantity is not straightforward due to the heterogeneity in levels of infections and sequencing across locations. Details about these choices follow in subsections below. The hub will solicit predictions of frequencies (i.e., numbers between 0 and 1) associated with each clade or group of clades, for a particular location and a particular day.
+
+We ask modeling teams to predict frequencies of the predominant SARS-CoV-2 clades in the US, at a daily timescale and the geographic resolution of all 50 United States plus Washington, DC and Puerto Rico (or a subset of these geographies—submissions do not need to include all states).
+We will not solicit estimates for the US as a whole, in part because evaluating this quantity is not straightforward due to the heterogeneity in levels of infections and sequencing across locations. Details about these choices follow in subsections below. The hub will solicit predictions of frequencies (_i.e._, numbers between 0 and 1) associated with each clade or group of clades, for a particular location and a particular day.
 
 ### Predicted clades
+
 Each week the hub designates up to nine NextStrain clades with the highest reported prevalence of at least 1% across the US in any of the three complete [USA/CDC epidemiological weeks](https://ndc.services.cdc.gov/wp-content/uploads/MMWR_Week_overview.pdf) (a.k.a. MMWR weeks) preceding the Wednesday submission date. Any clades with prevalence of less than 1% are grouped into an “other” category for which predictions of combined prevalence are also collected. No more than 10 clades (including “other”) are selected in a given week. For details on the workflow that generates this list each week, see the [clade list section](#clade-list) below.
 
 ### Prediction horizon
-Genomic sequences tend to be reported weeks after being collected. Therefore, recent data is subject to quite a lot of backfill. For this reason, the hub collects "nowcasts" (predictions for data relevant to times prior to the current time, but not yet observed) and some "forecasts" (predictions for future observations). Counting the Wednesday submission date as a prediction horizon of zero, we collect daily-level predictions for 10 days into the future (the Saturday that ends the epidemic week after the Wednesday submission) and -31 days into the past (the Sunday that starts the epidemic week four weeks prior to the Wednesday submission date). Overall, six weeks (42 days) of predicted values are solicited each week.
 
+Genomic sequences tend to be reported weeks after being collected. Therefore, recent data is subject to quite a lot of backfill. For this reason, the hub collects "nowcasts" (predictions for data relevant to times prior to the current time, but not yet observed) and some "forecasts" (predictions for future observations). Counting the Wednesday submission date as a prediction horizon of zero, we collect daily-level predictions for 10 days into the future (the Saturday that ends the epidemic week after the Wednesday submission) and -31 days into the past (the Sunday that starts the epidemic week four weeks prior to the Wednesday submission date). Overall, six weeks (42 days) of predicted values are solicited each week.
 
 ## Data created and stored by the hub
 
 ### <a name="clade-list"></a>Clade list
+
 Early Monday morning (~3am ET) prior to a Wednesday on which submissions are due, the hub generates a JSON file with two high-level properties:
 
 1. `clades`: an array of [NextClade clade names](https://clades.nextstrain.org/about) that will be accepted in submission files for the upcoming deadline.
@@ -38,17 +111,19 @@ The JSON file will live in the `auxiliary-data/modeled-clades/` directory of the
 This clade selection is based on the ["full open" NextStrain sequence metadata files](https://docs.nextstrain.org/projects/ncov/en/latest/reference/remote_inputs.html#remote-inputs-open-files), in particular [this file](https://data.nextstrain.org/files/ncov/open/metadata.tsv.zst) which is loaded and analyzed using [this script](https://github.com/reichlab/cladetime/blob/main/src/cladetime/get_clade_list.py). The NextStrain files are [typically updated daily in the late evening US eastern time](https://github.com/nextstrain/forecasts-ncov/actions/workflows/update-ncov-open-clade-counts.yaml) (it is only updated when new data are available). The hub pulls the most recent version of the file when the workflow runs each week. The precise lineage assignment model (sometimes referred to as a “reference tree”) that was used as well as the version of raw sequence data is stored as metadata, to facilitate reproducibility and evaluation.
 
 ### Tasks for primary evaluation
+
 As described [below](#eval-challenges), only certain model tasks will be included in the primary model evaluation. These will include all clade frequencies for location-date pairs for which there are no observed specimens reported as of Wednesday night. A file that specifies which location-date pairs will be eligible for inclusion in the primary analysis will be generated and stored in the hub's `auxiliary-data/unscored-location-dates` directory after the submission deadline passes.
 
 ### Target data for evaluation
-Ninety days after each round closes, a script will generate a file containing summarized counts of selected clades for that round (including "other") for each location and date in the prediction window. These clade assignments will be made using the reference tree that was current when the submission round was open three months prior. While such "target data" files will not be suitable for training models (they will contain only limited dates and aggregated clades), they will be used as snapshots for evaluation.
 
+Ninety days after each round closes, a script will generate a file containing summarized counts of selected clades for that round (including "other") for each location and date in the prediction window. These clade assignments will be made using the reference tree that was current when the submission round was open three months prior. While such "target data" files will not be suitable for training models (they will contain only limited dates and aggregated clades), they will be used as snapshots for evaluation.
 
 ## Model evaluation
 
 We note that due to some of the challenges outlined just below, upon launch of the hub, final evaluation plans remain a work in progress. However, below we outline a sketch of the possible evaluation schemes.
 
 ### <a name="eval-challenges"></a>Evaluation challenges
+
 Several features of these data in particular make evaluations tricky.
 
 1. Data for some model tasks may be partially observed at the time nowcasts and forecasts are made. The hub encourages teams to submit predictions of “true” underlying clade frequencies that will vary more or less smoothly, if sometimes steeply, over time. When some observations are partially observed at the time of nowcast submissions, it could be to the modeler’s advantage to predict a value that is close to the frequency observed at the time the forecast is made, thus deviating from the underlying (likely smooth) function the model would predict in the absence of data. To incentivize “honest” nowcasts that do not shift predictions for time-points with partial observations, we will only evaluate locations and dates for which no data have yet been reported at the time submissions are due (Wednesday evening).
@@ -57,7 +132,6 @@ One implication of this decision is that different numbers of days may be evalua
 2. The reference phylogenetic tree that defines clades changes over time. Nowcasts and forecasts will be evaluated against whatever sequence data is available 90 days after the deadline that a set of predictions were submitted for. Additionally, those sequences will be assigned a clade based on the reference tree that was used to generate the list of predicted clades on the Monday prior to the submission date. This means that new sequences that emerge in the time since the predictions were made will still be classified as they would have been when predictions were made.
 
 3. The variance in the eventually observed clade counts depends on the eventual sample size, or number of sequences tested on a particular day. With a large number of sequences, the variance of the clade counts would tend to be larger and with a small number of sequences the variance would be smaller. However, the number of sequences itself is not of particular epidemiological interest. The evaluation plan introduced below evaluates the counts assuming they follow a multinomial observation model with sample size equal to the number of sequences collected on the target date and location that have been reported as of the evaluation date, so as to eliminate the nuisance parameter of the count variance.
-
 
 ### Notation
 
@@ -86,4 +160,3 @@ An additional alternative scoring option would be to compute Brier scores on eac
 ### Score aggregation
 
 Scores will be primarily reported as aggregated scores across all locations and dates. However, we will also report scores for individual locations and dates.
-
