@@ -1,0 +1,62 @@
+# Required fields
+team_name: "California Department of Public Health"  # No more than 50 characters
+team_abbr: "CADPH"  # Up to 16 alphanumeric characters or underscores
+
+model_name: "Clade Assessment Tool, a Logistic Growth Function"  # No more than 50 characters
+model_abbr: "CATaLog"  # Up to 16 alphanumeric characters or underscores
+
+model_contributors:
+  [
+    {
+      "name": "Brent Siegel",
+      "affiliation": "California Department of Public Health, Center for Infectious Diseases, Modeling and Advanced Analytics Section",
+      "email": "brent.siegel@cdph.ca.gov",
+      "orcid": "0000-0002-4695-9474"
+    },
+    {
+      "name": "Mugdha Thakur",
+      "affiliation": "California Department of Public Health, Center for Infectious Diseases, Modeling and Advanced Analytics Section",
+      "email": "mugdha.thakur@cdph.ca.gov",
+       "orcid": "0000-0002-3883-8656"
+    },
+    {
+      "name": "Natalie Linton",
+      "affiliation": "California Department of Public Health, Center for Infectious Diseases, Modeling and Advanced Analytics Section",
+      "email": "natalie.linton@cdph.ca.gov",
+      "orcid": "0000-0002-5464-0076"
+    },
+    {
+      "name": "Chris Hoover",
+      "affiliation": "Formerly: California Department of Public Health, Center for Infectious Diseases, Modeling and Advanced Analytics Section",
+      "email": "chris.hoover@cdph.ca.gov",
+    },
+    {
+      "name": "Tomas Leon",
+      "affiliation": "California Department of Public Health, Center for Infectious Diseases, Modeling and Advanced Analytics Section",
+      "email": "tomas.leon@cdph.ca.gov",
+    }
+  ]
+
+license: "CC-BY-4.0"  # Choose from accepted licenses
+
+team_funding:
+  - "The content is solely the responsibility of the authors and does not necessarily represent the official views of the California Department of Public Health or the California Health and Human Services Agency."
+
+methods: "Fits a logistic growth function to data. Based on Althaus, Christian L., et al. ''A Tale of Two Variants: Spread of SARS-CoV-2 Variants Alpha in Geneva, Switzerland, and Beta in South Africa."
+
+methods_url: "https://calcat.cdph.ca.gov"
+
+data_sources:
+  - "Theiagen Genomics manages the viral sequence data."
+
+ensemble_of_models: false  # Set to true if it is an ensemble of separate models
+
+ensemble_of_hub_models: false  # Set to true if it is an ensemble of hub-submitted models
+
+# Optional fields
+model_version: "1.0"  # Optional version identifier
+
+repo_url: "https://github.com/breesie/variant-nowcast-hub" # Optional repository URL
+
+citation:
+- "Wadford et al. Implementation of California COVIDNet - a multi-sector collaboration for statewide SARS-CoV-2 genomic surveillance. Front Public Health. 2023 Oct 23;11:1249614. doi: 10.3389/fpubh.2023.1249614. PMID: 37937074; PMCID: PMC10627185."
