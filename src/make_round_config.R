@@ -156,7 +156,7 @@ new_round <- create_new_round(hub_root)
 
 existing_task_config <- try(hubUtils::read_config(hub_root, config = c("tasks")), silent = TRUE)
 if (inherits(existing_task_config, "try-error")) {
-  cli::cli_alert_info("Existing config not found, creating a new tasks.json")
+  cli::cli_alert_info("Existing config not found, creating a new {.file tasks.json}")
   new_task_config <- hubAdmin::create_config(hubAdmin::create_rounds(new_round))
 } else {
   cli::cli_alert_info("Existing config found, adding a new round")
@@ -164,5 +164,5 @@ if (inherits(existing_task_config, "try-error")) {
 }
 
 write_and_validate_task_config(new_task_config, this_round_date, hub_root)
-cli::cli_h1("New round added to tasks.json")
-cli::cli_alert_success(lobstr::tree(new_round))
+cli::cli_h1("New round added to {.file tasks.json}")
+lobstr::tree(new_round)
