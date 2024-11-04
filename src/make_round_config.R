@@ -150,55 +150,6 @@ write_and_validate_task_config <- function(task_config, round_id, hub_root) {
   }
 }
 
-#' Coerce a list to a round object
-#'
-#' @description
-#' `coerce_to_round` converts a list of round information to a round object,
-#'   using attributes of the newly-created round as needed.
-#'
-#' @param existing_round List. A single hub round, in list form.
-#' @param new_round A Hubverse round created via hubAdmin::create_new_round().
-#' @returns A Hubverse round.
-coerce_to_round <- function(existing_round, new_round) {
-  class(existing_round) <- c("round", "list")
-  attr(existing_round, "round_id") <- attr(new_round, "round_id")
-  attr(existing_round, "schema_id") <- attr(new_round, "schema_id")
-  existing_round$model_tasks[[1]]$task_ids[["nowcast_date"]][["required"]] <-
-    list(existing_round$model_tasks[[1]]$task_ids[["nowcast_date"]][["required"]])
-  return(existing_round)
-}
-
-#' Create a new task_config that includes existing rounds and a new round
-#'
-#' @description
-#' `append_to_round` coerces the hub's existing rounds to a list of rounds,
-#'   appends the new round to the list, and uses the result to create a new
-#'   task config.
-#'
-#' @param old_task_config List. A hub task config in list form, as created by
-#'   hubAdmin::read_config().
-#' @param new_round A Hubverse round created via hubAdmin::create_new_round().
-#' @returns A Hubverse task config that represents the hub's existing rounds
-#'   plus a newly-created round.
-append_round <- function(old_task_config, new_round) {
-  existing_round_list <- lapply(old_task_config$rounds, coerce_to_round, new_round)
-  round_list <- append(existing_round_list, list(new_round))
-  tryCatch(
-    {
-      rounds <- do.call(hubAdmin::create_rounds, round_list)
-    },
-    error = function(err)
-    {
-      cli::cli_alert_danger(
-        "Error calling hubAdmin::create_rounds (likely because the new round object failed validation)")
-        cli::cli_h1("Error")
-      print(err)
-      stop()
-    }
-  )
-  new_task_config <- hubAdmin::create_config(rounds)
-  return(new_task_config)
-}
 
 hub_root <- here::here()
 new_round <- create_new_round(hub_root)
@@ -209,7 +160,7 @@ if (inherits(existing_task_config, "try-error")) {
   new_task_config <- hubAdmin::create_config(hubAdmin::create_rounds(new_round))
 } else {
   cli::cli_alert_info("Existing config found, adding a new round")
-  new_task_config <- append_round(existing_task_config, new_round)
+  new_task_config <- hubAdmin::append_round(existing_task_config, new_round)
 }
 
 write_and_validate_task_config(new_task_config, this_round_date, hub_root)
