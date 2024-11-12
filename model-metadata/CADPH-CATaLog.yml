@@ -28,12 +28,22 @@ model_contributors:
     {
       "name": "Chris Hoover",
       "affiliation": "Formerly: California Department of Public Health, Center for Infectious Diseases, Modeling and Advanced Analytics Section",
-      "email": "chris.hoover@cdph.ca.gov",
+      "email": "chris.hoover@cdph.ca.gov"
+    },
+    {
+      "name": "Rahil Ryder",
+      "affiliation": "California Department of Public Health, Center for Laboratory Sciences, Viral and Rickettsial Disease Laboratory",
+      "email": "rahil.ryder@cdph.ca.gov"
+    },
+    {
+      "name": "Jesse Elder",
+      "affiliation": "California Department of Public Health, Center for Laboratory Sciences, Viral and Rickettsial Disease Laboratory",
+      "email": "jesse.elder@cdph.ca.gov"
     },
     {
       "name": "Tomas Leon",
       "affiliation": "California Department of Public Health, Center for Infectious Diseases, Modeling and Advanced Analytics Section",
-      "email": "tomas.leon@cdph.ca.gov",
+      "email": "tomas.leon@cdph.ca.gov"
     }
   ]
 
