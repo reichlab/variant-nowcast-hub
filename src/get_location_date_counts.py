@@ -26,8 +26,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import polars as pl
-from cladetime import CladeTime  # type: ignore
-from cladetime.util.sequence import filter_covid_genome_metadata  # type: ignore
+from cladetime import CladeTime, sequence  # type: ignore
 
 # Log to stdout
 logger = logging.getLogger(__name__)
@@ -76,7 +75,7 @@ def get_location_date_counts(
 
     # Apply the same filters we used to create the list of clade
     # target data for the round (e.g., USA, human host)
-    filtered = filter_covid_genome_metadata(sequence_metadata)
+    filtered = sequence.filter_metadata(sequence_metadata)
 
     # Create a LazyFrame with all combinations of states and the
     # dates we're interested in (in this case, 31 days prior to
@@ -113,7 +112,7 @@ def test_counts(round_close_time: datetime, computed_counts: pl.DataFrame):
     # Get all rows in sequence metadata that have reported a sequence
     # with a collection date in the 31 days prior to round_close
     begin_date = round_close_time.date() - timedelta(days=31)
-    test_data = filter_covid_genome_metadata(ct.sequence_metadata)
+    test_data = sequence.filter_metadata(ct.sequence_metadata)
     test_data = test_data.filter(pl.col("date") >= begin_date).collect(streaming=True)
 
     assert test_data.height == computed_counts["count"].sum()

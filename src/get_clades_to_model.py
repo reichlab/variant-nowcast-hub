@@ -33,8 +33,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import polars as pl
-from cladetime import CladeTime  # type: ignore
-from cladetime.util.sequence import filter_covid_genome_metadata, get_clade_counts  # type: ignore
+from cladetime import CladeTime, sequence  # type: ignore
 
 # Log to stdout
 logger = logging.getLogger(__name__)
@@ -125,8 +124,10 @@ def main(
     logger.info("Getting clade list")
     ct = CladeTime()
     lf_metadata = ct.sequence_metadata
-    lf_metadata_filtered = filter_covid_genome_metadata(lf_metadata)
-    counts = get_clade_counts(lf_metadata_filtered)
+    lf_metadata_filtered = sequence.filter_metadata(lf_metadata)
+    counts = sequence.summarize_clades(
+        lf_metadata_filtered, group_by=["clade", "date", "location"]
+    )
     clade_list = get_clades(counts, threshold, threshold_weeks, max_clades)
 
     # Sort clade list and add "other"
