@@ -28,13 +28,12 @@ To run the script manually:
 
 import json
 import logging
-from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import TypedDict
 
 import polars as pl
-from cladetime import CladeTime  # type: ignore
-from cladetime.util.sequence import filter_covid_genome_metadata, get_clade_counts  # type: ignore
+from cladetime import CladeTime, sequence  # type: ignore
 
 # Log to stdout
 logger = logging.getLogger(__name__)
@@ -119,28 +118,32 @@ def main(
 ):
     """Get a list of clades to model and save to the hub's auxiliary-data folder."""
 
-    round_data: defaultdict[str, dict] = defaultdict(dict)
+    class RoundData(TypedDict):
+        clades: list[str]
+        meta: dict[str, dict]
 
     # Get the clade list
     logger.info("Getting clade list")
     ct = CladeTime()
     lf_metadata = ct.sequence_metadata
-    lf_metadata_filtered = filter_covid_genome_metadata(lf_metadata)
-    counts = get_clade_counts(lf_metadata_filtered)
+    lf_metadata_filtered = sequence.filter_metadata(lf_metadata)
+    counts = sequence.summarize_clades(
+        lf_metadata_filtered, group_by=["clade", "date", "location"]
+    )
     clade_list = get_clades(counts, threshold, threshold_weeks, max_clades)
 
     # Sort clade list and add "other"
     clade_list.sort()
     clade_list.append("other")
-    round_data["clades"] = clade_list
     logger.info(f"Clade list: {clade_list}")
 
     # Get metadata about the Nextstrain ncov pipeline run that
     # the clade list is based on
     ncov_meta = ct.ncov_metadata
     ncov_meta["metadata_version_url"] = ct.url_ncov_metadata
-    round_data["meta"]["ncov"] = ncov_meta
     logger.info(f"Ncov metadata: {ncov_meta}")
+
+    round_data: RoundData = {"clades": clade_list, "meta": {"ncov": ncov_meta}}
 
     clade_file = clade_output_path / f"{round_id}.json"
     with open(clade_file, "w") as f:
