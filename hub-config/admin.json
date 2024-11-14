@@ -14,11 +14,11 @@
     "file_format": ["parquet"],
     "timezone": "US/Eastern",
     "cloud": {
-        "enabled": false,
+        "enabled": true,
         "host": {
             "name": "aws",
             "storage_service": "s3",
-            "storage_location": "variant-nowcast-hub"
+            "storage_location": "covid-variant-nowcast-hub"
         }
     }
 }
