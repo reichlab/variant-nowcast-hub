@@ -8,7 +8,7 @@ plot_one_location_clades <- function(this_location, model_output_data, target_da
   require(dplyr)
   require(ggplot2)
   theme_set(theme_bw())
-
+  
   mean_data_loc <- model_output_data |>
     filter(location == this_location) |>
     group_by(target_date, clade, location) |>
@@ -28,7 +28,7 @@ plot_one_location_clades <- function(this_location, model_output_data, target_da
     ylim <- c(0, 1) 
     transftitle <- ""
   }
-
+  
   p <- mean_data_loc |>
     ggplot(aes(x=date, y=value)) +
     geom_point(data = target_data_loc, aes(size = total))+
@@ -89,7 +89,7 @@ plot_one_location_clades_logit <- function(this_location, model_output_data, tar
   #mean_data_loc$value_logit <- mean_data_loc$vlogit |> rangeScale()
   mean_data_loc$q10_scale <- mean_data_loc$q10_logit |> rangeScale()
   mean_data_loc$q90_scale <- mean_data_loc$q90_logit |> rangeScale()
-
+  
   
   View(mean_data_loc)
   
@@ -97,7 +97,7 @@ plot_one_location_clades_logit <- function(this_location, model_output_data, tar
   target_data_loc <- filter(target_data, location == this_location) |>
     mutate(value_logit = logit(value)) |>
     filter(value_logit != -Inf, value_logit != Inf) #|>
-    #mutate(value_logit = rangeScale(value_logit))
+  #mutate(value_logit = rangeScale(value_logit))
   
   
   p <- mean_data_loc |>
