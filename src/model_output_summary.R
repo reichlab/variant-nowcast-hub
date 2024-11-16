@@ -1,4 +1,8 @@
 model_output_summary <- function(target_date){
+  ## A function to write a summary table of `model-output` and `model-metadata`
+  ## to PDF format. 
+  # Input: target_date = a model submission date in date format. 
+  
   library(arrow)
   library(yaml)
   library(knitr)
