@@ -6,10 +6,9 @@
 #' @param baseline_clade clade to use as baseline for logit
 #' @param save_path path to where files will be saved
 #'
-#' @return
-#' @export
-#'
 #' @examples
+#' plot_summary_graphs(model_output_file = "LANL-CovTransformer/2024-11-13-LANL-CovTransformer.parquet",
+#'                     s3_data_date = "2024-11-11")
 plot_summary_graphs <- function(model_output_file = NULL,
                                 s3_data_date = NULL,
                                 baseline_clade = "24A",
