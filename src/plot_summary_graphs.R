@@ -190,8 +190,8 @@ plot_one_location <- function(this_location, model_output_data, target_data){
   target_data_loc <- filter(target_data, location == this_location)
 
   if (min(target_data_loc$value) < 0 | max(target_data_loc$value) > 1) {
-    ylim <- c(-4, 4)
-    transftitle <- "Logit Transformed "
+    ylim <- c(NA, NA) ## ensures that all data are plotted
+    transftitle <- "Logit Transformed"
   } else {
     ylim <- c(0, 1)
     transftitle <- ""
@@ -203,7 +203,8 @@ plot_one_location <- function(this_location, model_output_data, target_data){
     geom_smooth(data = target_data_loc, se=FALSE, aes(weight = total))+
     geom_line(color = "red") +
     geom_ribbon(aes(ymin = q10, ymax = q90), fill="red", alpha = .5) +
-    scale_y_continuous(limits = ylim, name = "clade frequency") +
+    scale_y_continuous(name = "clade frequency") +
+    coord_cartesian(ylim = ylim) +
     scale_x_date(NULL, date_breaks = "3 months", date_minor_breaks = "1 month") +
     scale_size(name = "# of sequences") +
     facet_wrap(~clade) +
@@ -235,8 +236,8 @@ plot_one_clade <- function(this_clade, model_output_data, target_data){
   target_data_clade <- filter(target_data, clade == this_clade)
 
   if (min(target_data_clade$value) < 0 | max(target_data_clade$value) > 1) {
-    ylim <- c(-4, 4)
-    transftitle <- "Logit Transformed "
+    ylim <- c(NA, NA) ## ensures that all data are plotted
+    transftitle <- "Logit Transformed"
   } else {
     ylim <- c(0, 1)
     transftitle <- ""
