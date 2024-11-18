@@ -12,10 +12,10 @@
 #' plot_summary_graphs(model_output_file = "LANL-CovTransformer/2024-11-13-LANL-CovTransformer.parquet",
 #'                     s3_data_date = "2024-11-11")
 plot_summary_graphs <- function(
-    hub_path = "../",
     model_output_file = NULL,
     s3_data_date = NULL,
     baseline_clade = "24A",
+    hub_path = "../",
     save_path = "~/Downloads/"){
   require(arrow)
   require(dplyr)
@@ -25,7 +25,7 @@ plot_summary_graphs <- function(
   dat <- read_parquet(dat_path)
 
   ## load in the hub locations file
-  load(paste(hub_path, "src/hub_locations.rda", sep=""))
+  load(paste(hub_path, "auxiliary-data/hub_locations.rda", sep=""))
   locs <- hub_locations |>
     dplyr::select(abbreviation, location_name)
 
