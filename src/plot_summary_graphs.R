@@ -24,6 +24,8 @@ plot_summary_graphs <- function(
   dat_path <- paste(hub_path,"model-output/", model_output_file, sep = "")
   dat <- read_parquet(dat_path)
 
+  model_id <- sub("/.*", "", model_output_file)
+
   ## load in the hub locations file
   load(paste(hub_path, "auxiliary-data/hub_locations.rda", sep=""))
   locs <- hub_locations |>
@@ -61,14 +63,14 @@ plot_summary_graphs <- function(
   ### plots on probability scale
 
   ## Weekly plots
-  save_path_weekly = paste(save_path, "weekly_", s3_data_date, ".pdf", sep = "")
+  save_path_weekly = paste(save_path, model_id, "_weekly_", s3_data_date, ".pdf", sep = "")
   save_plots(model_output_data = dat,
              target_data = targets_other_wk,
              save_path = save_path_weekly)
 
 
   ## Daily plots
-  save_path_daily = paste(save_path, "daily_", s3_data_date, ".pdf", sep = "")
+  save_path_daily = paste(save_path, model_id, "_daily_", s3_data_date, ".pdf", sep = "")
   save_plots(model_output_data = dat,
              target_data = targets_other_wk,
              save_path = save_path_daily)
@@ -78,8 +80,11 @@ plot_summary_graphs <- function(
   samples <- dat[dat$output_type == "sample", ]
 
   ## compute logit-scale values for each sample
-  model_output_logit <- merge(samples, samples[samples$clade == baseline_clade, c("target_date", "output_type_id", "value")],
-                by = c("target_date", "output_type_id"), suffixes = c("", ".base"),
+  model_output_logit <- merge(samples,
+                              samples[samples$clade == baseline_clade,
+                                      c("target_date", "output_type_id", "value")],
+                by = c("target_date", "output_type_id"),
+                suffixes = c("", ".base"),
                 all.x = TRUE)
   model_output_logit$logitval <- log(model_output_logit$value) - log(model_output_logit$value.base)
   model_output_logit$value.base <- NULL
@@ -87,8 +92,9 @@ plot_summary_graphs <- function(
   model_output_logit$logitval <- NULL
 
   ## compute logit-scale target data at weekly scale
-  target_logit_wk <- merge(targets_other_wk, targets_other_wk[targets_other_wk$clade == baseline_clade,
-                                                             c("date", "location", "value")],
+  target_logit_wk <- merge(targets_other_wk,
+                           targets_other_wk[targets_other_wk$clade == baseline_clade,
+                                            c("date", "location", "value")],
                           by = c("date", "location"), suffixes = c("", ".base"),
                           all.x = TRUE)
   target_logit_wk <- target_logit_wk[target_logit_wk$value > 0 & target_logit_wk$value.base > 0, ]
@@ -108,14 +114,14 @@ plot_summary_graphs <- function(
   target_logit$logitval <- NULL
 
   ## Logit weekly plots
-  save_path_weekly_logit = paste(save_path, "weekly_logit_", s3_data_date, ".pdf", sep = "")
+  save_path_weekly_logit = paste(save_path, model_id, "_weekly_logit_", s3_data_date, ".pdf", sep = "")
   save_plots(model_output_data = model_output_logit,
              target_data = target_logit_wk,
              save_path = save_path_weekly_logit)
 
 
   ## Logit plots daily
-  save_path_daily_logit = paste(save_path, "daily_logit_", s3_data_date, ".pdf", sep = "")
+  save_path_daily_logit = paste(save_path, model_id, "_daily_logit_", s3_data_date, ".pdf", sep = "")
   save_plots(model_output_data = model_output_logit,
              target_data = target_logit,
              save_path = save_path_daily_logit)
