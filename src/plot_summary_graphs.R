@@ -4,24 +4,28 @@
 #' @param model_output_file character string, directory under variant-nowcast-hub/[team name]/[model output parquet file]
 #' @param s3_data_date character string, the date to pull data from S3 bucket. Should be a Monday.
 #' @param baseline_clade clade to use as baseline for logit
-#' @param save_path path to where files will be saved
+#' @param hub_path character string, path to the root of the hub from the current working directory,
+#' defaults to assume that variant-nowcast-hub/src is the working directory
+#' @param save_path path to where files will be saved, relative to the working directory
 #'
 #' @examples
 #' plot_summary_graphs(model_output_file = "LANL-CovTransformer/2024-11-13-LANL-CovTransformer.parquet",
 #'                     s3_data_date = "2024-11-11")
-plot_summary_graphs <- function(model_output_file = NULL,
-                                s3_data_date = NULL,
-                                baseline_clade = "24A",
-                                save_path = "~/Downloads/"){
+plot_summary_graphs <- function(
+    hub_path = "../",
+    model_output_file = NULL,
+    s3_data_date = NULL,
+    baseline_clade = "24A",
+    save_path = "~/Downloads/"){
   require(arrow)
   require(dplyr)
 
   # Model output data from model_output
-  dat_path <- paste("../model-output/", model_output_file, sep = "")
+  dat_path <- paste(hub_path,"model-output/", model_output_file, sep = "")
   dat <- read_parquet(dat_path)
 
   ## load in the hub locations file
-  load("../src/hub_locations.rda")
+  load(paste(hub_path, "src/hub_locations.rda", sep=""))
   locs <- hub_locations |>
     dplyr::select(abbreviation, location_name)
 
