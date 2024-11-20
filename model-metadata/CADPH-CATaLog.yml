@@ -52,7 +52,7 @@ license: "CC-BY-4.0"  # Choose from accepted licenses
 team_funding:
   - "The content is solely the responsibility of the authors and does not necessarily represent the official views of the California Department of Public Health or the California Health and Human Services Agency."
 
-methods: "Fits a logistic growth function to data. Based on Althaus, Christian L., et al. ''A Tale of Two Variants: Spread of SARS-CoV-2 Variants Alpha in Geneva, Switzerland, and Beta in South Africa."
+methods: "Fits a logistic growth function to data. Based on Althaus, Christian L., et al. ''A Tale of Two Variants: Spread of SARS-CoV-2 Variants Alpha in Geneva, Switzerland, and Beta in South Africa. 1.1 Adds filtering criteria/ GISAID data addition"
 
 methods_url: "https://calcat.cdph.ca.gov"
 
@@ -64,7 +64,7 @@ ensemble_of_models: false  # Set to true if it is an ensemble of separate models
 ensemble_of_hub_models: false  # Set to true if it is an ensemble of hub-submitted models
 
 # Optional fields
-model_version: "1.0"  # Optional version identifier
+model_version: "1.1"  # Optional version identifier
 
 repo_url: "https://github.com/breesie/variant-nowcast-hub" # Optional repository URL
 
