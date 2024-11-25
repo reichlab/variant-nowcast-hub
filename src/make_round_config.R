@@ -46,6 +46,7 @@ get_latest_clade_file <- function(hub_dir) {
 #' @param hub_root Character vector. The full path to the hub's root directory.
 #' @returns A round object.
 create_new_round <- function(hub_root) {
+  the_schema <- "v3.0.1"
   this_round_clade_file <- get_latest_clade_file(hub_root)
   this_round_clade_list <- fromJSON(this_round_clade_file$clade_file)$clades
   this_round_date <- this_round_clade_file$round_id
@@ -57,6 +58,7 @@ create_new_round <- function(hub_root) {
     hubAdmin::create_model_task(
       task_ids = hubAdmin::create_task_ids(
         hubAdmin::create_task_id("nowcast_date",
+          schema = the_schema,
           required = list(this_round_date),
           optional = NULL
         ),
@@ -66,6 +68,7 @@ create_new_round <- function(hub_root) {
           optional = as.character(seq(as.Date(this_round_date) - 31, as.Date(this_round_date) + 10, by = "day"))
         ),
         hubAdmin::create_task_id("location",
+          schema = the_schema,
           required = NULL,
           optional = c(
             "AL", "AK", "AZ", "AR", "CA", "CO",
@@ -80,18 +83,21 @@ create_new_round <- function(hub_root) {
           )
         ),
         hubAdmin::create_task_id("clade",
+          schema = the_schema,
           required = this_round_clade_list,
           optional = NULL
         )
       ),
       output_type = hubAdmin::create_output_type(
         hubAdmin::create_output_type_mean(
+          schema = the_schema,
           is_required = FALSE,
           value_type = "double",
           value_minimum = 0L,
           value_maximum = 1L
         ),
         hubAdmin::create_output_type_sample(
+          schema = the_schema,
           is_required = FALSE,
           output_type_id_type = "character",
           max_length = 15L,
@@ -104,6 +110,7 @@ create_new_round <- function(hub_root) {
       ),
       target_metadata = hubAdmin::create_target_metadata(
         hubAdmin::create_target_metadata_item(
+          schema = the_schema,
           target_id = "clade prop",
           target_name = "Daily nowcasted clade proportions",
           target_units = "proportion",
