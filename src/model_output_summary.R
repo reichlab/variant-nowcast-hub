@@ -63,13 +63,15 @@ model_summary <- function(target_date, file_path_to_metadata = "../model-metadat
 
     # getting the output types and the model names
     output_types[j] <- paste(unique(model$output_type), collapse = ", ")
-    clade_names[j] <- paste(unique(model$clade), collapse = ", ")
+    clades <- sort(unique(model$clade))
+    clade_names[j] <- paste(clades, collapse = ", ")
     model_names[j] <- substr(file, 1, nchar(file) - 4)
     j <- j + 1
   }
   # reading the information into a txt file
   save_file_name = paste0(file_path_for_txt_file, target_date, ".txt")
-  cat(paste("Summary of submissions for", target_date), file = save_file_name)
+  cat(paste("Summary of submissions for", target_date, "\n"), file = save_file_name)
+  cat(paste("Clades modeled:", clade_names[1], "\n"), file = save_file_name, append = T)
   for(i in 1:length((Model_creator))){
     cat("\n", file = save_file_name, append = T)
     cat(paste("Model creators:", Model_creator[i], "\n"), file = save_file_name, append = T)
@@ -78,6 +80,5 @@ model_summary <- function(target_date, file_path_to_metadata = "../model-metadat
     cat(paste("Number of locations modeled:", number_of_locations_modeled[i], "\n"), file = save_file_name, append = T)
     cat(paste("Locations modeled:", Locations_modeled[i], "\n"), file = save_file_name, append = T)
     cat(paste("Locations not modeled:", locations_not_modeled[i], "\n"), file = save_file_name, append = T)
-    cat(paste("Clades modeled:", clade_names[i], "\n"), file = save_file_name, append = T)
   }
 }
