@@ -63,6 +63,7 @@ create_new_round <- function(hub_root) {
           optional = NULL
         ),
         hubAdmin::create_task_id("target_date",
+          schema = the_schema,
           required = NULL,
           ## target date is nowcast_date and the three prior weeks
           optional = as.character(seq(as.Date(this_round_date) - 31, as.Date(this_round_date) + 10, by = "day"))
