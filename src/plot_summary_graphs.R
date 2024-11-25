@@ -1,4 +1,3 @@
-
 #' save PDF plots: clades by location, daily and weekly, logit and non-logit
 #'
 #' @param model_output_file character string, directory under variant-nowcast-hub/[team name]/[model output parquet file]
@@ -23,6 +22,7 @@ plot_summary_graphs <- function(
     page_by_location = TRUE){
   require(arrow)
   require(dplyr)
+  options(dplyr.summarise.inform = FALSE) # Suppress message output for dplyr use
 
   # Model output data from model_output
   dat_path <- paste(hub_path,"model-output/", model_output_file, sep = "")
@@ -68,18 +68,18 @@ plot_summary_graphs <- function(
 
   ## Weekly plots
   save_path_weekly = paste(save_path, model_id, "_weekly_", s3_data_date, ".pdf", sep = "")
-  save_plots(model_output_data = dat,
+  suppressMessages(save_plots(model_output_data = dat,
              target_data = targets_other_wk,
              save_path = save_path_weekly,
-             page_by_location = page_by_location)
+             page_by_location = page_by_location))
 
 
   ## Daily plots
   save_path_daily = paste(save_path, model_id, "_daily_", s3_data_date, ".pdf", sep = "")
-  save_plots(model_output_data = dat,
+  suppressMessages(save_plots(model_output_data = dat,
              target_data = targets_other_wk,
              save_path = save_path_daily,
-             page_by_location = page_by_location)
+             page_by_location = page_by_location))
 
   ### plots on logit scale
 
@@ -121,18 +121,18 @@ plot_summary_graphs <- function(
 
   ## Logit weekly plots
   save_path_weekly_logit = paste(save_path, model_id, "_weekly_logit_", s3_data_date, ".pdf", sep = "")
-  save_plots(model_output_data = model_output_logit,
+  suppressMessages(save_plots(model_output_data = model_output_logit,
              target_data = target_logit_wk,
              save_path = save_path_weekly_logit,
-             page_by_location = page_by_location)
+             page_by_location = page_by_location))
 
 
   ## Logit plots daily
   save_path_daily_logit = paste(save_path, model_id, "_daily_logit_", s3_data_date, ".pdf", sep = "")
-  save_plots(model_output_data = model_output_logit,
+  suppressMessages(save_plots(model_output_data = model_output_logit,
              target_data = target_logit,
              save_path = save_path_daily_logit,
-             page_by_location = page_by_location)
+             page_by_location = page_by_location))
 }
 
 
