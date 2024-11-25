@@ -21,7 +21,7 @@ To run the script manually:
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#   "cladetime@git+https://github.com/reichlab/cladetime",
+#   "cladetime@git+https://github.com/reichlab/cladetime@elr/use_metadata_url",
 #   "polars",
 # ]
 # ///
