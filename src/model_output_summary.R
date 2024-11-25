@@ -1,3 +1,11 @@
+#' print model output summary for all models submitted for a given week
+#'
+#' @param target_date date of format YYYY-MM-DD. Should be a Wednesday (when submissions are due)
+#' @param file_path_to_metadata character string, directory under variant-nowcast-hub/[model-metadata]
+#' @param file_path_to_output character string, directory under variant-nowcast-hub/[team name]/[model output parquet file]
+#' @param file_path_for_txt_file character string, dierctory to save the output summary as .txt
+#'
+#' @examples model_summary(target_date = as.Date("2024-11-13"))
 model_summary <- function(target_date, file_path_to_metadata = "../model-metadata", file_path_to_output = "../model-output/"
                           , file_path_for_txt_file = "../model_output_summary_" ){
 
@@ -16,6 +24,7 @@ model_summary <- function(target_date, file_path_to_metadata = "../model-metadat
   output_types <- c() # the variable to store the output types
   number_of_locations_modeled <- c() # the variable to store the number of locationes modeled
   model_names <- c() # the names of the models
+  clade_names <- c() # the names of the clades modeled
   all_locations <- c(state.abb, "PR", "DC") # all the possible locations to model
   j <- 1
 
@@ -28,14 +37,17 @@ model_summary <- function(target_date, file_path_to_metadata = "../model-metadat
     # reading in the modelers name
     suppressWarnings(yml_data <- yaml::yaml.load_file(paste0(file_path_to_metadata, "/", file)))
     Model_creator[j] <- yml_data$team_name
+
     # reading in the model file
     model <- arrow::read_parquet(paste0(file_path_to_output, substr(file, 1, nchar(file) - 4),
                                         "/", target_date, "-", substr(file, 1, nchar(file) - 3), "parquet"))
+
     # grabbing the number of locations, and locations modeled for the model
     loc_modeled <- unique(model$location) # the locations modeled as a vector
     loc_not_modeled <- "" # all the locations not modeled as a string
     Locations_modeled[j] <- paste(loc_modeled, collapse = ", ")
     number_of_locations_modeled[j] <- length(unique(model$location))
+
     # finding all the locations not modeled
     if(number_of_locations_modeled[j] == 52){
       loc_not_modeled <- "All locations modeled"
@@ -48,14 +60,18 @@ model_summary <- function(target_date, file_path_to_metadata = "../model-metadat
       loc_not_modeled <- substr(loc_not_modeled, 2, nchar(loc_not_modeled)) # removing the extra comma at the start
     }
     locations_not_modeled[j] <- loc_not_modeled
+
     # getting the output types and the model names
     output_types[j] <- paste(unique(model$output_type), collapse = ", ")
+    clades <- sort(unique(model$clade))
+    clade_names[j] <- paste(clades, collapse = ", ")
     model_names[j] <- substr(file, 1, nchar(file) - 4)
     j <- j + 1
   }
   # reading the information into a txt file
   save_file_name = paste0(file_path_for_txt_file, target_date, ".txt")
-  cat(paste("Summary of submissions for", target_date), file = save_file_name)
+  cat(paste("Summary of submissions for", target_date, "\n"), file = save_file_name)
+  cat(paste("Clades modeled:", clade_names[1], "\n"), file = save_file_name, append = T)
   for(i in 1:length((Model_creator))){
     cat("\n", file = save_file_name, append = T)
     cat(paste("Model creators:", Model_creator[i], "\n"), file = save_file_name, append = T)
@@ -66,4 +82,3 @@ model_summary <- function(target_date, file_path_to_metadata = "../model-metadat
     cat(paste("Locations not modeled:", locations_not_modeled[i], "\n"), file = save_file_name, append = T)
   }
 }
-#model_summary(target_date = as.Date("2024-11-13"))
