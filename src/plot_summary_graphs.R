@@ -1,4 +1,3 @@
-options(dplyr.summarise.inform = FALSE) # Suppress message output for dplyr use
 #' save PDF plots: clades by location, daily and weekly, logit and non-logit
 #'
 #' @param model_output_file character string, directory under variant-nowcast-hub/[team name]/[model output parquet file]
@@ -23,6 +22,7 @@ plot_summary_graphs <- function(
     page_by_location = TRUE){
   require(arrow)
   require(dplyr)
+  options(dplyr.summarise.inform = FALSE) # Suppress message output for dplyr use
 
   # Model output data from model_output
   dat_path <- paste(hub_path,"model-output/", model_output_file, sep = "")
