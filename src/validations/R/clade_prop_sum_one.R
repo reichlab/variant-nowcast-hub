@@ -1,5 +1,5 @@
 clade_prop_sum_one <- function(tbl, file_path) {
-  tbl <- tbl[tbl[["output_type"]] == "sample", ]
+  tbl <- tbl[tbl[["output_type"]] %in% c("mean", "sample"), ]
   error_object <- check_sum_one(tbl)
   check <- is.null(error_object)
 
@@ -49,10 +49,11 @@ check_sum_one <- function (tbl) {
     return(NULL)
   }
   # If we get here, then return the task IDs that did not succeed
-  dplyr::filter(check_tbl, !.data[["sum1"]]) %>% 
+  baddies <- dplyr::filter(check_tbl, !.data[["sum1"]]) %>% 
     dplyr::select(-dplyr::all_of("sum1")) %>% 
-    dplyr::ungroup() %>% 
-    dplyr::mutate(output_type = "sample")
+    dplyr::ungroup()
+  baddies$output_type <- ifelse(is.na(baddies$output_type_id), "mean", "sample")
+  return(baddies)
 }
 
 ## PRINTING UTILITIES ----------------------------------------------------------
@@ -60,9 +61,9 @@ check_sum_one <- function (tbl) {
 cheap_kable <- function(tbl) {
   n <- nrow(tbl)
   cols <- names(tbl)
-  pads <- vapply(tbl, nchar, integer(n))
+  pads <- vapply(tbl, nchar, integer(n), allowNA = TRUE, keepNA = FALSE)
   if (n > 1) {
-    pads <- apply(pads, MARGIN = 2, max)
+    pads <- apply(pads, MARGIN = 2, max, na.rm = TRUE)
   }
   cpad <- nchar(cols)
   pad <- ifelse(pads > cpad, pads, cpad)
@@ -127,9 +128,9 @@ test <- function() {
     "good output has non-null error object" = is.null(good_res$error_object),
     "output table is shown for good data" = expect_rows(good_out, 0),
     "bad output table has wrong number of rows" = expect_rows(bad_out, 2),
-    "bad output table has expected rows" = nrow(bad_res$error_object) == 2,
+    "bad output error object has unexpected rows" = nrow(bad_res$error_object) == 2,
     "big bad output table has wrong number of rows" = expect_rows(big_bad_out, 10),
-    "big bad output table has expected rows" = nrow(big_bad_res$error_object) == 12,
+    "big bad output error object has unexpected rows" = nrow(big_bad_res$error_object) == 12 + 6,
     TRUE
   )
   
