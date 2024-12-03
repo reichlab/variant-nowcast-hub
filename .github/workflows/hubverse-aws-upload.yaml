@@ -21,6 +21,9 @@ jobs:
 
     steps:
 
+    - name: wat
+      run: echo ${{ github.repository.fork }}
+
     - name: Checkout
       uses: actions/checkout@v4
 
