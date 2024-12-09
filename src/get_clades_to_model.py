@@ -22,7 +22,7 @@ To run the script manually:
 # requires-python = ">=3.11"
 # dependencies = [
 #   "cladetime@git+https://github.com/reichlab/cladetime",
-#   "polars==1.6.0",
+#   "polars>=1.17.1,<1.18.0",
 # ]
 # ///
 
