@@ -1,0 +1,25 @@
+team_name: "ugatest"
+team_abbr: "ugatest"
+model_name: "Basic Multinomial Logistic Regression"
+model_abbr: "compound_taskid"
+model_version: "1.0"
+model_contributors: [
+  {
+    "name": "Spencer Fox",
+    "affiliation": "Department of Epidemiology and Biostatistics, University of Georgia",
+    "email": "sjfox@uga.edu"
+  },
+  {
+    "name": "Ehsan Suez",
+    "affiliation": "Institute of Bioinformatics, University of Georgia",
+    "email": "Ehsan.Suez@uga.edu"
+  },
+]
+license: "CC-BY-4.0"
+team_funding: "This work has been supported by the US Centers for Disease Control and Prevention’s Center for Forecasting and Outbreak Analytics (NU38FT000008). The content is solely the responsibility of the authors and does not represent the official views of the CDC."
+methods: "A multinomial logistic regression model with no fancy features for nowcasting COVID-19 variants."
+methods_url: "https://github.com/sjfox/multicast/tree/main"
+data_sources: "NextStrain"
+ensemble_of_models: false
+ensemble_of_hub_models: false
+repo_url: "https://github.com/sjfox/multicast/tree/main"
