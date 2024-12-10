@@ -104,6 +104,7 @@ create_new_round <- function(hub_root) {
           max_length = 15L,
           min_samples_per_task = 100L,
           max_samples_per_task = 100L,
+          compound_taskid_set = c("nowcast_date", "location"),
           value_type = "double",
           value_minimum = 0L,
           value_maximum = 1L,
