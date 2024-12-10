@@ -28,7 +28,7 @@ To run the script manually:
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import TypedDict
 
@@ -120,7 +120,9 @@ def main(
 
     class RoundData(TypedDict):
         clades: list[str]
-        meta: dict[str, dict]
+        meta: dict[str, dict | str]
+
+    current_time = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
     # Get the clade list
     logger.info("Getting clade list")
@@ -143,7 +145,10 @@ def main(
     ncov_meta["metadata_version_url"] = ct.url_ncov_metadata
     logger.info(f"Ncov metadata: {ncov_meta}")
 
-    round_data: RoundData = {"clades": clade_list, "meta": {"ncov": ncov_meta}}
+    round_data: RoundData = {
+        "clades": clade_list,
+        "meta": {"created_at": current_time, "ncov": ncov_meta},
+    }
 
     clade_file = clade_output_path / f"{round_id}.json"
     with open(clade_file, "w") as f:
