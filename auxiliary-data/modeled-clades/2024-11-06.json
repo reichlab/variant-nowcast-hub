@@ -10,6 +10,7 @@
         "other"
     ],
     "meta": {
+        "created_at": "2024-11-04T19:58:15+00:00",
         "ncov": {
             "schema_version": "v1",
             "nextclade_version": "nextclade 3.9.1",
