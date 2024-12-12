@@ -8,9 +8,11 @@ To run the script manually:
 IMPORTANT NOTE! If you want to try the script on a subset of Nextstrain data
 (rather than a full dataset of sequences), set an environment variable named
 CLADETIME_DEMO to true before running the scripts.
-
 For example, on MacOS:
 export CLADETIME_DEMO=true
+
+DO NOT SET CLADETIME_DEMO TO TRUE IF YOU WANT TO USE THE FULL DATASET OF SEQUENCES
+(for example when generating target data)
 """
 
 # /// script
@@ -44,6 +46,7 @@ def main():
     # save summarized clades to a file
     assigned_clades.summary.collect().write_csv("summarized_clades.csv")
     # or output to another data structure
+    # (optional: if you're using polars in python or if you're using R, you can skip this)
     assigned_clades.summary.collect().to_pandas()
 
     # the detailed file is larger, so if you need to save it, parquet is a good option
