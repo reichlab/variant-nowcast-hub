@@ -12,7 +12,10 @@ To run the script manually:
 2. From the root of this repo:
 uv run src/get_target_data.py --nowcast-date=YYYY-MM-DD
 For example:
-uv run src/get_target_data.py --nowcast-date=2024-10-09
+`uv run src/get_target_data.py --nowcast-date=2024-10-09`
+
+To run the included tests manually (from the root of the repo):
+uv run --with-requirements src/requirements.txt --module pytest src/get_target_data.py
 """
 
 # /// script
@@ -27,10 +30,13 @@ uv run src/get_target_data.py --nowcast-date=2024-10-09
 import json
 from pathlib import Path
 import logging
+import sys
 from datetime import datetime, timedelta, timezone
 
 import click
 import polars as pl
+from click.testing import CliRunner
+from click import Context, Option
 
 from cladetime import Clade, CladeTime, sequence  # type: ignore
 
@@ -44,11 +50,61 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
-# Output directory is the hub's target-data directory
-# (note in the docstring that this script should be run from the repo's root)
-target_data_dir = Path(__file__).parents[1] / "target-data"
-target_time_series_dir = target_data_dir / "time-series"
-target_time_series_dir.mkdir(exist_ok=True, parents=True)
+# valid locations for variant-nowcast-hub (50 states + DC and PR)
+state_list = [
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "DC",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+    "PR",
+]
 
 
 def normalize_date(ctx, param, value):
@@ -124,13 +180,21 @@ def set_collection_max_date(ctx, param, value):
     callback=set_collection_max_date,
     help="Assign clades to sequences collected on or before this UTC date (YYYY-MM-DD), Default is the nowcast date plus 10 days.",
 )
+@click.option(
+    "--target-data-dir",
+    type=Path,
+    required=False,
+    default=Path(__file__).parents[1] / "target-data",
+    help="For testing only: Path object to the directory where the target data will be saved. Default is the hub's target-data directory.",
+)
 def main(
     nowcast_date: datetime,
     sequence_as_of: datetime,
     tree_as_of: datetime,
     collection_min_date: datetime,
     collection_max_date: datetime,
-) -> Clade:
+    target_data_dir: Path,
+) -> tuple[Path, Path]:
     """Get clade counts and save to S3 bucket."""
 
     # Date for retrieving sequences cannot be in the future
@@ -138,7 +202,7 @@ def main(
         logger.info(
             f"Stopping script. Sequence_as_of is in the future: {sequence_as_of}"
         )
-        return 1
+        sys.exit(1)
 
     # Nowcast_date must match a variant-nowcast-hub round_id
     nowcast_string = nowcast_date.strftime("%Y-%m-%d")
@@ -149,7 +213,7 @@ def main(
         logger.info(
             f"Stopping script. No round found for nowcast_date: {nowcast_string}"
         )
-        return 1
+        sys.exit(1)
     else:
         modeled_clades = json.loads(modeled_clades_path.read_text(encoding="utf-8"))
         clade_list = modeled_clades.get("clades", [])
@@ -172,7 +236,7 @@ def main(
         collection_min_date,
         collection_max_date,
     )
-    write_target_time_series(
+    target_data = create_target_data(
         assignments,
         clade_list,
         nowcast_string,
@@ -180,6 +244,15 @@ def main(
         collection_min_date,
         collection_max_date,
     )
+
+    output_files = write_target_data(
+        nowcast_string,
+        sequence_as_of.strftime("%Y-%m-%d"),
+        target_data,
+        target_data_dir,
+    )
+
+    return output_files
 
 
 def assign_clades(
@@ -214,15 +287,17 @@ def assign_clades(
     return assignments
 
 
-def write_target_time_series(
+def create_target_data(
     assignments: Clade,
     clade_list: list,
     nowcast_string: str,
     sequence_as_of_string: str,
     collection_min_date: datetime,
     collection_max_date: datetime,
-):
-    """Write time series target data to partitioned parquet file."""
+) -> tuple[pl.LazyFrame, pl.LazyFrame]:
+    """Return time series and oracle output target data."""
+    clade_list = [clade for clade in clade_list if clade != "other"]
+
     time_series = assignments.summary.select(
         ["location", "date", "clade_nextstrain", "count"]
     ).filter(pl.col("clade_nextstrain").is_in(clade_list))
@@ -233,8 +308,8 @@ def write_target_time_series(
                 collection_min_date, collection_max_date, "1d", eager=True
             ).alias("date")
         )
-        .join(time_series.select("location").unique(), how="cross")
-        .join(time_series.select("clade_nextstrain").unique(), how="cross")
+        .join(pl.Series("location", state_list).to_frame().lazy(), how="cross")
+        .join(pl.Series("clade_nextstrain", clade_list).to_frame().lazy(), how="cross")
     )
 
     # Add rows that for locations/target_dates/clades that didn't have observations
@@ -252,17 +327,159 @@ def write_target_time_series(
         )
     )
 
-    output_path = (
+    return (time_series_all, pl.LazyFrame())
+
+
+def write_target_data(
+    nowcast_string: str,
+    sequence_as_of_string: str,
+    target_data: tuple[pl.LazyFrame, pl.LazyFrame],
+    # default output directory is the hub's target-data directory
+    target_data_dir: Path,
+) -> tuple[Path, Path]:
+    """Write time series and oracle output target data to S3 bucket."""
+    target_time_series_dir = target_data_dir / "time-series"
+
+    ts_output_path = (
         target_time_series_dir
         / f"nowcast_date={nowcast_string}/sequence_as_of={sequence_as_of_string}"
     )
-    output_path.mkdir(exist_ok=True, parents=True)
+    ts_output_path.mkdir(exist_ok=True, parents=True)
+    ts_output_path = ts_output_path / "timeseries.parquet"
 
-    # the time_series_all LazyFrame has a query plan that sink_parquet doesn't like,
+    # the time_series LazyFrame has a query plan that sink_parquet doesn't like,
     # so we'll have to collect it before exporting as parquet
-    time_series_all.collect().write_parquet(output_path / "timeseries.parquet")
-    logger.info(f"Target time series saved to {output_path / 'timeseries.parquet'}")
+    time_series = target_data[0]
+    time_series.collect().write_parquet(ts_output_path)
+    logger.info(f"Target time series saved to {ts_output_path}")
+
+    return (ts_output_path, Path())
 
 
 if __name__ == "__main__":
     main()
+
+
+##############################################################
+# Tests                                                      #
+##############################################################
+
+
+def test_set_option_defaults():
+    """Test default value of optional Click parameters."""
+
+    @click.command()
+    def mock_command():
+        pass
+
+    ctx = Context(mock_command)
+    ctx.params = {"nowcast_date": datetime(2024, 10, 2)}
+
+    # default sequence_as_of is 90 days after the nowcast date
+    param = Option(["--sequence-as-of"])
+    result = set_sequence_as_of(ctx, param, None)
+    assert result == datetime(2024, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+
+    # if tree_as_of is provided, it should be set to end of day UTC
+    param = Option(["--tree-as-of"])
+    result = normalize_date(ctx, param, datetime(2024, 11, 11, 11, 11, 11))
+    assert result == datetime(2024, 11, 11, 23, 59, 59, tzinfo=timezone.utc)
+
+    # default collection_min_date is 31 days before the nowcast date
+    param = Option(["--collection-min-date"])
+    result = set_collection_min_date(ctx, param, None)
+    assert result == datetime(2024, 9, 1, 23, 59, 59, tzinfo=timezone.utc)
+
+    # default collection_max_date is 10 days after the nowcast date
+    param = Option(["--collection-max-date"])
+    result = set_collection_max_date(ctx, param, None)
+    assert result == datetime(2024, 10, 12, 23, 59, 59, tzinfo=timezone.utc)
+
+
+def test_bad_inputs():
+    """Bad inputs should return a non-zero exit code."""
+    runner = CliRunner()
+
+    # sequence_as_of cannot be in the future
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            main,
+            [
+                "--nowcast-date",
+                "2024-10-02",
+                "--sequence-as-of",
+                "2054-10-02",
+            ],
+            catch_exceptions=True,
+            color=True,
+            standalone_mode=False,
+        )
+        assert result.exit_code == 1
+
+    # nowcast_date must match a variant-nowcast-hub round_id
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            main,
+            [
+                "--nowcast-date",
+                "2022-2-2",
+                "--sequence-as-of",
+                "2024-10-01",
+            ],
+            catch_exceptions=True,
+            color=True,
+            standalone_mode=False,
+        )
+        assert result.exit_code == 1
+
+
+def test_target_data(caplog, tmp_path):
+    """
+    If the modeled-clades file doesn't have meta.created_at, tree_as_of should default to
+    nowcast_date - two days.
+    """
+    caplog.set_level(logging.INFO)
+    env = {
+        "CLADETIME_DEMO": "false",
+    }
+
+    nowcast_date = "2024-09-11"
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--nowcast-date",
+            nowcast_date,
+            "--target-data-dir",
+            tmp_path,
+        ],
+        color=True,
+        catch_exceptions=False,
+        standalone_mode=False,
+        env=env,
+    )
+    assert result.exit_code == 0
+    ts = pl.read_parquet(result.return_value[0])
+
+    # sequence date should default to nowcast_date + 90 days
+    assert "sequence_as_of=2024-12-10" in caplog.text
+    # tasks.json for 2024-09-11 doesn't have a meta.created_at field, so tree_as_of = nowcast_date - 2 days
+    assert "tree_as_of=2024-09-09" in caplog.text
+
+    # time series target dates should be limited to dates that match collection date min/max options
+    # (2024-08-11 to 2024-09-21 is 43 days, but both have 11:59:59 timestamps, so we'd expect
+    # 42 days in the time series)
+    target_dates = ts["target_date"].unique().to_list()
+    assert len(target_dates) == 42
+
+    modeled_clades_path = Path("auxiliary-data/modeled-clades") / f"{nowcast_date}.json"
+    modeled_clades = json.loads(modeled_clades_path.read_text(encoding="utf-8"))
+    round_clades = [
+        clade for clade in modeled_clades.get("clades", []) if clade != "other"
+    ]
+    ts_clades = ts["clade"].unique().to_list()
+    assert len(round_clades) == len(ts_clades)
+    assert set(ts_clades).issubset(set(round_clades))
+
+    # time series rows should = total target dates * total locations * total clades
+    len(target_dates) * len(state_list) * len(round_clades) == ts.height
