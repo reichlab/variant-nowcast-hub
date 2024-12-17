@@ -22,7 +22,7 @@ uv run --with-requirements src/requirements.txt --module pytest src/get_target_d
 # requires-python = "==3.12"
 # dependencies = [
 #   "click",
-#   "cladetime@git+https://github.com/reichlab/cladetime@bsweger/optimize-fasta-handling/55",
+#   "cladetime@git+https://github.com/reichlab/cladetime",
 #   "polars>=1.17.1,<1.18.0",
 # ]
 # ///
