@@ -439,9 +439,6 @@ def test_target_data(caplog, tmp_path):
     nowcast_date - two days.
     """
     caplog.set_level(logging.INFO)
-    env = {
-        "CLADETIME_DEMO": "false",
-    }
 
     nowcast_date = "2024-09-11"
     runner = CliRunner()
@@ -456,7 +453,6 @@ def test_target_data(caplog, tmp_path):
         color=True,
         catch_exceptions=False,
         standalone_mode=False,
-        env=env,
     )
     assert result.exit_code == 0
     ts = pl.read_parquet(result.return_value[0])
