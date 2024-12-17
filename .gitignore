@@ -7,4 +7,7 @@
 # uv run creates a transient, isolated environment
 **/uv.lock
 
+# other python artifacts
+**/__pycache__
+
 .pre-commit-config.yaml
