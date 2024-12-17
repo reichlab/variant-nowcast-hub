@@ -1,4 +1,4 @@
-name: run-target-data-code-checks
+name: Run tests for target data script
 
 on:
   push:
