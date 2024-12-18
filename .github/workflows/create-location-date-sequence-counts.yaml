@@ -1,7 +1,7 @@
 # This workflow is designed to run shortly after the hub's weekly submission
 # deadline. It generates an unscored-location-dates file as well as time
 # series and oracle output target data.
-name: Run post-submission close jobs
+name: Run post-submission jobs
 
 on:
   schedule:
@@ -13,7 +13,12 @@ on:
       nowcast_date:
         description: "Nowcast date (YYYY-MM-DD). Defaults to most recent Wed."
         required: true
-        default: $(date -d'last wednesday' +%Y-%m-%d)
+        default: |
+          $(if [ $(date +%u) -eq 3 ]; then
+            date +%Y-%m-%d
+          else
+            date -d'last wednesday' +%Y-%m-%d
+          fi)
 
 permissions:
     contents: write
@@ -48,7 +53,11 @@ jobs:
         # if nowcast_date is not provided, use the most recent Wednesday
         run: |
           if [ -z "${{ inputs.nowcast_date }}" ]; then
-            NOWCAST_DATE=$(date -d'last wednesday' +%Y-%m-%d)
+            NOWCAST_DATE=$(if [ $(date +%u) -eq 3 ]; then
+              date +%Y-%m-%d
+            else
+              date -d'last wednesday' +%Y-%m-%d
+            fi)
           else
             NOWCAST_DATE=${{ inputs.nowcast_date }}
           fi
