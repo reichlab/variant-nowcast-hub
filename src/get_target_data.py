@@ -31,7 +31,7 @@ import json
 from pathlib import Path
 import logging
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import click
 import polars as pl
@@ -435,6 +435,50 @@ def test_bad_inputs():
             standalone_mode=False,
         )
         assert result.exit_code == 1
+
+
+def test_target_time_series():
+    test_summary = {
+        "location": ["PA", "PA", "MA", "MA", "MA"],
+        "date": [
+            date(2024, 12, 1),
+            date(2024, 12, 3),
+            date(2024, 12, 2),
+            date(2024, 12, 1),
+            date(2024, 12, 2),
+        ],
+        "clade_nextstrain": ["AA", "BB", "CC", "DD", "BB"],
+        "count": [2, 3, 4, 5, 6],
+    }
+    test_assignments: Clade = Clade({}, pl.LazyFrame(), pl.LazyFrame(test_summary))  # type: ignore
+    test_clade_list = ["AA", "BB", "other"]
+    test_min_date = datetime(2024, 11, 30, tzinfo=timezone.utc)
+    test_max_date = datetime(2024, 12, 4, tzinfo=timezone.utc)
+    time_series, _ = create_target_data(
+        test_assignments,
+        test_clade_list,
+        "2024-12-11",
+        "2024-12-11",
+        test_min_date,
+        test_max_date,
+    )
+    ts = time_series.collect()
+
+    # time series row count should = 5 days * 3 clades * 52 locations
+    assert ts.height == 5 * 3 * 52
+
+    assert set(ts.get_column("clade").to_list()) == {"AA", "BB", "other"}
+    assert ts.get_column("target_date").min() == date(2024, 11, 30)
+    assert ts.get_column("target_date").max() == date(2024, 12, 4)
+    assert ts.get_column("observation").sum() == 20
+
+    clade_counts = ts.sql(
+        "select clade, sum(observation) as sum from self group by clade"
+    )
+    clade_counts_dict = dict(clade_counts.iter_rows())
+    assert clade_counts_dict.get("other") == 9
+    assert clade_counts_dict.get("AA") == 2
+    assert clade_counts_dict.get("BB") == 9
 
 
 def test_target_data(caplog, tmp_path):
