@@ -296,11 +296,18 @@ def create_target_data(
     collection_max_date: datetime,
 ) -> tuple[pl.LazyFrame, pl.LazyFrame]:
     """Return time series and oracle output target data."""
-    clade_list = [clade for clade in clade_list if clade != "other"]
 
-    time_series = assignments.summary.select(
-        ["location", "date", "clade_nextstrain", "count"]
-    ).filter(pl.col("clade_nextstrain").is_in(clade_list))
+    time_series = (
+        assignments.summary.select(["location", "date", "clade_nextstrain", "count"])
+        .with_columns(
+            clade=pl.when(pl.col("clade_nextstrain").is_in(clade_list))
+            .then(pl.col("clade_nextstrain"))
+            .otherwise(pl.lit("other"))
+        )
+        .select(["location", "date", "clade", "count"])
+        .group_by(["location", "date", "clade"])
+        .sum()
+    )
 
     all_rows = (
         pl.LazyFrame(
@@ -309,18 +316,15 @@ def create_target_data(
             ).alias("date")
         )
         .join(pl.Series("location", state_list).to_frame().lazy(), how="cross")
-        .join(pl.Series("clade_nextstrain", clade_list).to_frame().lazy(), how="cross")
+        .join(pl.Series("clade", clade_list).to_frame().lazy(), how="cross")
     )
 
     # Add rows that for locations/target_dates/clades that didn't have observations
     time_series_all = (
-        all_rows.join(
-            time_series, on=["location", "date", "clade_nextstrain"], how="left"
-        )
+        all_rows.join(time_series, on=["location", "date", "clade"], how="left")
         .fill_null(strategy="zero")
         .rename(
             {
-                "clade_nextstrain": "clade",
                 "count": "observation",
                 "date": "target_date",
             }
@@ -469,13 +473,11 @@ def test_target_data(caplog, tmp_path):
     assert len(target_dates) == 42
 
     modeled_clades_path = Path("auxiliary-data/modeled-clades") / f"{nowcast_date}.json"
-    modeled_clades = json.loads(modeled_clades_path.read_text(encoding="utf-8"))
-    round_clades = [
-        clade for clade in modeled_clades.get("clades", []) if clade != "other"
-    ]
+    modeled_clades_json = json.loads(modeled_clades_path.read_text(encoding="utf-8"))
+    modeled_clades = modeled_clades_json["clades"]
     ts_clades = ts["clade"].unique().to_list()
-    assert len(round_clades) == len(ts_clades)
-    assert set(ts_clades).issubset(set(round_clades))
+    assert len(modeled_clades) == len(ts_clades)
+    assert set(ts_clades).issubset(set(modeled_clades))
 
     # time series rows should = total target dates * total locations * total clades
-    len(target_dates) * len(state_list) * len(round_clades) == ts.height
+    len(target_dates) * len(state_list) * len(modeled_clades) == ts.height

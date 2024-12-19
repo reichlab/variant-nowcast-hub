@@ -3,6 +3,6 @@
 # to invoke scripts' test_ functions (the dependencies are also part of the
 # individual scripts' metadata block for ease of use).
 click
-cladetime@git+https://github.com/reichlab/cladetime@bsweger/optimize-fasta-handling/55
+cladetime@git+https://github.com/reichlab/cladetime
 polars>=1.17.1,<1.18.0
 pytest
