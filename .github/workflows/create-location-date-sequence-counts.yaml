@@ -11,14 +11,8 @@ on:
   workflow_dispatch:
     inputs:
       nowcast_date:
-        description: "Nowcast date (YYYY-MM-DD). Defaults to most recent Wed."
-        required: true
-        default: |
-          $(if [ $(date +%u) -eq 3 ]; then
-            date +%Y-%m-%d
-          else
-            date -d'last wednesday' +%Y-%m-%d
-          fi)
+        description: "Nowcast date (YYYY-MM-DD)"
+        required: false
 
 permissions:
     contents: write
@@ -52,12 +46,9 @@ jobs:
       - name: Get nowcast date (aka round_id) 🕰️
         # if nowcast_date is not provided, use the most recent Wednesday
         run: |
+          source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
           if [ -z "${{ inputs.nowcast_date }}" ]; then
-            NOWCAST_DATE=$(if [ $(date +%u) -eq 3 ]; then
-              date +%Y-%m-%d
-            else
-              date -d'last wednesday' +%Y-%m-%d
-            fi)
+            NOWCAST_DATE=$(get_latest_wednesday)
           else
             NOWCAST_DATE=${{ inputs.nowcast_date }}
           fi
