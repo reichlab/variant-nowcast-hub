@@ -1,5 +1,5 @@
 """
-Create time series and oracle output target data for a specfici modeling round.
+Create time series and oracle output target data for a specific modeling round.
 
 This script wraps the cladetime package, which generates clade counts using the
 GenBank-based Sars-CoV-2 sequence metadata from Nextstrain.
