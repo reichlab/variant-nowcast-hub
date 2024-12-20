@@ -54,7 +54,7 @@ jobs:
       - name: Create target data 🎯
         run: |
           export CLADETIME_DEMO=true
-          uv run get_target_data.py --nowcast-date=$NOWCAST_DATE
+          uv run src/get_target_data.py --nowcast-date=$NOWCAST_DATE
 
       - name: Create PR for new target data
         uses: ./.github/actions/create-pr
@@ -93,8 +93,7 @@ jobs:
 
       - name: Create file of sequence counts by location and date 🦠
         run: |
-          uv run get_location_date_counts.py
-        working-directory: src
+          uv run src/get_location_date_counts.py
 
       - name: Create PR for sequence counts 🚀
         uses: ./.github/actions/create-pr
