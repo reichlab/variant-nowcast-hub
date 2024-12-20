@@ -42,27 +42,30 @@ jobs:
         with:
           version: ">=0.0.1"
 
-      - name: Get nowcast date (aka round_id) 🕰️
+      - name: Get nowcast date (aka round_id) for target data🕰️
         # if nowcast_date is not provided, use the most recent Wednesday
         run: |
           source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
           NOWCAST_DATE=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
+          TARGET_NOWCAST_DATE=$(date -d "$NOWCAST_DATE - 91 days" +%Y-%m-%d)
           echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_ENV
-          echo "Nowcast date for most recent round: $NOWCAST_DATE"
+          echo "TARGET_NOWCAST_DATE=$TARGET_NOWCAST_DATE" >> $GITHUB_ENV
+          echo "Creating target data for round $TARGET_NOWCAST_DATE"
 
       # remove CLADETIME_DEMO=true when done testing
       - name: Create target data 🎯
         run: |
           export CLADETIME_DEMO=true
-          uv run src/get_target_data.py --nowcast-date=$NOWCAST_DATE
+          uv run get_target_data.py --nowcast-date=$TARGET_NOWCAST_DATE
+        working-directory: src
 
       - name: Create PR for new target data
         uses: ./.github/actions/create-pr
         with:
-          pr-prefix: "${{ env.NOWCAST_DATE }} target data"
+          pr-prefix: "${{ env.TARGET_NOWCAST_DATE }} target data"
           file-path: target-data/
-          commit-message: "Add target data for round $NOWCAST_DATE"
-          pr-body: "Created via GitHub Actions: generate target data for round $NOWCAST_DATE"
+          commit-message: "Add target data for round $TARGET_NOWCAST_DATE"
+          pr-body: "Created via GitHub Actions: generate target data for round $TARGET_NOWCAST_DATE"
 
 
   create-location-date-sequence-counts:
@@ -93,7 +96,8 @@ jobs:
 
       - name: Create file of sequence counts by location and date 🦠
         run: |
-          uv run src/get_location_date_counts.py
+          uv run get_location_date_counts.py
+        working-directory: src
 
       - name: Create PR for sequence counts 🚀
         uses: ./.github/actions/create-pr
