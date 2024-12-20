@@ -46,13 +46,9 @@ jobs:
         # if nowcast_date is not provided, use the most recent Wednesday
         run: |
           source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
-          if [ -z "${{ inputs.nowcast_date }}" ]; then
-            NOWCAST_DATE=$(get_latest_wednesday)
-          else
-            NOWCAST_DATE=${{ inputs.nowcast_date }}
-          fi
+          NOWCAST_DATE=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
           echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_ENV
-          echo "Getting nowcast date for most recent round: $NOWCAST_DATE"
+          echo "Nowcast date for most recent round: $NOWCAST_DATE"
 
       #uv run get_target_data.py --nowcast-date=$NOWCAST_DATE
       - name: Create target data 🎯
@@ -87,11 +83,13 @@ jobs:
         with:
           version: "5.0.1"
 
-      - name: Test step
+      - name: Get nowcast date (aka round_id) 🕰️
+        # if nowcast_date is not provided, use the most recent Wednesday
         run: |
-          PR_DATETIME=$(date +'%Y-%m-%d_%H-%M-%S')
-          echo "PR_DATETIME=$PR_DATETIME" >> $GITHUB_ENV
-          echo "PR_DATETIME=$PR_DATETIME"
+          source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
+          NOWCAST_DATE=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
+          echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_ENV
+          echo "Nowcast date for most recent round: $NOWCAST_DATE"
 
       # - name: Create file of sequence counts by location and date 🦠
       #   run: |
