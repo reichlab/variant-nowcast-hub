@@ -19,7 +19,7 @@ uv run --with-requirements src/requirements.txt --module pytest src/get_target_d
 """
 
 # /// script
-# requires-python = "==3.12"
+# requires-python = ">=3.12,<3.13"
 # dependencies = [
 #   "click",
 #   "cladetime@git+https://github.com/reichlab/cladetime",
@@ -207,7 +207,10 @@ def main(
     # Nowcast_date must match a variant-nowcast-hub round_id
     nowcast_string = nowcast_date.strftime("%Y-%m-%d")
     modeled_clades_path = (
-        Path("auxiliary-data/modeled-clades") / f"{nowcast_string}.json"
+        Path(__file__).parents[1]
+        / "auxiliary-data"
+        / "modeled-clades"
+        / f"{nowcast_string}.json"
     )
     if not modeled_clades_path.is_file():
         logger.info(
