@@ -331,7 +331,13 @@ def create_target_data(
         )
     )
 
-    return (time_series_all, pl.LazyFrame())
+    oracle_output = (
+        time_series_all.select(["location", "target_date", "clade", "observation"])
+        .with_columns(pl.lit(nowcast_string).alias("nowcast_date"))
+        .rename({"observation": "oracle_value"})
+    )
+
+    return (time_series_all, oracle_output)
 
 
 def write_target_data(
@@ -341,7 +347,9 @@ def write_target_data(
     # default output directory is the hub's target-data directory
     target_data_dir: Path,
 ) -> tuple[Path, Path]:
-    """Write time series and oracle output target data to S3 bucket."""
+    """Write time series and oracle output target data."""
+
+    # write time series data
     target_time_series_dir = target_data_dir / "time-series"
 
     ts_output_path = (
@@ -357,7 +365,17 @@ def write_target_data(
     time_series.collect().write_parquet(ts_output_path)
     logger.info(f"Target time series saved to {ts_output_path}")
 
-    return (ts_output_path, Path())
+    # write oracle output data
+    target_oracle_output_dir = target_data_dir / "oracle-output"
+    oracle_output_path = target_oracle_output_dir / f"nowcast_date={nowcast_string}"
+    oracle_output_path.mkdir(exist_ok=True, parents=True)
+    oracle_output_path = oracle_output_path / "oracle.parquet"
+
+    oracle = target_data[1]
+    oracle.collect().write_parquet(oracle_output_path)
+    logger.info(f"Target oracle output saved to {oracle_output_path}")
+
+    return (ts_output_path, oracle_output_path)
 
 
 if __name__ == "__main__":
@@ -437,7 +455,7 @@ def test_bad_inputs():
         assert result.exit_code == 1
 
 
-def test_target_time_series():
+def test_target_data():
     test_summary = {
         "location": ["PA", "PA", "MA", "MA", "MA"],
         "date": [
@@ -454,7 +472,7 @@ def test_target_time_series():
     test_clade_list = ["AA", "BB", "other"]
     test_min_date = datetime(2024, 11, 30, tzinfo=timezone.utc)
     test_max_date = datetime(2024, 12, 4, tzinfo=timezone.utc)
-    time_series, _ = create_target_data(
+    time_series, oracle = create_target_data(
         test_assignments,
         test_clade_list,
         "2024-12-11",
@@ -466,6 +484,9 @@ def test_target_time_series():
 
     # time series row count should = 5 days * 3 clades * 52 locations
     assert ts.height == 5 * 3 * 52
+
+    expected_time_series_cols = set(["location", "target_date", "clade", "observation"])
+    assert set(ts.columns) == expected_time_series_cols
 
     assert set(ts.get_column("clade").to_list()) == {"AA", "BB", "other"}
     assert ts.get_column("target_date").min() == date(2024, 11, 30)
@@ -480,8 +501,15 @@ def test_target_time_series():
     assert clade_counts_dict.get("AA") == 2
     assert clade_counts_dict.get("BB") == 9
 
+    oracle = oracle.collect()
+    expected_oracle_cols = set(
+        ["nowcast_date", "location", "target_date", "clade", "oracle_value"]
+    )
+    assert set(oracle.columns) == expected_oracle_cols
+    assert oracle.height == ts.height
 
-def test_target_data(caplog, tmp_path):
+
+def test_target_data_integration(caplog, tmp_path):
     """
     If the modeled-clades file doesn't have meta.created_at, tree_as_of should default to
     nowcast_date - two days.
@@ -521,7 +549,29 @@ def test_target_data(caplog, tmp_path):
     modeled_clades = modeled_clades_json["clades"]
     ts_clades = ts["clade"].unique().to_list()
     assert len(modeled_clades) == len(ts_clades)
-    assert set(ts_clades).issubset(set(modeled_clades))
+    assert set(ts_clades) == (set(modeled_clades))
+
+    # check time series column data types
+    ts_schema_dict = ts.schema.to_python()
+    assert ts_schema_dict.get("location") is str
+    assert ts_schema_dict.get("target_date") is date
+    assert ts_schema_dict.get("clade") is str
+    assert ts_schema_dict.get("observation") is int
 
     # time series rows should = total target dates * total locations * total clades
     len(target_dates) * len(state_list) * len(modeled_clades) == ts.height
+
+    oracle = pl.read_parquet(result.return_value[1])
+    assert oracle.height == ts.height
+
+    oracle_clades = oracle["clade"].unique().to_list()
+    assert len(modeled_clades) == len(oracle_clades)
+    assert set(oracle_clades) == (set(modeled_clades))
+
+    # check oracle column data types
+    oracle_schema_dict = oracle.schema.to_python()
+    assert oracle_schema_dict.get("nowcast_date") is str
+    assert oracle_schema_dict.get("location") is str
+    assert oracle_schema_dict.get("target_date") is date
+    assert oracle_schema_dict.get("clade") is str
+    assert oracle_schema_dict.get("oracle_value") is int
