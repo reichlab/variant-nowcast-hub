@@ -96,7 +96,7 @@ jobs:
 
       - name: Create file of sequence counts by location and date 🦠
         run: |
-          uv run get_location_date_counts.py
+          uv run get_location_date_counts.py --nowcast-date=$NOWCAST_DATE
         working-directory: src
 
       - name: Create PR for sequence counts 🚀
