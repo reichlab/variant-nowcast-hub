@@ -62,7 +62,7 @@ jobs:
       - name: Create PR for new target data
         uses: ./.github/actions/create-pr
         with:
-          pr-prefix: "${{ env.TARGET_NOWCAST_DATE }} target data"
+          pr-prefix: "${{ env.TARGET_NOWCAST_DATE }}-target-data"
           file-path: target-data/
           commit-message: "Add target data for round $TARGET_NOWCAST_DATE"
           pr-body: "Created via GitHub Actions: generate target data for round $TARGET_NOWCAST_DATE"
@@ -102,7 +102,7 @@ jobs:
       - name: Create PR for sequence counts 🚀
         uses: ./.github/actions/create-pr
         with:
-          pr-prefix: "${{ env.NOWCAST_DATE }} unscored locations"
+          pr-prefix: "${{ env.NOWCAST_DATE }}-unscored-locations"
           file-path: auxiliary-data/unscored-location-dates/
           commit-message: "Add unscored locations for round $NOWCAST_DATE"
           pr-body: "Created via GitHub Actions: generate count of sequences collected by date/location for the past 31 days."
