@@ -50,16 +50,16 @@ jobs:
           echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_ENV
           echo "Nowcast date for most recent round: $NOWCAST_DATE"
 
-      #uv run get_target_data.py --nowcast-date=$NOWCAST_DATE
+      # remove CLADETIME_DEMO=true when done testing
       - name: Create target data 🎯
         run: |
-          mkdir -p target-data
-          echo "This is a test" > target-data/testy.txt
+          export CLADETIME_DEMO=true
+          uv run get_target_data.py --nowcast-date=$NOWCAST_DATE
 
       - name: Create PR for new target data
         uses: ./.github/actions/create-pr
         with:
-          pr-prefix: "${{ env.NOWCAST_DATE }}_target_data"
+          pr-prefix: "${{ env.NOWCAST_DATE }} target data"
           file-path: target-data/
           commit-message: "Add target data for round $NOWCAST_DATE"
           pr-body: "Created via GitHub Actions: generate target data for round $NOWCAST_DATE"
@@ -71,8 +71,7 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
         with:
-            # don't check out repo folders with large amounts of data
-            # (e.g., model-output, target-data)
+            # only checkout what we need
             sparse-checkout: |
               .github/
               auxiliary-data/
@@ -92,27 +91,15 @@ jobs:
           echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_ENV
           echo "Nowcast date for most recent round: $NOWCAST_DATE"
 
-      # - name: Create file of sequence counts by location and date 🦠
-      #   run: |
-      #     uv run get_location_date_counts.py
-      #   working-directory: src
+      - name: Create file of sequence counts by location and date 🦠
+        run: |
+          uv run get_location_date_counts.py
+        working-directory: src
 
-      # - name: Get current date and time 🕰️
-      #   run: |
-      #     PR_DATETIME=$(date +'%Y-%m-%d_%H-%M-%S')
-      #     echo "PR_DATETIME=$PR_DATETIME" >> $GITHUB_ENV
-
-      # - name: Create PR for sequence counts 🚀
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     git config user.name "github-actions[bot]"
-      #     git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      #     git checkout -b new_location_date_sequence_counts_"$PR_DATETIME"
-      #     git add auxiliary-data/unscored-location-dates/
-      #     git commit -m "Add sequence counts by location & date $PR_DATETIME"
-      #     git push -u origin new_location_date_sequence_counts_"$PR_DATETIME"
-      #     gh pr create \
-      #       --base main \
-      #       --title "Add new sequence counts by location and date $PR_DATETIME" \
-      #       --body "Created via GitHub Actions: generate count of sequences collected by date/location for the past 31 days."
+      - name: Create PR for sequence counts 🚀
+        uses: ./.github/actions/create-pr
+        with:
+          pr-prefix: "${{ env.NOWCAST_DATE }} unscored locations"
+          file-path: auxiliary-data/unscored-location-dates/
+          commit-message: "Add unscored locations for round $NOWCAST_DATE"
+          pr-body: "Created via GitHub Actions: generate count of sequences collected by date/location for the past 31 days."
