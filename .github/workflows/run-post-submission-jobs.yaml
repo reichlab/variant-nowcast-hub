@@ -1,0 +1,106 @@
+# This workflow is designed to run shortly after the hub's weekly submission
+# deadline. It generates an unscored-location-dates file as well as time
+# series and oracle output target data.
+name: Run post-submission jobs
+
+on:
+  schedule:
+    # Not precise, but GithHub actions don't support time zones
+    - cron: "20 01 * 11-12,1-3 4" # 1:20 AM UTC every Thurs (Nov-Dec, Jan-Mar)
+    - cron: "20 00 * 4-10 4" # 12:20 AM UTC every Thurs (Apr-Oct)
+  workflow_dispatch:
+    inputs:
+      nowcast_date:
+        description: "Nowcast date (YYYY-MM-DD)"
+        required: false
+
+permissions:
+    contents: write
+    pull-requests: write
+
+jobs:
+
+  # Create target data for the round that closed 90 days ago.
+  # This step will exit if there is no round with a nowcast
+  # date 90 days ago.
+  create-target-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+        with:
+            # only checkout what we need
+            sparse-checkout: |
+              .github/
+              auxiliary-data/
+              hub-config/
+              target-data/
+              src/
+
+      - name: Install uv 🐍
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: ">=0.0.1"
+
+      - name: Get nowcast date (aka round_id) for target data🕰️
+        # if nowcast_date is not provided, use the most recent Wednesday
+        run: |
+          source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
+          NOWCAST_DATE=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
+          TARGET_NOWCAST_DATE=$(date -d "$NOWCAST_DATE - 91 days" +%Y-%m-%d)
+          echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_ENV
+          echo "TARGET_NOWCAST_DATE=$TARGET_NOWCAST_DATE" >> $GITHUB_ENV
+          echo "Creating target data for round $TARGET_NOWCAST_DATE"
+
+      - name: Create target data 🎯
+        run: |
+          uv run get_target_data.py --nowcast-date=$TARGET_NOWCAST_DATE
+        working-directory: src
+
+      - name: Create PR for new target data
+        uses: ./.github/actions/create-pr
+        with:
+          pr-prefix: "${{ env.TARGET_NOWCAST_DATE }}-target-data"
+          file-path: target-data/
+          commit-message: "Add target data for round $TARGET_NOWCAST_DATE"
+          pr-body: "Created via GitHub Actions: generate target data for round $TARGET_NOWCAST_DATE"
+
+
+  create-location-date-sequence-counts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+        with:
+            # only checkout what we need
+            sparse-checkout: |
+              .github/
+              auxiliary-data/
+              hub-config/
+              src/
+
+      - name: Install uv 🐍
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: ">=0.0.1"
+
+      - name: Get nowcast date (aka round_id) 🕰️
+        # if nowcast_date is not provided, use the most recent Wednesday
+        run: |
+          source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
+          NOWCAST_DATE=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
+          echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_ENV
+          echo "Nowcast date for most recent round: $NOWCAST_DATE"
+
+      - name: Create file of sequence counts by location and date 🦠
+        run: |
+          uv run get_location_date_counts.py --nowcast-date=$NOWCAST_DATE
+        working-directory: src
+
+      - name: Create PR for sequence counts 🚀
+        uses: ./.github/actions/create-pr
+        with:
+          pr-prefix: "${{ env.NOWCAST_DATE }}-unscored-locations"
+          file-path: auxiliary-data/unscored-location-dates/
+          commit-message: "Add unscored locations for round $NOWCAST_DATE"
+          pr-body: "Created via GitHub Actions: generate count of sequences collected by date/location for the past 31 days."
