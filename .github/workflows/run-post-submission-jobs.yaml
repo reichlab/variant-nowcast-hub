@@ -52,10 +52,8 @@ jobs:
           echo "TARGET_NOWCAST_DATE=$TARGET_NOWCAST_DATE" >> $GITHUB_ENV
           echo "Creating target data for round $TARGET_NOWCAST_DATE"
 
-      # remove CLADETIME_DEMO=true when done testing
       - name: Create target data 🎯
         run: |
-          export CLADETIME_DEMO=true
           uv run get_target_data.py --nowcast-date=$TARGET_NOWCAST_DATE
         working-directory: src
 
