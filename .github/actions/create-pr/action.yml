@@ -18,7 +18,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Get current date and time
+    - name: Get current date and time ⏰
       shell: bash
       run: |
         PR_DATETIME=$(date +'%Y-%m-%d_%H-%M-%S')
