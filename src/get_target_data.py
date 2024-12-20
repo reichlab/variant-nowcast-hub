@@ -216,7 +216,7 @@ def main(
         logger.info(
             f"Stopping script. No round found for nowcast_date: {nowcast_string}"
         )
-        sys.exit(1)
+        sys.exit(0)
     else:
         modeled_clades = json.loads(modeled_clades_path.read_text(encoding="utf-8"))
         clade_list = modeled_clades.get("clades", [])
@@ -421,8 +421,9 @@ def test_set_option_defaults():
     assert result == datetime(2024, 10, 12, 23, 59, 59, tzinfo=timezone.utc)
 
 
-def test_bad_inputs():
+def test_bad_inputs(caplog):
     """Bad inputs should return a non-zero exit code."""
+    caplog.set_level(logging.INFO)
     runner = CliRunner()
 
     # sequence_as_of cannot be in the future
@@ -455,7 +456,8 @@ def test_bad_inputs():
             color=True,
             standalone_mode=False,
         )
-        assert result.exit_code == 1
+        assert result.exit_code == 0
+        assert "stopping script" in caplog.text.lower()
 
 
 def test_target_data():
