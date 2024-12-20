@@ -323,6 +323,10 @@ def create_target_data(
     time_series_all = (
         all_rows.join(time_series, on=["location", "date", "clade"], how="left")
         .fill_null(strategy="zero")
+        .with_columns(
+            pl.lit(nowcast_string).alias("nowcast_date"),
+            pl.lit(sequence_as_of_string).alias("sequence_as_of"),
+        )
         .rename(
             {
                 "count": "observation",
@@ -475,8 +479,8 @@ def test_target_data():
     time_series, oracle = create_target_data(
         test_assignments,
         test_clade_list,
-        "2024-12-11",
-        "2024-12-11",
+        "2024-9-11",
+        "2024-12-17",
         test_min_date,
         test_max_date,
     )
@@ -485,13 +489,24 @@ def test_target_data():
     # time series row count should = 5 days * 3 clades * 52 locations
     assert ts.height == 5 * 3 * 52
 
-    expected_time_series_cols = set(["location", "target_date", "clade", "observation"])
+    expected_time_series_cols = set(
+        [
+            "location",
+            "target_date",
+            "clade",
+            "observation",
+            "nowcast_date",
+            "sequence_as_of",
+        ]
+    )
     assert set(ts.columns) == expected_time_series_cols
 
     assert set(ts.get_column("clade").to_list()) == {"AA", "BB", "other"}
     assert ts.get_column("target_date").min() == date(2024, 11, 30)
     assert ts.get_column("target_date").max() == date(2024, 12, 4)
     assert ts.get_column("observation").sum() == 20
+    assert ts.get_column("nowcast_date").unique().to_list() == ["2024-9-11"]
+    assert ts.get_column("sequence_as_of").unique().to_list() == ["2024-12-17"]
 
     clade_counts = ts.sql(
         "select clade, sum(observation) as sum from self group by clade"
@@ -557,6 +572,8 @@ def test_target_data_integration(caplog, tmp_path):
     assert ts_schema_dict.get("target_date") is date
     assert ts_schema_dict.get("clade") is str
     assert ts_schema_dict.get("observation") is int
+    assert ts_schema_dict.get("nowcast_date") is str
+    assert ts_schema_dict.get("sequence_as_of") is str
 
     # time series rows should = total target dates * total locations * total clades
     len(target_dates) * len(state_list) * len(modeled_clades) == ts.height
