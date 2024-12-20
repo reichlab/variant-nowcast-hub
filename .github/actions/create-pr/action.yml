@@ -40,6 +40,13 @@ runs:
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git checkout -b ${{ inputs.pr-prefix }}_"$PR_DATETIME"
         git add ${{ inputs.file-path }}
+
+        # if there are no changes to commit, exit
+        if git diff --staged --quiet; then
+          echo "No changes to commit in ${{ inputs.file-path }}"
+          exit 0
+        fi
+
         git commit -m "${{ inputs.commit-message }} $PR_DATETIME"
         git push -u origin HEAD
         gh pr create \
