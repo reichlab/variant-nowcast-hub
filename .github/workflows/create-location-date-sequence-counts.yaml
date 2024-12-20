@@ -40,8 +40,7 @@ jobs:
       - name: Install uv 🐍
         uses: astral-sh/setup-uv@v2
         with:
-          version: "0.4.9"
-          enable-cache: true
+          version: "5.0.1"
 
       - name: Get nowcast date (aka round_id) 🕰️
         # if nowcast_date is not provided, use the most recent Wednesday
@@ -86,8 +85,7 @@ jobs:
       - name: Install uv 🐍
         uses: astral-sh/setup-uv@v2
         with:
-          version: "0.4.9"
-          enable-cache: true
+          version: "5.0.1"
 
       - name: Test step
         run: |
