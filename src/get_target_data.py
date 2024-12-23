@@ -326,6 +326,9 @@ def create_target_data(
         .with_columns(
             pl.lit(nowcast_string).alias("nowcast_date"),
             pl.lit(sequence_as_of_string).alias("sequence_as_of"),
+            pl.lit(assignments.meta["tree_as_of"].strftime("%Y-%m-%d")).alias(
+                "tree_as_of"
+            ),
         )
         .rename(
             {
@@ -472,7 +475,11 @@ def test_target_data():
         "clade_nextstrain": ["AA", "BB", "CC", "DD", "BB"],
         "count": [2, 3, 4, 5, 6],
     }
-    test_assignments: Clade = Clade({}, pl.LazyFrame(), pl.LazyFrame(test_summary))  # type: ignore
+    test_assignments: Clade = Clade(
+        {"tree_as_of": datetime(2024, 8, 1, 14, 30, 40)},
+        pl.LazyFrame(),
+        pl.LazyFrame(test_summary),
+    )  # type: ignore
     test_clade_list = ["AA", "BB", "other"]
     test_min_date = datetime(2024, 11, 30, tzinfo=timezone.utc)
     test_max_date = datetime(2024, 12, 4, tzinfo=timezone.utc)
@@ -497,6 +504,7 @@ def test_target_data():
             "observation",
             "nowcast_date",
             "sequence_as_of",
+            "tree_as_of",
         ]
     )
     assert set(ts.columns) == expected_time_series_cols
@@ -507,6 +515,7 @@ def test_target_data():
     assert ts.get_column("observation").sum() == 20
     assert ts.get_column("nowcast_date").unique().to_list() == ["2024-9-11"]
     assert ts.get_column("sequence_as_of").unique().to_list() == ["2024-12-17"]
+    assert ts.get_column("tree_as_of").unique().to_list() == ["2024-08-01"]
 
     clade_counts = ts.sql(
         "select clade, sum(observation) as sum from self group by clade"
@@ -566,6 +575,8 @@ def test_target_data_integration(caplog, tmp_path):
     assert len(modeled_clades) == len(ts_clades)
     assert set(ts_clades) == (set(modeled_clades))
 
+    assert ts.get_column("tree_as_of").unique().to_list() == ["2024-09-09"]
+
     # check time series column data types
     ts_schema_dict = ts.schema.to_python()
     assert ts_schema_dict.get("location") is str
@@ -574,6 +585,7 @@ def test_target_data_integration(caplog, tmp_path):
     assert ts_schema_dict.get("observation") is int
     assert ts_schema_dict.get("nowcast_date") is str
     assert ts_schema_dict.get("sequence_as_of") is str
+    assert ts_schema_dict.get("tree_as_of") is str
 
     # time series rows should = total target dates * total locations * total clades
     len(target_dates) * len(state_list) * len(modeled_clades) == ts.height
