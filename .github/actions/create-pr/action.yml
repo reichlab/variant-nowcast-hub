@@ -1,0 +1,55 @@
+name: Submit PR
+description: Submit a PR with files created by the invoking GitHub workflow
+
+inputs:
+  pr-prefix:
+    description: "Prefix for PR branch and title"
+    required: true
+  file-path:
+    description: "Path to the file(s) to commit"
+    required: true
+  commit-message:
+    description: "Commit message"
+    required: true
+  pr-body:
+    description: "Description of the PR"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get current date and time ⏰
+      shell: bash
+      run: |
+        PR_DATETIME=$(date +'%Y-%m-%d_%H-%M-%S')
+        echo "PR_DATETIME=$PR_DATETIME" >> $GITHUB_ENV
+
+    - name: Create PR
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: |
+        # debug stuff
+        echo "Current directory: $(pwd)"
+        echo "Checking file exists:"
+        ls -la ${{ inputs.file-path }}
+        echo "Git status:"
+        git status
+
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git checkout -b ${{ inputs.pr-prefix }}_"$PR_DATETIME"
+        git add ${{ inputs.file-path }}
+
+        # if there are no changes to commit, exit
+        if git diff --staged --quiet; then
+          echo "No changes to commit in ${{ inputs.file-path }}"
+          exit 0
+        fi
+
+        git commit -m "${{ inputs.commit-message }} $PR_DATETIME"
+        git push -u origin HEAD
+        gh pr create \
+          --base main \
+          --title "${{ inputs.pr-prefix }} $PR_DATETIME" \
+          --body "${{ inputs.pr-body }}"
