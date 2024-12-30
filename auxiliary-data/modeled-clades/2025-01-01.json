@@ -1,0 +1,28 @@
+{
+    "clades": [
+        "24A",
+        "24B",
+        "24C",
+        "24E",
+        "24F",
+        "24G",
+        "24H",
+        "24I",
+        "recombinant",
+        "other"
+    ],
+    "meta": {
+        "created_at": "2024-12-30T03:09:34+00:00",
+        "ncov": {
+            "schema_version": "v1",
+            "nextclade_version": "nextclade 3.9.1",
+            "nextclade_dataset_name": "SARS-CoV-2",
+            "nextclade_dataset_version": "2024-11-19--14-18-53Z",
+            "nextclade_tsv_sha256sum": "aad5d0679cb591274de53459597479cd6fe815649f6354e13db892023556f1ec",
+            "metadata_tsv_sha256sum": "b8ebc05cafb0d4c97cd913e28839f051afde5ee67b5ba3e6a125c74406687646",
+            "nextclade_dataset_name_full": "nextstrain/sars-cov-2/wuhan-hu-1/orfs",
+            "nextclade_version_num": "3.9.1",
+            "metadata_version_url": "https://nextstrain-data.s3.amazonaws.com/files/ncov/open/metadata_version.json?versionId=dx0R28zI6vLU.PST_iW48Z1jOoqCdf0G"
+        }
+    }
+}
