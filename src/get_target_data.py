@@ -1,4 +1,5 @@
 """
+Create time series and oracle output target data for a specific modeling round.
 
 This script wraps the cladetime package, which generates clade counts using the
 GenBank-based Sars-CoV-2 sequence metadata from Nextstrain.
@@ -6,7 +7,6 @@ https://github.com/reichlab/cladetime
 
 The script is scheduled to run every Wednesday evening (US Eastern)
 
-Create time series and oracle output target data for a specific modeling round.
 To run the script manually:
 1. Install uv on your machine: https://docs.astral.sh/uv/getting-started/installation/
 2. From the root of this repo:
@@ -335,6 +335,12 @@ def create_target_data(
 
     oracle_output = (
         time_series_all.select(["location", "target_date", "clade", "observation"])
+        # for oracle output, include only sequence collection dates that are >=
+        # nowcast_date - 31 days
+        .filter(
+            pl.col("target_date")
+            >= datetime.fromisoformat(nowcast_string) - timedelta(days=31)
+        )
         .with_columns(pl.lit(nowcast_string).alias("nowcast_date"))
         .rename({"observation": "oracle_value"})
     )
@@ -472,11 +478,11 @@ def test_target_data():
         "clade_nextstrain": ["AA", "BB", "CC", "DD", "BB"],
         "count": [2, 3, 4, 5, 6],
     }
-    test_assignments: Clade = Clade(
+    test_assignments = Clade(
         {"tree_as_of": datetime(2024, 8, 1, 14, 30, 40)},
         pl.LazyFrame(),
         pl.LazyFrame(test_summary),
-    )  # type: ignore
+    )
     test_clade_list = ["AA", "BB", "other"]
     test_min_date = datetime(2024, 11, 30, tzinfo=timezone.utc)
     test_max_date = datetime(2024, 12, 4, tzinfo=timezone.utc)
@@ -599,7 +605,21 @@ def test_target_data_integration(caplog, tmp_path):
     len(target_dates) * len(state_list) * len(modeled_clades) == ts.height
 
     oracle = pl.read_parquet(result.return_value[1])
-    assert oracle.height == ts.height
+
+    oracle_min_date = oracle["target_date"].min()
+    oracle_max_date = oracle["target_date"].max()
+    assert (
+        oracle_min_date
+        == (datetime.strptime(nowcast_date, "%Y-%m-%d") - timedelta(days=31)).date()
+    )
+    assert (
+        oracle_max_date
+        == (datetime.strptime(nowcast_date, "%Y-%m-%d") + timedelta(days=10)).date()
+    )
+
+    # oracle series rows should = number of oracle target dates * total locations * total clades
+    expected_num_days = (oracle_max_date - oracle_min_date).days + 1
+    assert oracle.height == expected_num_days * len(state_list) * len(modeled_clades)
 
     oracle_clades = oracle["clade"].unique().to_list()
     assert len(modeled_clades) == len(oracle_clades)
