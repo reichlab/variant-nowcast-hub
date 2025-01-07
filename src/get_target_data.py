@@ -422,7 +422,7 @@ def test_set_option_defaults():
 
 
 def test_bad_inputs(caplog):
-    """Bad inputs should return a non-zero exit code."""
+    """Bad inputs should return a non-zero exit code or a graceful script exit."""
     caplog.set_level(logging.INFO)
     runner = CliRunner()
 
