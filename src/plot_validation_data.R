@@ -5,15 +5,16 @@
 # Currently does daily plots, but will be extended to weekly
 library("dplyr")
 library("ggplot2")
+library("arrow")
 here::i_am("src/plot_validation_data.R")
 # Load validation data from CladeTime (pre-made)
 # Note: this file is generated through CladeTime as is not made here, must be
 # created ahead of time and path changed here
 hub_path <- here::here()
-df_oct <- read.csv(here::here("auxiliary-data/example-files/summarized_clades_asof_2024-10-28_on_2025-01-07.csv")) |> 
+df_validation <- read.csv(here::here("auxiliary-data/example-files/summarized_clades_asof_2024-10-28_on_2025-01-07.csv")) |> 
   subset(select = -c(host, country))
 # Some locs have missing counts (non-present)
-# e.g. subset(df_oct, (date == "2024-10-01") & (location == "TX")) # "MA"
+# e.g. subset(df_validation, (date == "2024-10-01") & (location == "TX")) # "MA"
 # Resolved with tidyr::complete() 
 
 # Meta data for getting data available on reference date
@@ -21,7 +22,7 @@ reference_date <- "2024-10-28" ## REFERENCE DATE
 s3_data_date <- reference_date
 targets_path_s3 <- paste0("https://covid-clade-counts.s3.amazonaws.com/",
 s3_data_date, "_covid_clade_counts.parquet")
-df_retro_oct <- arrow::read_parquet(targets_path_s3)
+df_retro <- arrow::read_parquet(targets_path_s3)
 
 ## load in the hub locations file - convert names/abbreviations
 load(file.path(hub_path, "auxiliary-data/hub_locations.rda"))
@@ -30,7 +31,7 @@ locs <- hub_locations |>
   rename(location = location_name)
 
 ## Modify location names for df_retro
-df_retro_oct <- df_retro_oct %>%
+df_retro <- df_retro %>%
   left_join(locs, by = "location") %>%
   # Replace the location names with their abbreviations
   mutate(location = abbreviation) %>%
@@ -42,8 +43,8 @@ df_model_output <- arrow::read_parquet(file.path(hub_path, "model-output/UMass-H
 
 clades <- unique(df_model_output$clade)
 
-colnames(df_retro_oct)[3] <- "clade"
-targets_retro <- df_retro_oct |>
+colnames(df_retro)[3] <- "clade"
+targets_retro <- df_retro |>
   filter(!is.na(date), date >= (as.Date(s3_data_date) - 150)) |>
   mutate(clade = ifelse(clade %in% clades, clade, "other")) |>
   #tidyr::complete(location, date, clade, fill = list(count=0)) |>
@@ -66,8 +67,8 @@ for (this_location in unique_locs){
   targets_retro_this_location <- targets_retro |> subset((location == this_location))
   
   ## Daily targets (actual observed)
-  colnames(df_oct)[3] <- "clade"
-  targets <- df_oct |>
+  colnames(df_validation)[3] <- "clade"
+  targets <- df_validation |>
     #filter(!is.na(date), date >= "2024-01-01") |>
     mutate(clade = ifelse(clade %in% clades, clade, "other")) |>
     #tidyr::complete(location, date, clade, fill = list(count=0)) |>
