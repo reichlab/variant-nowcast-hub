@@ -3,11 +3,14 @@
 # at reference date (training data) and data validated through CladeTime at a 
 # later date for validation purposes. 
 # Currently does daily plots, but will be extended to weekly
-
+library("dplyr")
+library("ggplot2")
+here::i_am("src/plot_validation_data.R")
 # Load validation data from CladeTime (pre-made)
 # Note: this file is generated through CladeTime as is not made here, must be
 # created ahead of time and path changed here
-df_oct <- read.csv("./auxiliary-data/example-files/summarized_clades_asof_2024-10-28_on_2025-01-07.csv") |> 
+hub_path <- here::here()
+df_oct <- read.csv(here::here("auxiliary-data/example-files/summarized_clades_asof_2024-10-28_on_2025-01-07.csv")) |> 
   subset(select = -c(host, country))
 # Some locs have missing counts (non-present)
 # e.g. subset(df_oct, (date == "2024-10-01") & (location == "TX")) # "MA"
@@ -21,8 +24,7 @@ s3_data_date, "_covid_clade_counts.parquet")
 df_retro_oct <- arrow::read_parquet(targets_path_s3)
 
 ## load in the hub locations file - convert names/abbreviations
-hub_path = "./"
-load(paste0(hub_path, "auxiliary-data/hub_locations.rda"))
+load(file.path(hub_path, "auxiliary-data/hub_locations.rda"))
 locs <- hub_locations |>
   dplyr::select(abbreviation, location_name) |>
   rename(location = location_name)
@@ -36,7 +38,7 @@ df_retro_oct <- df_retro_oct %>%
   select(-abbreviation)
 
 # Model output, just UMASS HMLR for now
-df_model_output <- arrow::read_parquet(paste0(hub_path, "model-output/UMass-HMLR/2024-10-30-UMass-HMLR.parquet"))
+df_model_output <- arrow::read_parquet(file.path(hub_path, "model-output/UMass-HMLR/2024-10-30-UMass-HMLR.parquet"))
 
 clades <- unique(df_model_output$clade)
 
