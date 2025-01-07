@@ -19,7 +19,7 @@ uv run --with-requirements src/requirements.txt --module pytest src/get_target_d
 """
 
 # /// script
-# requires-python = "==3.12"
+# requires-python = ">=3.12,<3.13"
 # dependencies = [
 #   "click",
 #   "cladetime@git+https://github.com/reichlab/cladetime",
@@ -207,13 +207,16 @@ def main(
     # Nowcast_date must match a variant-nowcast-hub round_id
     nowcast_string = nowcast_date.strftime("%Y-%m-%d")
     modeled_clades_path = (
-        Path("auxiliary-data/modeled-clades") / f"{nowcast_string}.json"
+        Path(__file__).parents[1]
+        / "auxiliary-data"
+        / "modeled-clades"
+        / f"{nowcast_string}.json"
     )
     if not modeled_clades_path.is_file():
         logger.info(
             f"Stopping script. No round found for nowcast_date: {nowcast_string}"
         )
-        sys.exit(1)
+        sys.exit(0)
     else:
         modeled_clades = json.loads(modeled_clades_path.read_text(encoding="utf-8"))
         clade_list = modeled_clades.get("clades", [])
@@ -425,8 +428,9 @@ def test_set_option_defaults():
     assert result == datetime(2024, 10, 12, 23, 59, 59, tzinfo=timezone.utc)
 
 
-def test_bad_inputs():
-    """Bad inputs should return a non-zero exit code."""
+def test_bad_inputs(caplog):
+    """Bad inputs should return a non-zero exit code or a graceful script exit."""
+    caplog.set_level(logging.INFO)
     runner = CliRunner()
 
     # sequence_as_of cannot be in the future
@@ -459,7 +463,8 @@ def test_bad_inputs():
             color=True,
             standalone_mode=False,
         )
-        assert result.exit_code == 1
+        assert result.exit_code == 0
+        assert "stopping script" in caplog.text.lower()
 
 
 def test_target_data():

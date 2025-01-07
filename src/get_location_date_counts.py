@@ -13,8 +13,9 @@ To run the script manually:
 """
 
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.12,<3.13"
 # dependencies = [
+#   "click",
 #   "cladetime@git+https://github.com/reichlab/cladetime",
 #   "polars>=1.17.1,<1.18.0",
 # ]
@@ -26,6 +27,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import click
 import polars as pl
 from cladetime import CladeTime, sequence  # type: ignore
 
@@ -40,27 +42,38 @@ logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
 
-def main(round_id: str, output_path: Path):
+@click.command()
+@click.option(
+    "--nowcast-date",
+    type=click.DateTime(formats=["%Y-%m-%d"]),
+    required=True,
+    help="The modeling round nowcast date (i.e., round_id) (YYYY-MM-DD)",
+)
+@click.option(
+    "--output-path",
+    type=Path,
+    required=False,
+    default=Path(__file__).parents[1] / "auxiliary-data" / "unscored-location-dates",
+    help="For testing only: Path object to the directory where the output file will be saved",
+)
+def main(nowcast_date: datetime, output_path: Path):
     # Round closing time is 8 PM US/Eastern on the day the round closes
-    round_close_time = datetime.strptime(round_id, "%Y-%m-%d").replace(
-        hour=20, minute=0, second=0
-    )
+    round_close_time = nowcast_date.replace(hour=20, minute=0, second=0)
     round_close_time = round_close_time.replace(tzinfo=ZoneInfo("US/Eastern"))
+    nowcast_date_str = nowcast_date.strftime("%Y-%m-%d")
 
-    logger.info(f"Getting location/date counts for round {round_id}")
-    location_date_df = get_location_date_counts(round_close_time, output_path)
+    logger.info(f"Getting location/date counts for round {nowcast_date_str}")
+    location_date_df = get_location_date_counts(round_close_time)
 
-    logger.info(f"Testing location/date counts for round {round_id}")
+    logger.info(f"Testing location/date counts for round {nowcast_date_str}")
     test_counts(round_close_time, location_date_df)
 
-    output_file = output_path / f"{round_id}.csv"
+    output_file = output_path / f"{nowcast_date_str}.csv"
     location_date_df.write_csv(output_file)
     logger.info(f"Location/date counts saved to {output_file}")
 
 
-def get_location_date_counts(
-    round_close_time: datetime, output_path: Path
-) -> pl.DataFrame:
+def get_location_date_counts(round_close_time: datetime) -> pl.DataFrame:
     """
     Return a Polars DataFrame with total clade counts by location and collection date.
     The DataFrame will have a column for each date 31 days prior to round close.
@@ -114,7 +127,7 @@ def test_counts(round_close_time: datetime, computed_counts: pl.DataFrame):
     # with a collection date in the 31 days prior to round_close
     begin_date = round_close_time.date() - timedelta(days=31)
     test_data = sequence.filter_metadata(ct.sequence_metadata)
-    test_data = test_data.filter(pl.col("date") >= begin_date).collect(streaming=True)
+    test_data = test_data.filter(pl.col("date") >= begin_date).collect()
 
     assert test_data.height == computed_counts["count"].sum()
 
@@ -133,4 +146,4 @@ if __name__ == "__main__":
     output_path = (
         Path(__file__).parents[1] / "auxiliary-data" / "unscored-location-dates"
     )
-    main(round_id, output_path)
+    main()
