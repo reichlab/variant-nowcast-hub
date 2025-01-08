@@ -567,7 +567,7 @@ def test_target_data_integration(caplog, tmp_path):
     assert "tree_as_of=2024-09-09" in caplog.text.lower()
 
     # number of unique dates in the time series target should be the number of
-    # days between collection_min_date (tree_as_of = 90 days) and the
+    # days between collection_min_date (tree_as_of - 90 days) and the
     # collection_max_date (nowcast_date + 10 days), inclusive
     nowcast_datetime = datetime.fromisoformat(nowcast_date).replace(
         hour=11, minute=59, second=59, tzinfo=timezone.utc
