@@ -24,6 +24,7 @@ uv run --with-requirements src/requirements.txt --module pytest src/get_target_d
 #   "click",
 #   "cladetime@git+https://github.com/reichlab/cladetime",
 #   "polars>=1.17.1,<1.18.0",
+#   "pyarrow>=18.1.0,<19.0.0",
 # ]
 # ///
 
@@ -35,6 +36,9 @@ from datetime import date, datetime, timedelta, timezone
 
 import click
 import polars as pl
+import pyarrow as pa  # type: ignore
+import pyarrow.dataset as ds  # type: ignore
+import pyarrow.parquet as pq  # type: ignore
 from click.testing import CliRunner
 from click import Context, Option
 
@@ -355,7 +359,16 @@ def write_target_data(
     # default output directory is the hub's target-data directory
     target_data_dir: Path,
 ) -> tuple[Path, Path]:
-    """Write time series and oracle output target data."""
+    """
+    Write time series and oracle output target data.
+
+    This function converts the target data LazyFrames to arrow tables
+    and explicitly specifies what the schema should be. This ensures that the
+    R Hubverse tools (which use arrow::read_dataset to read parquet files) will
+    not get a data type mismatch between the values in folder names used for
+    Hive-style partitioning the corresponding columns in the parquet files.
+    https://github.com/reichlab/variant-nowcast-hub/issues/265
+    """
 
     # write time series data
     target_time_series_dir = target_data_dir / "time-series"
@@ -367,10 +380,22 @@ def write_target_data(
     ts_output_path.mkdir(exist_ok=True, parents=True)
     ts_output_path = ts_output_path / "timeseries.parquet"
 
-    # the time_series LazyFrame has a query plan that sink_parquet doesn't like,
-    # so we'll have to collect it before exporting as parquet
     time_series = target_data[0]
-    time_series.collect().write_parquet(ts_output_path)
+    time_series_arrow = time_series.collect().to_arrow()
+
+    ts_schema = pa.schema(
+        [
+            ("target_date", pa.date32()),
+            ("location", pa.string()),
+            ("clade", pa.string()),
+            ("observation", pa.int32()),
+            ("nowcast_date", pa.string()),
+            ("sequence_as_of", pa.string()),
+            ("tree_as_of", pa.string()),
+        ]
+    )
+    time_series_arrow = time_series_arrow.cast(ts_schema)
+    pq.write_table(time_series_arrow, ts_output_path, use_dictionary=False)
     logger.info(f"Target time series saved to {ts_output_path}")
 
     # write oracle output data
@@ -380,7 +405,19 @@ def write_target_data(
     oracle_output_path = oracle_output_path / "oracle.parquet"
 
     oracle = target_data[1]
-    oracle.collect().write_parquet(oracle_output_path)
+    oracle_arrow = oracle.collect().to_arrow()
+
+    oracle_schema = pa.schema(
+        [
+            ("location", pa.string()),
+            ("target_date", pa.date32()),
+            ("clade", pa.string()),
+            ("oracle_value", pa.int32()),
+            ("nowcast_date", pa.string()),
+        ]
+    )
+    oracle_arrow = oracle_arrow.cast(oracle_schema)
+    pq.write_table(oracle_arrow, oracle_output_path, use_dictionary=False)
     logger.info(f"Target oracle output saved to {oracle_output_path}")
 
     return (ts_output_path, oracle_output_path)
@@ -559,7 +596,10 @@ def test_target_data_integration(caplog, tmp_path):
         standalone_mode=False,
     )
     assert result.exit_code == 0
-    ts = pl.read_parquet(result.return_value[0])
+
+    ts_path = result.return_value[0]
+    oracle_path = result.return_value[1]
+    ts = pl.read_parquet(ts_path)
 
     # sequence date should default to nowcast_date + 90 days
     assert "sequence_as_of=2024-12-10" in caplog.text.lower()
@@ -604,7 +644,7 @@ def test_target_data_integration(caplog, tmp_path):
     # time series rows should = total target dates * total locations * total clades
     len(target_dates) * len(state_list) * len(modeled_clades) == ts.height
 
-    oracle = pl.read_parquet(result.return_value[1])
+    oracle = pl.read_parquet(oracle_path)
 
     oracle_min_date = oracle["target_date"].min()
     oracle_max_date = oracle["target_date"].max()
@@ -632,3 +672,15 @@ def test_target_data_integration(caplog, tmp_path):
     assert oracle_schema_dict.get("target_date") is date
     assert oracle_schema_dict.get("clade") is str
     assert oracle_schema_dict.get("oracle_value") is int
+
+    # string columns also used as hive partition keys should have a datatype of
+    # string (instead of large_string) when read by Arrow. otherwise, Hubverse
+    # tools will throw a schema mismatch error when reading the target data
+    ts_arrow = ds.dataset(str(ts_path), format="parquet")
+    ts_schema = ts_arrow.schema
+    assert ts_schema.field("nowcast_date").type == pa.string()
+    assert ts_schema.field("sequence_as_of").type == pa.string()
+
+    oracle_arrow = ds.dataset(str(oracle_path), format="parquet")
+    oracle_schema = oracle_arrow.schema
+    assert oracle_schema.field("nowcast_date").type == pa.string()
