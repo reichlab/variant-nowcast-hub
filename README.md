@@ -93,6 +93,17 @@ We will not solicit estimates for the US as a whole, in part because evaluating 
 
 Each week the hub designates up to nine NextStrain clades with the highest reported prevalence of at least 1% across the US in any of the three complete [USA/CDC epidemiological weeks](https://ndc.services.cdc.gov/wp-content/uploads/MMWR_Week_overview.pdf) (a.k.a. MMWR weeks) preceding the Wednesday submission date. Any clades with prevalence of less than 1% are grouped into an “other” category for which predictions of combined prevalence are also collected. No more than 10 clades (including “other”) are selected in a given week. For details on the workflow that generates this list each week, see the [clade list section](#clade-list) below.
 
+#### Why use Nextstrain clades?
+
+To designate a list of modeling targets weekly, it is ideal to have a system that does not require human intervention.
+Further, this system must consistently produce a reasonable number of modeling units to permit the submission of [samples](#probabilistic-forecast-evaluation) of the frequency of every modeling unit in each state for [six weeks](#prediction-horizon).
+[Nextstrain clades](https://nextstrain.org/blog/2021-01-06-updated-SARS-CoV-2-clade-naming) satisfy both requirements readily.
+They intentionally follow larger-scale trends in SARS-CoV-2 evolution, and a suitably-sized selection of relevant clades can be obtained with a simple frequency cutoff.
+The somewhat more commonly-encountered [Pango lineages](https://www.nature.com/articles/s41564-020-0770-5) describe variation at a much finer scale, and the selection of a suitable number of relevant modeling units is non-trivial.
+Further, as both systems are inherently phylogenetic, there is [sufficient](https://raw.githubusercontent.com/nextstrain/ncov-clades-schema/master/clades.svg) correspondence [between them](https://next.nextstrain.org/nextclade/sars-cov-2) that it is possible to model Nextstrain clades but discuss results in terms of Pango lineages.
+For example, Nextstrain clade 24A corresponds to Pango lineage JN.1, 22F to XBB, and 21L to BA.2.
+For these reasons, we have chosen to target Nextstrain clades as modeling units.
+
 ### Prediction horizon
 
 Genomic sequences tend to be reported weeks after being collected. Therefore, recent data is subject to quite a lot of backfill. For this reason, the hub collects "nowcasts" (predictions for data relevant to times prior to the current time, but not yet observed) and some "forecasts" (predictions for future observations). Counting the Wednesday submission date as a prediction horizon of zero, we collect daily-level predictions for 10 days into the future (the Saturday that ends the epidemic week after the Wednesday submission) and -31 days into the past (the Sunday that starts the epidemic week four weeks prior to the Wednesday submission date). Overall, six weeks (42 days) of predicted values are solicited each week.
