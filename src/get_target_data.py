@@ -545,7 +545,7 @@ def test_target_data_integration(caplog, tmp_path):
     caplog.set_level(logging.INFO)
 
     nowcast_date = "2024-09-11"
-    runner = CliRunner()
+    runner = CliRunner(env={"CLADETIME_DEMO": "true"})
     result = runner.invoke(
         main,
         [
