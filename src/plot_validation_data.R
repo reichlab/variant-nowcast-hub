@@ -57,7 +57,9 @@ targets_retro <- df_retro |>
 #######
 
 # Create a PDF file to save the plots
-pdf("~/Downloads/plot_validation_by_location.pdf")
+# Make argument to function eventually
+save_path = paste0(hub_path, "/plot_validation_by_location_", reference_date, ".pdf")
+pdf(save_path)
 unique_locs <- sort(unique(df_model_output$location))
 
 #this_location <- "CA"
