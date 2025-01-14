@@ -101,7 +101,9 @@ It was with these needs in mind that we chose to use [Nextstrain clades](https:/
 They intentionally follow larger-scale trends in SARS-CoV-2 evolution, and a suitably-sized selection of relevant clades can be obtained with a simple frequency cutoff.
 The somewhat more commonly-encountered [Pango lineages](https://www.nature.com/articles/s41564-020-0770-5) describe variation at a much finer scale, and the selection of a suitable number of relevant variants is non-trivial.
 That said, as both systems are inherently phylogenetic, there is typically [sufficient](https://raw.githubusercontent.com/nextstrain/ncov-clades-schema/master/clades.svg) correspondence [between them](https://next.nextstrain.org/nextclade/sars-cov-2) that it is possible to model Nextstrain clades but [discuss results in terms of Pango lineages](https://github.com/nextstrain/ncov/blob/master/defaults/clade_display_names.yml).
-For example, Nextstrain clade 24A corresponds to Pango lineage JN.1, 22F to XBB, and 21L to BA.2.
+For example, Nextstrain clade 24A corresponds to Pango lineage JN.1, 22F to XBB, and 21L to BA.2.[^1]
+
+[^1]: Note that such correspondence between Nextstrain clades and Pango lineages does not guarantee that a clear and consistent mapping is obvious when looking at the lineages and clades to which individual sequences have been assigned.
 
 ### Prediction horizon
 
