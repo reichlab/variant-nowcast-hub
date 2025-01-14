@@ -98,7 +98,8 @@ Each week the hub designates up to nine NextStrain clades with the highest repor
 To designate, weekly, a list of variants to model, it is ideal to have a system that does not require human intervention.
 Further, this system must consistently produce a reasonable number of variants to permit the submission of [samples](#probabilistic-forecast-evaluation) of the frequency of every variant in each state for [six weeks](#prediction-horizon).
 It was with these needs in mind that we chose to use [Nextstrain clades](https://nextstrain.org/blog/2021-01-06-updated-SARS-CoV-2-clade-naming) to define target variants for nowcasting and forecasting.
-They intentionally follow larger-scale trends in SARS-CoV-2 evolution, and a suitably-sized selection of relevant clades can be obtained with a simple frequency cutoff.
+Nextstrain clades reflect large-scale trends in SARS-CoV-2 evolution.
+A suitably-sized set of relevant clades to model can be obtained with a simple frequency cutoff.
 The somewhat more commonly-encountered [Pango lineages](https://www.nature.com/articles/s41564-020-0770-5) describe variation at a much finer scale, and the selection of a suitable number of relevant variants is non-trivial.
 That said, as both systems are inherently phylogenetic, there is typically [sufficient](https://raw.githubusercontent.com/nextstrain/ncov-clades-schema/master/clades.svg) correspondence [between them](https://next.nextstrain.org/nextclade/sars-cov-2) that it is possible to model Nextstrain clades but [discuss results in terms of Pango lineages](https://github.com/nextstrain/ncov/blob/master/defaults/clade_display_names.yml).
 For example, Nextstrain clade 24A corresponds to Pango lineage JN.1, 22F to XBB, and 21L to BA.2.[^1]
