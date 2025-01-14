@@ -388,10 +388,10 @@ def write_target_data(
             ("target_date", pa.date32()),
             ("location", pa.string()),
             ("clade", pa.string()),
-            ("observation", pa.int32()),
-            ("nowcast_date", pa.string()),
-            ("sequence_as_of", pa.string()),
-            ("tree_as_of", pa.string()),
+            ("observation", pa.float64()),
+            ("nowcast_date", pa.date32()),
+            ("sequence_as_of", pa.date32()),
+            ("tree_as_of", pa.date32()),
         ]
     )
     time_series_arrow = time_series_arrow.cast(ts_schema)
@@ -412,8 +412,8 @@ def write_target_data(
             ("location", pa.string()),
             ("target_date", pa.date32()),
             ("clade", pa.string()),
-            ("oracle_value", pa.int32()),
-            ("nowcast_date", pa.string()),
+            ("oracle_value", pa.float64()),
+            ("nowcast_date", pa.date32()),
         ]
     )
     oracle_arrow = oracle_arrow.cast(oracle_schema)
