@@ -95,8 +95,11 @@ Each week the hub designates up to nine NextStrain clades with the highest repor
 
 #### Why use Nextstrain clades?
 
-To designate, weekly, a list of variants to model, it is ideal to have a system that does not require human intervention.
-Further, this system must consistently produce a reasonable number of variants to permit the submission of [samples](#probabilistic-forecast-evaluation) of the frequency of every variant in each state for [six weeks](#prediction-horizon).
+The Hub must define a list of variants to model each week.
+This system should consistently produce a reasonable number of distinct variants as modeling targets.
+(Experimentation showed this to be approximately 10 variants or fewer in order to accommodate a sufficient number of [samples](#probabilistic-forecast-evaluation) of the frequency of every variant in each state for [six weeks](#prediction-horizon).)
+Ideally, it should be algorithmic and operate without human intervention.
+An algorithmic approach makes the choice of targets more transparent and simplifies Hub administration.
 It was with these needs in mind that we chose to use [Nextstrain clades](https://nextstrain.org/blog/2021-01-06-updated-SARS-CoV-2-clade-naming) to define target variants for nowcasting and forecasting.
 Nextstrain clades reflect large-scale trends in SARS-CoV-2 evolution.
 A suitably-sized set of relevant clades to model can be obtained with a simple frequency cutoff.
