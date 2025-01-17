@@ -103,7 +103,7 @@ An algorithmic approach makes the choice of targets more transparent and simplif
 It was with these needs in mind that we chose to use [Nextstrain clades](https://nextstrain.org/blog/2021-01-06-updated-SARS-CoV-2-clade-naming) to define target variants for nowcasting and forecasting.
 Nextstrain clades reflect large-scale trends in SARS-CoV-2 evolution.
 A suitably-sized set of relevant clades to model can be obtained with a simple frequency cutoff.
-[Pango lineages](https://www.nature.com/articles/s41564-020-0770-5) are another approach to naming SARS-CoV-2 variants. By design, they describe both coarse-scale and fine-scale virus evolution. Selecting of a suitable number of relevant lineages for nowcasting and forecasting is not straightforward.
+[Pango lineages](https://www.nature.com/articles/s41564-020-0770-5) are another approach to naming SARS-CoV-2 variants. By design, they describe both coarse-scale and fine-scale virus evolution. Selecting a suitable number of relevant lineages for nowcasting and forecasting is not straightforward.
 That said, as both systems are inherently phylogenetic, there is typically [sufficient](https://raw.githubusercontent.com/nextstrain/ncov-clades-schema/master/clades.svg) correspondence [between them](https://next.nextstrain.org/nextclade/sars-cov-2) that it is possible to model Nextstrain clades but [discuss results in terms of Pango lineages](https://github.com/nextstrain/ncov/blob/master/defaults/clade_display_names.yml).
 For example, Nextstrain clade 24A corresponds to Pango lineage JN.1, 22F to XBB, and 21L to BA.2.[^1]
 
