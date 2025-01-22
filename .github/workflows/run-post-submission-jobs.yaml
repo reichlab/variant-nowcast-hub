@@ -26,7 +26,7 @@ jobs:
       NOWCAST_DATE: ${{ steps.set-dates.outputs.NOWCAST_DATE }}
       TARGET_NOWCAST_DATE: ${{ steps.set-dates.outputs.TARGET_NOWCAST_DATE }}
       SEQUENCE_AS_OF: ${{ steps.set-dates.outputs.SEQUENCE_AS_OF }}
-      MATRIX_DATES: ${{ steps.set-dates.outputs.MATRIX_DATES }}
+      matrix: ${{ steps.set-dates.outputs.MATRIX_DATES }}
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
@@ -48,11 +48,7 @@ jobs:
           NOWCAST_DATE=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
           TARGET_NOWCAST_DATE=$(date -d "$NOWCAST_DATE - 91 days" +%Y-%m-%d)
           SEQUENCE_AS_OF=$(date -d "$NOWCAST_DATE - 1 day" +%Y-%m-%d)
-          # Ensure proper escaping for GitHub Actions output
-          MATRIX_DATES="${MATRIX_DATES//'%'/'%25'}"
-          MATRIX_DATES="${MATRIX_DATES//$'\n'/'%0A'}"
-          MATRIX_DATES="${MATRIX_DATES//$'\r'/'%0D'}"
-          MATRIX_DATES=$(generate_weekly_dates "$NOWCAST_DATE" 13)
+          MATRIX_DATES=$(generate_weekly_dates "$NOWCAST_DATE" 1)
           echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_OUTPUT
           echo "TARGET_NOWCAST_DATE=$TARGET_NOWCAST_DATE" >> $GITHUB_OUTPUT
           echo "SEQUENCE_AS_OF=$SEQUENCE_AS_OF" >> $GITHUB_OUTPUT
@@ -75,7 +71,7 @@ jobs:
       SEQUENCE_AS_OF: ${{ needs.get-all-dates.outputs.SEQUENCE_AS_OF }}
     strategy:
       matrix:
-        nowcast-date: ["2025-01-15", "2025-01-08"]
+        nowcast-date: ${{ fromJson(needs.get-all-dates.outputs.matrix) }}
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
