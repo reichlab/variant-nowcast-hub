@@ -23,9 +23,9 @@ jobs:
   get-nowcast-date:
     runs-on: ubuntu-latest
     outputs:
-      nowcast-date: ${{ steps.calculate-dates.outputs.NOWCAST_DATE }}
-      target-nowcast-date: ${{ steps.calculate-dates.outputs.TARGET_NOWCAST_DATE }}
-      sequence-as-of: ${{ steps.calculate-dates.outputs.SEQUENCE_AS_OF }}
+      NOWCAST_DATE: ${{ steps.set-dates.outputs.NOWCAST_DATE }}
+      TARGET_NOWCAST_DATE: ${{ steps.set-dates.outputs.TARGET_NOWCAST_DATE }}
+      SEQUENCE_AS_OF: ${{ steps.set-dates.outputs.SEQUENCE_AS_OF }}
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
@@ -34,7 +34,8 @@ jobs:
             sparse-checkout: |
               .github/
 
-      - name: Calculate dates 🕰️
+      - name: Set dates 🕰️
+        id: set-dates
         # Nowcast_date = round_id of the round that just closed for submissions.
         # Target_nowcast_date = round_id of the round the can now be officially
         # closed and scored (i.e., 91 days before current round).continue-on-error: 
@@ -44,9 +45,9 @@ jobs:
           NOWCAST_DATE=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
           TARGET_NOWCAST_DATE=$(date -d "$NOWCAST_DATE - 91 days" +%Y-%m-%d)
           SEQUENCE_AS_OF=$(date -d "$NOWCAST_DATE - 1 day" +%Y-%m-%d)
-          echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_ENV
-          echo "TARGET_NOWCAST_DATE=$TARGET_NOWCAST_DATE" >> $GITHUB_ENV
-          echo "SEQUENCE_AS_OF=$SEQUENCE_AS_OF" >> $GITHUB_ENV
+          echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_OUTPUT
+          echo "TARGET_NOWCAST_DATE=$TARGET_NOWCAST_DATE" >> $GITHUB_OUTPUT
+          echo "SEQUENCE_AS_OF=$SEQUENCE_AS_OF" >> $GITHUB_OUTPUT
           echo "Submissions closed job for $NOWCAST_DATE"
           echo "Starting date for target files is $TARGET_NOWCAST_DATE"
           echo "Sequence as of date is $SEQUENCE_AS_OF"
@@ -84,6 +85,8 @@ jobs:
 
       - name: Create target data 🎯
         run: |
+          echo "sequence_as_of: $SEQUENCE_AS_OF"
+          echo "sequence_as_of: ${{ env.SEQUENCE_AS_OF }}"
           uv run get_target_data.py \
           --nowcast-date=${{ matrix.nowcast-date }} \
           --sequence-as-of=${{ env.SEQUENCE_AS_OF }}
@@ -121,41 +124,41 @@ jobs:
           commit-message: "Add target data and interim files."
           pr-body: "Created via GitHub Actions: generate target and interim data."
 
-  create-location-date-sequence-counts:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout 🛎️
-        uses: actions/checkout@v4
-        with:
-            # only checkout what we need
-            sparse-checkout: |
-              .github/
-              auxiliary-data/
-              hub-config/
-              src/
+  # create-location-date-sequence-counts:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout 🛎️
+  #       uses: actions/checkout@v4
+  #       with:
+  #           # only checkout what we need
+  #           sparse-checkout: |
+  #             .github/
+  #             auxiliary-data/
+  #             hub-config/
+  #             src/
 
-      - name: Install uv 🐍
-        uses: astral-sh/setup-uv@v5
-        with:
-          version: ">=0.0.1"
+  #     - name: Install uv 🐍
+  #       uses: astral-sh/setup-uv@v5
+  #       with:
+  #         version: ">=0.0.1"
 
-      - name: Get nowcast date (aka round_id) 🕰️
-        # if nowcast_date is not provided, use the most recent Wednesday
-        run: |
-          source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
-          NOWCAST_DATE=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
-          echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_ENV
-          echo "Nowcast date for most recent round: $NOWCAST_DATE"
+  #     - name: Get nowcast date (aka round_id) 🕰️
+  #       # if nowcast_date is not provided, use the most recent Wednesday
+  #       run: |
+  #         source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
+  #         NOWCAST_DATE=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
+  #         echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_ENV
+  #         echo "Nowcast date for most recent round: $NOWCAST_DATE"
 
-      - name: Create file of sequence counts by location and date 🦠
-        run: |
-          uv run get_location_date_counts.py --nowcast-date=$NOWCAST_DATE
-        working-directory: src
+  #     - name: Create file of sequence counts by location and date 🦠
+  #       run: |
+  #         uv run get_location_date_counts.py --nowcast-date=$NOWCAST_DATE
+  #       working-directory: src
 
-      - name: Create PR for sequence counts 🚀
-        uses: ./.github/actions/create-pr
-        with:
-          pr-prefix: "${{ env.NOWCAST_DATE }}-unscored-locations"
-          file-path: auxiliary-data/unscored-location-dates/
-          commit-message: "Add unscored locations for round $NOWCAST_DATE"
-          pr-body: "Created via GitHub Actions: generate count of sequences collected by date/location for the past 31 days."
+  #     - name: Create PR for sequence counts 🚀
+  #       uses: ./.github/actions/create-pr
+  #       with:
+  #         pr-prefix: "${{ env.NOWCAST_DATE }}-unscored-locations"
+  #         file-path: auxiliary-data/unscored-location-dates/
+  #         commit-message: "Add unscored locations for round $NOWCAST_DATE"
+  #         pr-body: "Created via GitHub Actions: generate count of sequences collected by date/location for the past 31 days."
