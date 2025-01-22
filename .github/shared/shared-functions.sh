@@ -29,13 +29,14 @@ generate_weekly_dates() {
     local dates=("$start_date")
     local current_date=$start_date
 
-    # Generate dates and format as JSON array
-    echo -n '{"nowcast-date":"['
-    echo -n "'$start_date'"
-    
+    # format dates as a json object w/ array
+    echo -n '{"nowcast-date":['
+    echo -n "\"$start_date\""
+
     for ((i=1; i<=$weeks; i++)); do
-        current_date=$(gdate -d "$current_date - 7 days" +%Y-%m-%d)
-        echo -n ",'$current_date'"
+        current_date=$(date -d "$current_date - 7 days" +%Y-%m-%d)
+        echo -n ",\"$current_date\""
     done
-    echo ']"}'
+
+    echo ']}'
 }
