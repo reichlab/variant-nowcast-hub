@@ -22,6 +22,10 @@ jobs:
 
   get-nowcast-date:
     runs-on: ubuntu-latest
+    outputs:
+      nowcast-date: ${{ steps.calculate-dates.outputs.NOWCAST_DATE }}
+      target-nowcast-date: ${{ steps.calculate-dates.outputs.TARGET_NOWCAST_DATE }}
+      sequence-as-of: ${{ steps.calculate-dates.outputs.SEQUENCE_AS_OF }}
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
@@ -43,7 +47,9 @@ jobs:
           echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_ENV
           echo "TARGET_NOWCAST_DATE=$TARGET_NOWCAST_DATE" >> $GITHUB_ENV
           echo "SEQUENCE_AS_OF=$SEQUENCE_AS_OF" >> $GITHUB_ENV
+          echo "Submissions closed job for $NOWCAST_DATE"
           echo "Starting date for target files is $TARGET_NOWCAST_DATE"
+          echo "Sequence as of date is $SEQUENCE_AS_OF"
 
       # next step: based on the target nowcast date, get the remainder of
       # the dates to populate the matrix for the create-target-data job
@@ -54,6 +60,8 @@ jobs:
   create-target-data:
     runs-on: ubuntu-latest
     needs: get-nowcast-date
+    env:
+      SEQUENCE_AS_OF: ${{ needs.get-nowcast-date.outputs.SEQUENCE_AS_OF }}
     strategy:
       matrix:
         nowcast-date: ["2025-01-15", "2025-01-08"]
