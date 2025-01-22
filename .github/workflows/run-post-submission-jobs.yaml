@@ -20,12 +20,13 @@ permissions:
 
 jobs:
 
-  get-nowcast-date:
+  get-all-dates:
     runs-on: ubuntu-latest
     outputs:
       NOWCAST_DATE: ${{ steps.set-dates.outputs.NOWCAST_DATE }}
       TARGET_NOWCAST_DATE: ${{ steps.set-dates.outputs.TARGET_NOWCAST_DATE }}
       SEQUENCE_AS_OF: ${{ steps.set-dates.outputs.SEQUENCE_AS_OF }}
+      MATRIX_DATES: ${{ steps.set-dates.outputs.MATRIX_DATES }}
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
@@ -40,17 +41,21 @@ jobs:
         # Target_nowcast_date = round_id of the round the can now be officially
         # closed and scored (i.e., 91 days before current round).continue-on-error: 
         # Sequence_as_of = date used to get the sequences for clade assignment.
+        # Matrix_dates = dates used for matrix in create-target-data job.
         run: |
           source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
           NOWCAST_DATE=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
           TARGET_NOWCAST_DATE=$(date -d "$NOWCAST_DATE - 91 days" +%Y-%m-%d)
           SEQUENCE_AS_OF=$(date -d "$NOWCAST_DATE - 1 day" +%Y-%m-%d)
+          MATRIX_DATES=$(generate_weekly_dates "$NOWCAST_DATE" 13)
           echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_OUTPUT
           echo "TARGET_NOWCAST_DATE=$TARGET_NOWCAST_DATE" >> $GITHUB_OUTPUT
           echo "SEQUENCE_AS_OF=$SEQUENCE_AS_OF" >> $GITHUB_OUTPUT
+          echo "MATRIX_DATES=$MATRIX_DATES" >> $GITHUB_OUTPUT
           echo "Submissions closed job for $NOWCAST_DATE"
           echo "Starting date for target files is $TARGET_NOWCAST_DATE"
           echo "Sequence as of date is $SEQUENCE_AS_OF"
+          echo "Matrix dates are $MATRIX_DATES"
 
       # next step: based on the target nowcast date, get the remainder of
       # the dates to populate the matrix for the create-target-data job
@@ -60,9 +65,9 @@ jobs:
   # date 90 days ago.
   create-target-data:
     runs-on: ubuntu-latest
-    needs: get-nowcast-date
+    needs: get-all-dates
     env:
-      SEQUENCE_AS_OF: ${{ needs.get-nowcast-date.outputs.SEQUENCE_AS_OF }}
+      SEQUENCE_AS_OF: ${{ needs.get-all-dates.outputs.SEQUENCE_AS_OF }}
     strategy:
       matrix:
         nowcast-date: ["2025-01-15", "2025-01-08"]
@@ -83,13 +88,15 @@ jobs:
         with:
           version: ">=0.0.1"
 
+      # REMOVE collection_min_date, it's there for running faster tests
       - name: Create target data 🎯
         run: |
           echo "sequence_as_of: $SEQUENCE_AS_OF"
-          echo "sequence_as_of: ${{ env.SEQUENCE_AS_OF }}"
           uv run get_target_data.py \
           --nowcast-date=${{ matrix.nowcast-date }} \
-          --sequence-as-of=${{ env.SEQUENCE_AS_OF }}
+          --sequence-as-of=${{ env.SEQUENCE_AS_OF }} \
+          --target-data-dir=${{ github.workspace }} \
+          --collection_min_date=2025-01-15
         working-directory: src
 
       - name: Upload target data 📤
@@ -97,8 +104,8 @@ jobs:
         with:
           name: target-data-${{ matrix.nowcast-date }}
           path: |
-            time-series/**/**/*.parquet
-            oracle-output/**/*.parquet
+            ${{ github.workspace }}/time-series/**/**/*.parquet
+            ${{ github.workspace }}/oracle-output/**/*.parquet
 
   target-data-pr:
     runs-on: ubuntu-latest
@@ -110,11 +117,19 @@ jobs:
         with:
           pattern: target-data-*
           path: ${{ github.workspace }}
-      
+
+      - name: debug1
+        run: |
+          ls -l ${{ github.workspace }}
+
       - name: Move target and interim data to hub directory ➡️
         run: |
           mv ${{ github.workspace }}/time-series ${{ github.workspace }}/target-data/
           mv ${{ github.workspace }}/oracle-output ${{ github.workspace }}/target-data/
+
+      - name: debug2
+        run: |
+          ls -l target-data/
 
       - name: Create PR for new target and interim data
         uses: ./.github/actions/create-pr
