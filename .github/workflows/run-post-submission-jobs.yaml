@@ -20,11 +20,33 @@ permissions:
 
 jobs:
 
+  get-nowcast-date:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+        with:
+            # only checkout what we need
+            sparse-checkout: |
+              .github/
+
+      - name: Get nowcast date (aka round_id) 🕰️
+        # if nowcast_date is not provided, use the most recent Wednesday
+        run: |
+          source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
+          NOWCAST_DATE=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
+          echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_ENV
+          echo "Nowcast date for most recent round: $NOWCAST_DATE"
+
   # Create target data for the round that closed 90 days ago.
   # This step will exit if there is no round with a nowcast
   # date 90 days ago.
   create-target-data:
     runs-on: ubuntu-latest
+    needs: get-nowcast-date
+    strategy:
+      matrix:
+        nowcast-date: ["2025-01-15", "2025-01-08"]
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
@@ -42,29 +64,42 @@ jobs:
         with:
           version: ">=0.0.1"
 
-      - name: Get nowcast date (aka round_id) for target data🕰️
-        # if nowcast_date is not provided, use the most recent Wednesday
-        run: |
-          source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
-          NOWCAST_DATE=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
-          TARGET_NOWCAST_DATE=$(date -d "$NOWCAST_DATE - 91 days" +%Y-%m-%d)
-          echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_ENV
-          echo "TARGET_NOWCAST_DATE=$TARGET_NOWCAST_DATE" >> $GITHUB_ENV
-          echo "Creating target data for round $TARGET_NOWCAST_DATE"
-
       - name: Create target data 🎯
         run: |
-          uv run get_target_data.py --nowcast-date=$TARGET_NOWCAST_DATE
+          uv run get_target_data.py --nowcast-date=${{ matrix.nowcast-date }}
         working-directory: src
 
-      - name: Create PR for new target data
+      - name: Upload target data 📤
+        uses: actions/upload-artifact@v4
+        with:
+          name: target-data-${{ matrix.nowcast-date }}
+          path: |
+            time-series/**/**/*.parquet
+            oracle-output/**/*.parquet
+
+  target-data-pr:
+    runs-on: ubuntu-latest
+    needs: create-target-data
+
+    steps:
+      - name: Download target data 📥
+        uses: actions/download-artifact@v4
+        with:
+          pattern: target-data-*
+          path: ${{ github.workspace }}
+      
+      - name: Move target and interim data to hub directory ➡️
+        run: |
+          mv ${{ github.workspace }}/time-series ${{ github.workspace }}/target-data/
+          mv ${{ github.workspace }}/oracle-output ${{ github.workspace }}/target-data/
+
+      - name: Create PR for new target and interim data
         uses: ./.github/actions/create-pr
         with:
-          pr-prefix: "${{ env.TARGET_NOWCAST_DATE }}-target-data"
+          pr-prefix: "add-target-data"
           file-path: target-data/
-          commit-message: "Add target data for round $TARGET_NOWCAST_DATE"
-          pr-body: "Created via GitHub Actions: generate target data for round $TARGET_NOWCAST_DATE"
-
+          commit-message: "Add target data and interim files."
+          pr-body: "Created via GitHub Actions: generate target and interim data."
 
   create-location-date-sequence-counts:
     runs-on: ubuntu-latest
