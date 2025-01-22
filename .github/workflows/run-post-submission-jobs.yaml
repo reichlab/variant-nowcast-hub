@@ -20,11 +20,50 @@ permissions:
 
 jobs:
 
+  get-all-dates:
+    runs-on: ubuntu-latest
+    outputs:
+      NOWCAST_DATE: ${{ steps.set-dates.outputs.NOWCAST_DATE }}
+      SEQUENCE_AS_OF: ${{ steps.set-dates.outputs.SEQUENCE_AS_OF }}
+      matrix: ${{ steps.set-dates.outputs.MATRIX_DATES }}
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+        with:
+            # only checkout what we need
+            sparse-checkout: |
+              .github/
+
+      - name: Set dates 🕰️
+        id: set-dates
+        # Nowcast_date = round_id of the round that just closed for submissions.
+        # Sequence_as_of = date used to get the sequences for clade assignment.
+        # Matrix_dates = dates used for matrix in create-target-data job (including
+        # the round_id of the 91-day-old round that can now be officially closed).
+        run: |
+          source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
+          nowcast_date=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
+          sequence_as_of=$(date -d "$nowcast_date - 1 day" +%Y-%m-%d)
+          matrix_dates=$(generate_weekly_dates "$nowcast_date" 13)
+          echo "nowcast_date=$nowcast_date" >> $GITHUB_OUTPUT
+          echo "sequence_as_of=$sequence_as_of" >> $GITHUB_OUTPUT
+          echo "matrix_dates=$matrix_dates" >> $GITHUB_OUTPUT
+
+          echo -e "\nDebug values:"
+          echo "Nowcast date: $nowcast_date"
+          echo "Sequence as of: $sequence_as_of"
+          echo "Matrix dates: $matrix_dates"
+
   # Create target data for the round that closed 90 days ago.
   # This step will exit if there is no round with a nowcast
   # date 90 days ago.
   create-target-data:
     runs-on: ubuntu-latest
+    needs: get-all-dates
+    env:
+      SEQUENCE_AS_OF: ${{ needs.get-all-dates.outputs.sequence_as_of }}
+    strategy:
+      matrix: ${{ fromJson(needs.get-all-dates.outputs.matrix) }}
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
@@ -42,32 +81,67 @@ jobs:
         with:
           version: ">=0.0.1"
 
-      - name: Get nowcast date (aka round_id) for target data🕰️
-        # if nowcast_date is not provided, use the most recent Wednesday
-        run: |
-          source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
-          NOWCAST_DATE=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
-          TARGET_NOWCAST_DATE=$(date -d "$NOWCAST_DATE - 91 days" +%Y-%m-%d)
-          echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_ENV
-          echo "TARGET_NOWCAST_DATE=$TARGET_NOWCAST_DATE" >> $GITHUB_ENV
-          echo "Creating target data for round $TARGET_NOWCAST_DATE"
-
       - name: Create target data 🎯
         run: |
-          uv run get_target_data.py --nowcast-date=$TARGET_NOWCAST_DATE
+          echo "sequence_as_of: $SEQUENCE_AS_OF"
+          uv run get_target_data.py \
+          --nowcast-date=${{ matrix.nowcast-date }} \
+          --sequence-as-of=$SEQUENCE_AS_OF \
+          --target-data-dir=${{ github.workspace }}
         working-directory: src
 
-      - name: Create PR for new target data
+      - name: Upload target data 📤
+        uses: actions/upload-artifact@v4
+        with:
+          name: target-data-${{ matrix.nowcast-date }}
+          path: |
+            ${{ github.workspace }}/time-series/**/**/*.parquet
+            ${{ github.workspace }}/oracle-output/**/*.parquet
+
+  target-data-pr:
+    runs-on: ubuntu-latest
+    needs: create-target-data
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+        with:
+            # only checkout what we need
+            sparse-checkout: |
+              .github/
+              auxiliary-data/
+              hub-config/
+              target-data/
+              src/
+
+      - name: Download target data 📥
+        uses: actions/download-artifact@v4
+        with:
+          pattern: target-data-*
+          merge-multiple: true
+          path: ${{ github.workspace }}
+
+      - name: Move target and interim data to hub directory ➡️
+        run: |
+          echo "Merging new target data files into target-data directory"
+          cp -R ${{ github.workspace }}/time-series/* ${{ github.workspace }}/target-data/time-series/
+          cp -R ${{ github.workspace }}/oracle-output/* ${{ github.workspace }}/target-data/oracle-output/
+          echo "Contents of target-data after merge:"
+          ls -lR ${{ github.workspace }}/target-data/
+
+      - name: Create PR for new target and interim data
         uses: ./.github/actions/create-pr
         with:
-          pr-prefix: "${{ env.TARGET_NOWCAST_DATE }}-target-data"
+          pr-prefix: "add-target-data"
           file-path: target-data/
-          commit-message: "Add target data for round $TARGET_NOWCAST_DATE"
-          pr-body: "Created via GitHub Actions: generate target data for round $TARGET_NOWCAST_DATE"
-
+          commit-message: "Add target data and interim files."
+          pr-body: "Created via GitHub Actions: generate target and interim data."
 
   create-location-date-sequence-counts:
     runs-on: ubuntu-latest
+    needs: get-all-dates
+    env:
+      NOWCAST_DATE: ${{ needs.get-all-dates.outputs.nowcast_date }}
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
@@ -83,14 +157,6 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           version: ">=0.0.1"
-
-      - name: Get nowcast date (aka round_id) 🕰️
-        # if nowcast_date is not provided, use the most recent Wednesday
-        run: |
-          source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
-          NOWCAST_DATE=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
-          echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_ENV
-          echo "Nowcast date for most recent round: $NOWCAST_DATE"
 
       - name: Create file of sequence counts by location and date 🦠
         run: |
