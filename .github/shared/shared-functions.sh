@@ -28,7 +28,6 @@ generate_weekly_dates() {
 
     # Format for GitHub Actions matrix
     echo -n '{"include":['
-    echo -n "{\"nowcast-date\":\"$start_date\"}"
 
     for ((i=1; i<=$weeks; i++)); do
         current_date=$(date -d "$current_date - 7 days" +%Y-%m-%d)
