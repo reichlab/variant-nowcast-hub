@@ -50,6 +50,13 @@ jobs:
           echo "sequence_as_of=$sequence_as_of" >> $GITHUB_OUTPUT
           echo "matrix_dates=$matrix_dates" >> $GITHUB_OUTPUT
 
+          # Debug output
+          echo -e "\nDebug values:"
+          echo "Nowcast date: $nowcast_date"
+          echo "Sequence as of: $sequence_as_of"
+          echo "Matrix dates: $matrix_dates"
+
+
   # Create target data for the round that closed 90 days ago.
   # This step will exit if there is no round with a nowcast
   # date 90 days ago.
