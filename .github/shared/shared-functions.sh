@@ -31,7 +31,11 @@ generate_weekly_dates() {
 
     for ((i=1; i<=$weeks; i++)); do
         current_date=$(date -d "$current_date - 7 days" +%Y-%m-%d)
-        echo -n ",{\"nowcast-date\":\"$current_date\"}"
+        if [ $i -eq $weeks ]; then
+            echo -n "{\"nowcast-date\":\"$current_date\"}"
+        else
+            echo -n "{\"nowcast-date\":\"$current_date\"},"
+        fi
     done
 
     echo ']}'
