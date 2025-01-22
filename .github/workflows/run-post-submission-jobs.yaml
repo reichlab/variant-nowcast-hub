@@ -43,10 +43,15 @@ jobs:
         # Sequence_as_of = date used to get the sequences for clade assignment.
         # Matrix_dates = dates used for matrix in create-target-data job.
         run: |
+          set -x
           source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
           NOWCAST_DATE=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
           TARGET_NOWCAST_DATE=$(date -d "$NOWCAST_DATE - 91 days" +%Y-%m-%d)
           SEQUENCE_AS_OF=$(date -d "$NOWCAST_DATE - 1 day" +%Y-%m-%d)
+          # Ensure proper escaping for GitHub Actions output
+          MATRIX_DATES="${MATRIX_DATES//'%'/'%25'}"
+          MATRIX_DATES="${MATRIX_DATES//$'\n'/'%0A'}"
+          MATRIX_DATES="${MATRIX_DATES//$'\r'/'%0D'}"
           MATRIX_DATES=$(generate_weekly_dates "$NOWCAST_DATE" 13)
           echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_OUTPUT
           echo "TARGET_NOWCAST_DATE=$TARGET_NOWCAST_DATE" >> $GITHUB_OUTPUT
