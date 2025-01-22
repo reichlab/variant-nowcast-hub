@@ -15,9 +15,7 @@ get_latest_wednesday() {
     fi
 }
 
-# Create a JSON array of weekly dates, working backwards from an input date,
-# for a specified number of weeks. Used to populate a matrix strategy in the
-# GitHub workflow that creates target data.
+# Create a series of dates formatted to work with a GitHub actions matrix
 generate_weekly_dates() {
     if [ $# -ne 2 ]; then
         echo "Usage: generate_weekly_dates YYYY-MM-DD number_of_weeks" >&2
@@ -26,16 +24,15 @@ generate_weekly_dates() {
 
     local start_date=$1
     local weeks=$2
-    local dates=("$start_date")
     local current_date=$start_date
 
-    # format dates as a json object w/ array
-    echo -n '{"nowcast-date":['
-    echo -n "\"$start_date\""
+    # Format for GitHub Actions matrix
+    echo -n '{"include":['
+    echo -n "{\"nowcast-date\":\"$start_date\"}"
 
     for ((i=1; i<=$weeks; i++)); do
         current_date=$(date -d "$current_date - 7 days" +%Y-%m-%d)
-        echo -n ",\"$current_date\""
+        echo -n ",{\"nowcast-date\":\"$current_date\"}"
     done
 
     echo ']}'
