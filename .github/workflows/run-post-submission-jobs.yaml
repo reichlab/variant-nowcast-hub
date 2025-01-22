@@ -30,13 +30,23 @@ jobs:
             sparse-checkout: |
               .github/
 
-      - name: Get nowcast date (aka round_id) 🕰️
-        # if nowcast_date is not provided, use the most recent Wednesday
+      - name: Calculate dates 🕰️
+        # Nowcast_date = round_id of the round that just closed for submissions.
+        # Target_nowcast_date = round_id of the round the can now be officially
+        # closed and scored (i.e., 91 days before current round).continue-on-error: 
+        # Sequence_as_of = date used to get the sequences for clade assignment.
         run: |
           source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
           NOWCAST_DATE=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
+          TARGET_NOWCAST_DATE=$(date -d "$NOWCAST_DATE - 91 days" +%Y-%m-%d)
+          SEQUENCE_AS_OF=$(date -d "$NOWCAST_DATE - 1 day" +%Y-%m-%d)
           echo "NOWCAST_DATE=$NOWCAST_DATE" >> $GITHUB_ENV
-          echo "Nowcast date for most recent round: $NOWCAST_DATE"
+          echo "TARGET_NOWCAST_DATE=$TARGET_NOWCAST_DATE" >> $GITHUB_ENV
+          echo "SEQUENCE_AS_OF=$SEQUENCE_AS_OF" >> $GITHUB_ENV
+          echo "Starting date for target files is $TARGET_NOWCAST_DATE"
+
+      # next step: based on the target nowcast date, get the remainder of
+      # the dates to populate the matrix for the create-target-data job
 
   # Create target data for the round that closed 90 days ago.
   # This step will exit if there is no round with a nowcast
@@ -66,7 +76,9 @@ jobs:
 
       - name: Create target data 🎯
         run: |
-          uv run get_target_data.py --nowcast-date=${{ matrix.nowcast-date }}
+          uv run get_target_data.py \
+          --nowcast-date=${{ matrix.nowcast-date }} \
+          --sequence-as-of=${{ env.SEQUENCE_AS_OF }}
         working-directory: src
 
       - name: Upload target data 📤
