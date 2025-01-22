@@ -105,6 +105,17 @@ jobs:
     needs: create-target-data
 
     steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+        with:
+            # only checkout what we need
+            sparse-checkout: |
+              .github/
+              auxiliary-data/
+              hub-config/
+              target-data/
+              src/
+
       - name: Download target data 📥
         uses: actions/download-artifact@v4
         with:
@@ -118,12 +129,13 @@ jobs:
 
       - name: Move target and interim data to hub directory ➡️
         run: |
-          mv ${{ github.workspace }}/time-series ${{ github.workspace }}/target-data/
-          mv ${{ github.workspace }}/oracle-output ${{ github.workspace }}/target-data/
+          cp -R ${{ github.workspace }}/time-series/* ${{ github.workspace }}/target-data/time-series/
+          cp -R ${{ github.workspace }}/oracle-output/* ${{ github.workspace }}/target-data/oracle-output/
 
       - name: debug2
         run: |
-          ls -R target-data/
+          echo "Contents after merge:"
+          ls -lR ${{ github.workspace }}/target-data/
 
       - name: Create PR for new target and interim data
         uses: ./.github/actions/create-pr
