@@ -27,7 +27,7 @@ generate_weekly_dates() {
     local current_date=$start_date
 
     # Format a series of dates for GitHub Actions matrix
-    seq 0 7 $(bc --expression="7 * $weeks") \
+    seq 0 7 $(echo "7 * $weeks" | bc) \
     | xargs -I {} date -d "$start_date -{} days" +%Y-%m-%d \
     | jq -R \
     | jq -s '. | map({"nowcast-date": .}) | {"include": .}'
