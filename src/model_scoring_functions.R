@@ -6,7 +6,7 @@
 #' @param ref_date character string, date corresponding to model submission deadline, also called nowcast date
 #'
 #' @examples
-#' df_score <- get_energy_scores(hub_path = "../", model_output_file = "UMass-HMLR/2024-10-16-UMass-HMLR.parquet", 
+#' df_score <- get_energy_scores(hub_path = "../", model_output_file = "UMass-HMLR/2024-10-16-UMass-HMLR.parquet",
 #' ref_date = "2024-10-16")
 get_energy_scores <- function(
     hub_path = "../",
@@ -18,178 +18,176 @@ get_energy_scores <- function(
   require("readr")
   require("arrow")
   require("scoringRules")
-  
+
   data <- process_target_data(hub_path = hub_path,
                           model_output_file = model_output_file,
                           ref_date = as.Date(ref_date))
-  
-  df_scores <- calc_energy_scores(targets = data[[1]], 
+
+  df_scores <- calc_energy_scores(targets = data[[1]],
                                   df_model_output = data[[2]])
-  
+
   return(df_scores)
 }
 
 #' Support function to process target data and pass to scoring function.
-#' 
+#'
 #' @param hub_path haracter string, path to the root of the hub from the current working directory,
 #' defaults to assume that variant-nowcast-hub/src is the working directory
 #' @param model_output_file character string, directory under variant-nowcast-hub/[team name]/[model output parquet file]
 #' @param ref_date character string, date corresponding to model submission deadline, also called nowcast date
-#' 
+#'
 #' @return List of two data frames. First element is the target data, second element is the model_output data
 process_target_data <- function(hub_path = "../",
-                                model_output_file, 
+                                model_output_file,
                                 ref_date){
   # Load model output
   df_model_output <- arrow::read_parquet(paste0(hub_path, "model-output/", model_output_file))
   clades <- sort(unique(df_model_output$clade))
   locs_modeled <- sort(unique(df_model_output$location))
-  
+
   # Load validation data
-  df_validation <- arrow::read_parquet(paste0(hub_path, 
-                                              "target-data/oracle-output/nowcast_date=", 
-                                              ref_date, 
+  df_validation <- arrow::read_parquet(paste0(hub_path,
+                                              "target-data/oracle-output/nowcast_date=",
+                                              ref_date,
                                               "/oracle.parquet"))
-  
+
   # Pick out dates to score that were not used for any training
   df_unscored <- read_csv(paste0(hub_path,
-                                 "/auxiliary-data/unscored-location-dates/", 
-                                 ref_date, 
-                                 ".csv"), 
+                                 "/auxiliary-data/unscored-location-dates/",
+                                 ref_date,
+                                 ".csv"),
                           show_col_types = FALSE)
-  
+
   # Load location data to match abbreviations to full name locations
   load(paste0(hub_path, "auxiliary-data/hub_locations.rda"))
   locs_join <- hub_locations |>
     dplyr::select(abbreviation, location_name) |>
     rename(location = location_name)
-  
+
   df_unscored <- df_unscored |>
     left_join(locs_join, by = c("location" = "location")) |>
     select(abbreviation, target_date, count) |>
     rename(location = abbreviation)
-  
+
   # Look at subset where count == 0
   df_unscored_zeros <- subset(df_unscored , count == 0)
-  
-  targets <- df_validation 
-  
+
+  targets <- df_validation
+
   # Max forecast date
-  forecast_date <- ref_date + 10 
-  
+  forecast_date <- ref_date + 10
+
   # Keep all forecast data
-  targets_forecast_temp <- targets |> 
+  targets_forecast_temp <- targets |>
     subset(target_date > ref_date & target_date <= forecast_date)
-  
+
   # Nowcast temp data frame to be refined
   targets_nowcast_temp <- targets |>
     subset(target_date <= ref_date)
-  
-  # Join by target_date and location - keeping only those 
-  # Merging "unscored" location data with full target data 
+
+  # Join by target_date and location - keeping only those
+  # Merging "unscored" location data with full target data
   # Need only be done for dates <= ref_date
   targets_nowcast_temp <- targets_nowcast_temp |>
     right_join(y = df_unscored_zeros, by = join_by(target_date, location)) |>
     select(-count)
-  
+
   # Combine refined nowcast data with forecast data
   targets <- rbind(targets_nowcast_temp, targets_forecast_temp) |>
     subset(location %in% locs_modeled) |>
     arrange(location, target_date)
-  
+
   return(list(targets, df_model_output))
 }
 
 #' Support function for calculating energy scores given target and model_output data
-#' 
+#'
 #' @param targets data frame, of target data
-#' @param df_model_output data frame, of model output 
-#' 
+#' @param df_model_output data frame, of model output
+#'
 #' @return Returns a data frame containing energy scores by location and date
 calc_energy_scores <- function(targets, df_model_output){
   # Energy Scores
   columns <- c("es_score", "location", "target_date")
   df_scores <- data.frame(matrix(nrow = 0, ncol = length(columns)))
   colnames(df_scores) <- columns
-  
+
   locs <- sort(unique(targets$location))
   dates <- sort(unique(targets$target_date))
-  
+
   # Loop over each day at each location
   for(loc in locs){
     for(day in dates){
-      
+
       # For debugging and satisfaction
-      if(display = TRUE){
-        print(loc)
-        print(as.Date(day))
-      }
-      
+      # print(loc)
+      # print(as.Date(day))
+
       # Storage for ES
       es <- as.numeric()
-      
+
       # Validated observed counts
       df_obs <- subset(targets, target_date == as.Date(day) & location == loc) |>
         group_by(clade)
-      
+
       # If there is no such observation, skip to next day
       if( nrow(df_obs) == 0 ){
         next
       }
-      
+
       # Observed counts by clade
       obs_count <- df_obs$oracle_value
-      
+
       # MCMC sample of modeled COUNTS
-      df_samp <- subset(df_model_output, 
-                        target_date == as.Date(day) & 
-                          location == loc & 
+      df_samp <- subset(df_model_output,
+                        target_date == as.Date(day) &
+                          location == loc &
                           output_type == "sample") |>
         group_by(clade)
-      
+
       # Pivot wider to get to MCMC format for scoring
-      df_samp_wide <- pivot_wider(df_samp, names_from = output_type_id, values_from = value) |> 
+      df_samp_wide <- pivot_wider(df_samp, names_from = output_type_id, values_from = value) |>
         group_by(clade)
-      df_samp_wide <- subset(df_samp_wide, 
+      df_samp_wide <- subset(df_samp_wide,
                              select = -c(nowcast_date, target_date,
                                          clade, location, output_type))
-      
+
       # Convert samples to matrix for scoringRules
       samp_matrix <- as.matrix(df_samp_wide)
-      
+
       ## Implement a Multinomial Sampling from the proportions
       ## SCORE ON COUNTS
-      
+
       # Vector to store ES from each multinomial sample
       es_from_multinom <- as.numeric()
-      
+
       for(col in 1:dim(samp_matrix)[2]){
-        
+
         # Get sample clade proportions from predictive distribution
         samp_props <- samp_matrix[,col]
-        
+
         ## Generate 100 multinomial observations for samp_props
         # Need the N for each loc/day from the validation data
         N <- sum(subset(targets,
                         location == loc & target_date == as.Date(day))$oracle_value)
-        
+
         # 100 multinomial samples
         samp_counts <- rmultinom(n = 100, size = N, prob = samp_props)
-        
+
         # Energy score for the 100 multinomial samples for day/loc
         # Note: days that have zero counts will contribute 0 ES
         es <- es_sample(y = obs_count, dat = samp_counts)
         es_from_multinom <- append(es_from_multinom, es)
       }
-      
+
       # Mean ES from 100 multinomial sample energy scoress
       mean_es_multinom <- mean(es)
-      
+
       # Store energy scores to data frame
-      df_temp <- as.data.frame(x = list(mean_es_multinom, loc, as.Date(day)), 
+      df_temp <- as.data.frame(x = list(mean_es_multinom, loc, as.Date(day)),
                                col.names = columns)
       df_scores <- rbind(df_scores, df_temp)
-      
+
     }
   }
   return(df_scores)
@@ -197,23 +195,23 @@ calc_energy_scores <- function(targets, df_model_output){
 
 #' Function to quickly get some summaries of the energy scores
 #' @param df_scores a data frame containing energy scores created by [calc_energy_scores]
-#' 
+#'
 #' @return Returns a list: first element is the mean energy score across all dates/locations.
 #' The second element is a table summarizing the mean energy score by location.
 #' The third element is a table summarizing the mean energy score by date.
 energy_summary <- function(df_scores){
   # Calculate overall energy score
   mean_score <- mean(df_scores$es_score)
-  
+
   # Calculate ES by location
-  tbl_scores_loc <- df_scores |> 
+  tbl_scores_loc <- df_scores |>
     group_by(location) |>
     summarise(mean_score=mean(es_score))
-  
+
   # Calculate ES by date
-  tbl_scores_date <- df_scores |> 
+  tbl_scores_date <- df_scores |>
     group_by(target_date) |>
     summarise(mean_score=mean(es_score))
-  
+
   return(list(mean_score, tbl_scores_loc, tbl_scores_date))
 }
