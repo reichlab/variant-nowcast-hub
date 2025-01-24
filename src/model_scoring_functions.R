@@ -6,10 +6,12 @@
 #' @param ref_date character string, date corresponding to model submission deadline, also called nowcast date
 #'
 #' @examples
-#' df_score <- get_energy_scores(hub_path = "../", model_output_file = "UMass-HMLR/2024-10-16-UMass-HMLR.parquet",
+#' source("model_scoring_functions.R")
+#' df_score <- get_energy_scores(hub_path = here::here(), model_output_file = "UMass-HMLR/2024-10-16-UMass-HMLR.parquet",
 #' ref_date = "2024-10-16")
+here::i_am("src/model_scoring_functions.R")
 get_energy_scores <- function(
-    hub_path = "../",
+    hub_path = here::here(),
     model_output_file = NULL,
     ref_date = NULL
 ){
@@ -37,29 +39,28 @@ get_energy_scores <- function(
 #' @param ref_date character string, date corresponding to model submission deadline, also called nowcast date
 #'
 #' @return List of two data frames. First element is the target data, second element is the model_output data
-process_target_data <- function(hub_path = "../",
+process_target_data <- function(hub_path = here::here(),
                                 model_output_file,
                                 ref_date){
   # Load model output
-  df_model_output <- arrow::read_parquet(paste0(hub_path, "model-output/", model_output_file))
+  df_model_output <- arrow::read_parquet(file.path(hub_path, "model-output", model_output_file))
   clades <- sort(unique(df_model_output$clade))
   locs_modeled <- sort(unique(df_model_output$location))
 
   # Load validation data
-  df_validation <- arrow::read_parquet(paste0(hub_path,
-                                              "target-data/oracle-output/nowcast_date=",
-                                              ref_date,
-                                              "/oracle.parquet"))
+  oracle_file <- paste0("nowcast_date=", ref_date)
+  oracle_path <- file.path(hub_path, "target-data", "oracle-output",
+                           oracle_file, "oracle.parquet")
+  df_validation <- arrow::read_parquet(oracle_path)
 
   # Pick out dates to score that were not used for any training
-  df_unscored <- read_csv(paste0(hub_path,
-                                 "/auxiliary-data/unscored-location-dates/",
-                                 ref_date,
-                                 ".csv"),
+  unscored_file <- paste0(ref_date, ".csv")
+  unscored_path <- file.path(hub_path, "auxiliary-data", "unscored-location-dates", unscored_file)
+  df_unscored <- read_csv(unscored_path,
                           show_col_types = FALSE)
 
   # Load location data to match abbreviations to full name locations
-  load(paste0(hub_path, "auxiliary-data/hub_locations.rda"))
+  load(file.path(hub_path, "auxiliary-data", "hub_locations.rda"))
   locs_join <- hub_locations |>
     dplyr::select(abbreviation, location_name) |>
     rename(location = location_name)
