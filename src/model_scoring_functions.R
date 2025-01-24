@@ -23,8 +23,8 @@ get_energy_scores <- function(
                           model_output_file = model_output_file,
                           ref_date = as.Date(ref_date))
   
-  df_scores <- calc_energy_scores(targets = as.data.frame(data[1]), 
-                                  df_model_output = as.data.frame(data[2]))
+  df_scores <- calc_energy_scores(targets = data[[1]], 
+                                  df_model_output = data[[2]])
   
   return(df_scores)
 }
