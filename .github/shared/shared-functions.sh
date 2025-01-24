@@ -30,5 +30,5 @@ generate_weekly_dates() {
     seq 0 7 $(echo "7 * $weeks" | bc) \
     | xargs -I {} date -d "$start_date -{} days" +%Y-%m-%d \
     | jq -R \
-    | jq -s '. | map({"nowcast-date": .}) | {"include": .}'
+    | jq -sc '. | map({"nowcast-date": .}) | {"include": .}'
 }
