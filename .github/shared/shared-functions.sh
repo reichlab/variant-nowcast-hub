@@ -26,18 +26,9 @@ generate_weekly_dates() {
     local weeks=$2
     local current_date=$start_date
 
-    # Format for GitHub Actions matrix
-    echo -n '{"include":['
-
-    for ((i=1; i<=$weeks; i++)); do
-        current_date=$(date -d "$current_date - 7 days" +%Y-%m-%d)
-        if [ $i -eq $weeks ]; then
-            # last item does not get a trailing comma
-            echo -n "{\"nowcast-date\":\"$current_date\"}"
-        else
-            echo -n "{\"nowcast-date\":\"$current_date\"},"
-        fi
-    done
-
-    echo ']}'
+    # Format a series of dates for GitHub Actions matrix
+    seq 0 7 $(bc --expression="7 * $weeks") \
+    | xargs -I {} date -d "$start_date -{} days" +%Y-%m-%d \
+    | jq -R \
+    | jq -s '. | map({"nowcast-date": .}) | {"include": .}'
 }
