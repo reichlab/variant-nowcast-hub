@@ -32,6 +32,7 @@ generate_weekly_dates() {
     for ((i=1; i<=$weeks; i++)); do
         current_date=$(date -d "$current_date - 7 days" +%Y-%m-%d)
         if [ $i -eq $weeks ]; then
+            # last item does not get a trailing comma
             echo -n "{\"nowcast-date\":\"$current_date\"}"
         else
             echo -n "{\"nowcast-date\":\"$current_date\"},"
