@@ -44,7 +44,6 @@ process_target_data <- function(hub_path = here::here(),
                                 ref_date){
   # Load model output
   df_model_output <- arrow::read_parquet(file.path(hub_path, "model-output", model_output_file))
-  clades <- sort(unique(df_model_output$clade))
   locs_modeled <- sort(unique(df_model_output$location))
   
   # Load validation data
@@ -158,9 +157,6 @@ calc_energy_scores <- function(targets, df_model_output){
       
       ## Implement Multinomial Sampling from the proportions
       ## SCORE ON COUNTS
-      
-      # Vector to store ES from each multinomial sample
-      es_from_multinom <- as.numeric()
       
       # Matrix to store 100 multinomial samples generated from each of 100 sample props
       samp_multinomial_counts <- matrix(nrow = dim(samp_matrix)[1], ncol = 0)
