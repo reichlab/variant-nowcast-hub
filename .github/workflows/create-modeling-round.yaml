@@ -37,11 +37,15 @@ jobs:
           extra-repositories: 'https://hubverse-org.r-universe.dev'
 
       - name: Set up renv 📦
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
         uses: r-lib/actions/setup-renv@v2
         with:
           working-directory: src
 
       - name: Create clade list and update tasks.json 🦠
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
         run: |
           uv run get_clades_to_model.py
           Rscript make_round_config.R
