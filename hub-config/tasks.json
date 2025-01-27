@@ -1466,6 +1466,80 @@
         "start": -2,
         "end": 1
       }
+    },
+    {
+      "round_id_from_variable": true,
+      "round_id": "nowcast_date",
+      "model_tasks": [
+        {
+          "task_ids": {
+            "nowcast_date": {
+              "required": [
+                "2025-01-29"
+              ],
+              "optional": null
+            },
+            "target_date": {
+              "required": null,
+              "optional": ["2024-12-29", "2024-12-30", "2024-12-31", "2025-01-01", "2025-01-02", "2025-01-03", "2025-01-04", "2025-01-05", "2025-01-06", "2025-01-07", "2025-01-08", "2025-01-09", "2025-01-10", "2025-01-11", "2025-01-12", "2025-01-13", "2025-01-14", "2025-01-15", "2025-01-16", "2025-01-17", "2025-01-18", "2025-01-19", "2025-01-20", "2025-01-21", "2025-01-22", "2025-01-23", "2025-01-24", "2025-01-25", "2025-01-26", "2025-01-27", "2025-01-28", "2025-01-29", "2025-01-30", "2025-01-31", "2025-02-01", "2025-02-02", "2025-02-03", "2025-02-04", "2025-02-05", "2025-02-06", "2025-02-07", "2025-02-08"]
+            },
+            "location": {
+              "required": null,
+              "optional": ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "PR"]
+            },
+            "clade": {
+              "required": ["24A", "24B", "24C", "24E", "24F", "24G", "24H", "24I", "recombinant", "other"],
+              "optional": null
+            }
+          },
+          "output_type": {
+            "mean": {
+              "output_type_id": {
+                "required": null,
+                "optional": [
+                  "NA"
+                ]
+              },
+              "value": {
+                "type": "double",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "sample": {
+              "output_type_id_params": {
+                "is_required": false,
+                "type": "character",
+                "max_length": 15,
+                "min_samples_per_task": 100,
+                "max_samples_per_task": 100,
+                "compound_taskid_set": ["nowcast_date", "location"]
+              },
+              "value": {
+                "type": "double",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          },
+          "target_metadata": [
+            {
+              "target_id": "clade prop",
+              "target_name": "Daily nowcasted clade proportions",
+              "target_units": "proportion",
+              "target_keys": null,
+              "target_type": "compositional",
+              "is_step_ahead": true,
+              "time_unit": "day"
+            }
+          ]
+        }
+      ],
+      "submissions_due": {
+        "relative_to": "nowcast_date",
+        "start": -2,
+        "end": 1
+      }
     }
   ]
 }
