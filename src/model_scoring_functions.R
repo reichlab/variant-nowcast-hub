@@ -138,6 +138,14 @@ calc_energy_scores <- function(targets, df_model_output){
       # Observed counts by clade
       obs_count <- df_obs$oracle_value
       
+      # If the observed counts are all 0, add NA ES
+      if( sum(obs_count) == 0 ){
+        df_temp <- as.data.frame(x = list(NA, loc, as.Date(day)),
+                                 col.names = columns)
+        df_scores <- rbind(df_scores, df_temp)
+        next
+      }
+      
       # MCMC sample of modeled COUNTS
       df_samp <- subset(df_model_output,
                         target_date == as.Date(day) &
@@ -161,26 +169,23 @@ calc_energy_scores <- function(targets, df_model_output){
       # Matrix to store 100 multinomial samples generated from each of 100 sample props
       samp_multinomial_counts <- matrix(nrow = dim(samp_matrix)[1], ncol = 0)
       
+      # Need the N for each loc/day from the validation data
+      N <- sum(subset(targets,
+                      location == loc & target_date == as.Date(day))$oracle_value)
+      
+      # Generate 100 multinomial counts for each proportions col of samp_matrix
       for(col in 1:dim(samp_matrix)[2]){
         
         # Get sample clade proportions from predictive distribution
         samp_props <- samp_matrix[,col]
         
-        ## Generate 100 multinomial observations for samp_props
-        # Need the N for each loc/day from the validation data
-        N <- sum(subset(targets,
-                        location == loc & target_date == as.Date(day))$oracle_value)
-        
-        # 100 multinomial samples
+        # Generate 100 multinomial observations from samp_props
         samp_counts <- rmultinom(n = 100, size = N, prob = samp_props)
         
         # Append each multinomial sample together for 10000 total
         samp_multinomial_counts <- cbind(samp_multinomial_counts, samp_counts)
         
       }
-      
-      # print(samp_multinomial_counts[,1:2])
-      # print(dim(samp_multinomial_counts))
       
       # Energy score for the 100*100 multinomial samples for day/loc
       es <- es_sample(y = obs_count, dat = samp_multinomial_counts)
@@ -189,7 +194,6 @@ calc_energy_scores <- function(targets, df_model_output){
       df_temp <- as.data.frame(x = list(es, loc, as.Date(day)),
                                col.names = columns)
       df_scores <- rbind(df_scores, df_temp)
-      
     }
   }
   return(df_scores)
@@ -203,17 +207,17 @@ calc_energy_scores <- function(targets, df_model_output){
 #' The third element is a table summarizing the mean energy score by date.
 energy_summary <- function(df_scores){
   # Calculate overall energy score
-  mean_score <- mean(df_scores$es_score)
+  mean_score <- mean(df_scores$es_score, na.rm = TRUE)
   
   # Calculate ES by location
   tbl_scores_loc <- df_scores |>
     group_by(location) |>
-    summarise(mean_score=mean(es_score))
+    summarise(mean_score=mean(es_score, na.rm = TRUE))
   
   # Calculate ES by date
   tbl_scores_date <- df_scores |>
     group_by(target_date) |>
-    summarise(mean_score=mean(es_score))
+    summarise(mean_score=mean(es_score, na.rm = TRUE))
   
   return(list(mean_score, tbl_scores_loc, tbl_scores_date))
 }
