@@ -69,9 +69,6 @@ process_target_data <- function(hub_path = here::here(),
     select(abbreviation, target_date, count) |>
     rename(location = abbreviation)
   
-  # Look at subset where count == 0
-  df_unscored_zeros <- subset(df_unscored , count == 0)
-  
   targets <- df_validation
   
   # Max forecast date
