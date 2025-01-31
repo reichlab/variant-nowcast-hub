@@ -69,15 +69,9 @@ process_target_data <- function(hub_path = here::here(),
     select(abbreviation, target_date, count) |>
     rename(location = abbreviation)
   
-  # Join by target_date and location - keeping only those
-  # Merging "unscored" location data with full target data
-  # Need only be done for dates <= ref_date
-  targets_nowcast_temp <- targets_nowcast_temp |>
-    right_join(y = df_unscored_zeros, by = join_by(target_date, location)) |>
-    select(-count)
-  
-  # Combine refined nowcast data with forecast data
-  targets <- rbind(targets_nowcast_temp, targets_forecast_temp) |>
+  # Remove location date combinations from unscored-location-dates file and subset to only locations modeled
+  targets <- df_validation |>
+    anti_join(y = df_unscored, by = join_by(target_date, location)) |>
     subset(location %in% locs_modeled) |>
     arrange(location, target_date)
   
