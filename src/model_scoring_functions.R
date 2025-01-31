@@ -69,19 +69,6 @@ process_target_data <- function(hub_path = here::here(),
     select(abbreviation, target_date, count) |>
     rename(location = abbreviation)
   
-  targets <- df_validation
-  
-  # Max forecast date
-  forecast_date <- ref_date + 10
-  
-  # Keep all forecast data
-  targets_forecast_temp <- targets |>
-    subset(target_date > ref_date & target_date <= forecast_date)
-  
-  # Nowcast temp data frame to be refined
-  targets_nowcast_temp <- targets |>
-    subset(target_date <= ref_date)
-  
   # Join by target_date and location - keeping only those
   # Merging "unscored" location data with full target data
   # Need only be done for dates <= ref_date
