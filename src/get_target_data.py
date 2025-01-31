@@ -135,6 +135,17 @@ def set_collection_max_date(ctx, param, value):
     value = value.replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
     return value
 
+def set_target_data_dir(ctx, param, value):
+    """Set the target_data_dir default value to the hub's target-data directory."""
+    if value is None:
+        value = Path(__file__).parents[1] / "target-data"
+    elif value == ".":
+        value = Path.cwd()
+    else:
+        value = Path(value)
+
+    return value
+
 
 @click.command()
 @click.option(
@@ -177,10 +188,14 @@ def set_collection_max_date(ctx, param, value):
 )
 @click.option(
     "--target-data-dir",
-    type=Path,
+    type=str,
     required=False,
-    default=Path(__file__).parents[1] / "target-data",
-    help="For testing only: Path object to the directory where the target data will be saved. Default is the hub's target-data directory.",
+    default=None,
+    callback=set_target_data_dir,
+    help=(
+        "Path object to the directory where the target data will be saved. Default is the hub's target-data directory. "
+        "Specify '.' to save target data to the current working directory."
+    )
 )
 def main(
     nowcast_date: datetime,
@@ -589,7 +604,7 @@ def test_target_data_integration(caplog, tmp_path):
             "--nowcast-date",
             nowcast_date,
             "--target-data-dir",
-            tmp_path,
+            str(tmp_path),
         ],
         color=True,
         catch_exceptions=False,
