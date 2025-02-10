@@ -1,4 +1,7 @@
 name: Build dependency cache on main branch
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main, master]

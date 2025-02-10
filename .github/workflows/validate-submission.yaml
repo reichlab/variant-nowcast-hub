@@ -1,4 +1,7 @@
 name: Hub Submission Validation (R)
+permissions:
+  contents: read
+  pull-requests: read
 
 on:
   workflow_dispatch:
