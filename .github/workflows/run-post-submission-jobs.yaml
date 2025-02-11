@@ -79,7 +79,7 @@ jobs:
       - name: Install uv 🐍
         uses: astral-sh/setup-uv@4db96194c378173c656ce18a155ffc14a9fc4355  #v5.2.2
         with:
-          version: ">=0.0.1"
+          version: "0.5.30"
 
       - name: Create target data 🎯
         run: |
@@ -156,7 +156,7 @@ jobs:
       - name: Install uv 🐍
         uses: astral-sh/setup-uv@4db96194c378173c656ce18a155ffc14a9fc4355  #v5.2.2
         with:
-          version: ">=0.0.1"
+          version: "0.5.30"
 
       - name: Create file of sequence counts by location and date 🦠
         run: |
