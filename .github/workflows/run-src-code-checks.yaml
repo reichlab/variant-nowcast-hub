@@ -1,4 +1,6 @@
 name: Run tests for target data script
+permissions:
+  contents: read
 
 on:
   push:
