@@ -8,6 +8,12 @@ The Hub is built on open source software and data standards developed by the
 
 **Submissions accepted** every Wednesday by 8pm ET, starting October 9, 2024.
 
+## Table of contents
+
+- [Modelers guide to using this hub](#modelers-guide-to-using-this-hub)
+- [Hub Background](#background)
+- [Accessing hub data on the cloud](#accessing-variant-nowcast-hub-data-on-the-cloud)
+
 ## Modelers guide to using this hub
 
 This section provides a high-level getting started guide for modelers who want
