@@ -402,7 +402,7 @@ lf = pl.scan_parquet(
 model_output = lf.collect(streaming=True)
 ```
 
-> [!TIP]
+> **💡 Tip** \
 > In addition to using the Polars API for manipulating data, you can also write
 > SQL against a Polars DataFrame.
 
