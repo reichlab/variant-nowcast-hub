@@ -8,6 +8,12 @@ The Hub is built on open source software and data standards developed by the
 
 **Submissions accepted** every Wednesday by 8pm ET, starting October 9, 2024.
 
+## Table of contents
+
+- [Modelers guide to using this hub](#modelers-guide-to-using-this-hub)
+- [Hub Background](#background)
+- [Accessing hub data on the cloud](#accessing-variant-nowcast-hub-data-on-the-cloud)
+
 ## Modelers guide to using this hub
 
 This section provides a high-level getting started guide for modelers who want
@@ -55,7 +61,8 @@ file describes the content of the model metadata file, including required fields
 [Existing model-metdata files](model-metadata/) serve as good as examples.
 Submit model metadata as a pull request to the repository.
 
-> [!TIP] There's a GitHub approval process for first-time contributors, so
+> [!TIP]
+> There's a GitHub approval process for first-time contributors, so
 > **creating a pull request for the metadata file before submitting nowcasts**
 > ensures that modelers won't need to wait for approval later in the round.
 
@@ -176,3 +183,339 @@ An additional alternative scoring option would be to compute Brier scores on eac
 ### Score aggregation
 
 Scores will be primarily reported as aggregated scores across all locations and dates. However, we will also report scores for individual locations and dates.
+
+## Accessing variant nowcast hub data on the cloud
+
+To ensure greater access to the data created by and submitted to this hub, real-time copies of files in the following
+directories are hosted on the Hubverse's Amazon Web Services (AWS) infrastructure, in a public S3 bucket:
+`covid-variant-nowcast-hub`.
+
+- auxiliary-data
+- hub-config
+- model-metadata
+- model-output
+- target-data
+
+GitHub remains the primary interface for operating the hub and collecting forecasts from modelers.
+However, the mirrors of hub files on S3 are the most convenient way to access hub data without using git/GitHub or
+cloning the entire hub to your local machine.
+
+The sections below provide examples for accessing hub data on the cloud, depending on your goals and
+preferred tools. The options include:
+
+| Access Method              | Description                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------- |
+| hubData (R)                | Hubverse R client and R code for accessing hub data                                   |
+| Polars (Python)            | Python open-source library for data manipulation                                      |
+| AWS command line interface | Download hub data to your machine and use hubData or Polars for local access          |
+
+In general, accessing the data directly from S3 (instead of downloading it first) is more convenient. However, if
+performance is critical (for example, you're building an interactive visualization), or if you need to work offline,
+we recommend downloading the data first.
+
+<!-------------------------------------------------- hubData ------------------------------------------------------->
+
+<details>
+
+<summary>hubData (R)</summary>
+
+[hubData](https://hubverse-org.github.io/hubData), the Hubverse R client, can create an interactive session
+for accessing, filtering, and transforming hub model output data stored in S3.
+
+hubData is a good choice if you:
+
+- already use R for data analysis
+- want to interactively explore hub data from the cloud without downloading it
+- want to save a subset of the hub's data (*e.g.*, forecasts for a specific date or target) to your local machine
+- want to save hub data in a different file format (*e.g.*, parquet to .csv)
+
+### Installing hubData
+
+To install hubData and its dependencies (including the dplyr and arrow packages), follow the [instructions in the hubData documentation](https://hubverse-org.github.io/hubData/#installation).
+
+### Using hubData
+
+hubData's [`connect_hub()` function](https://hubverse-org.github.io/hubData/reference/connect_hub.html) returns an [Arrow
+multi-file dataset](https://arrow.apache.org/docs/r/reference/Dataset.html) that represents a hub's model output data.
+The dataset can be filtered and transformed using dplyr and then materialized into a local data frame
+using the [`collect_hub()` function](https://hubverse-org.github.io/hubData/reference/collect_hub.html).
+
+
+#### Accessing target data
+
+*hubData will be updated to access target data once the Hubverse target data standards are finalized.*
+
+#### Accessing model output data
+
+Below is an example of using hubData to connect to a hub on S3 and filter the model output data.
+
+```r
+library(dplyr)
+library(hubData)
+
+bucket_name <- "covid-variant-nowcast-hub"
+hub_bucket <- s3_bucket(bucket_name)
+hub_con <- hubData::connect_hub(hub_bucket, file_format = "parquet", skip_checks = TRUE)
+hub_con %>%
+  dplyr::filter(location == "MA", output_type == "mean", clade != "recombinant") %>%
+  hubData::collect_hub() %>%
+  dplyr::select(model_id, nowcast_date, target_date, location, clade, value)
+
+# A tibble: 12,810 × 6
+#    model_id            nowcast_date target_date location clade   value
+#    <chr>               <date>       <date>      <chr>    <chr>   <dbl>
+#  1 LANL-CovTransformer 2024-11-06   2024-10-06  MA       24C   0.0394
+#  2 LANL-CovTransformer 2024-11-06   2024-10-07  MA       24C   0.0444
+#  3 LANL-CovTransformer 2024-11-06   2024-10-08  MA       24C   0.0559
+#  4 LANL-CovTransformer 2024-11-06   2024-10-09  MA       24C   0.0487
+#  5 LANL-CovTransformer 2024-11-06   2024-10-10  MA       24C   0.00951
+#  6 LANL-CovTransformer 2024-11-06   2024-10-11  MA       24C   0.0117
+#  7 LANL-CovTransformer 2024-11-06   2024-10-12  MA       24C   0.0371
+#  8 LANL-CovTransformer 2024-11-06   2024-10-13  MA       24C   0.0116
+#  9 LANL-CovTransformer 2024-11-06   2024-10-14  MA       24C   0.0163
+# 10 LANL-CovTransformer 2024-11-06   2024-10-15  MA       24C   0.0460
+# ℹ 12,800 more rows
+```
+
+- [full hubData documentation](https://hubverse-org.github.io/hubData/)
+
+</details>
+
+<!--------------------------------------------------- Polars ------------------------------------------------------->
+
+<details>
+
+<summary>Polars (Python)</summary>
+
+For Python users, we recommend the [Polars](https://pola.rs/) library to work with hub data in S3.
+Similar to pandas, Polars is based on dataframes and series. However, Polars has a more straightforward API and is
+designed to work with larger-than-memory datasets.
+
+Pandas users can access hub data as described below and then use the `to_pandas()` method to convert a Polars dataframe
+to pandas format.
+
+Polars is a good choice if you:
+
+- already use Python for data analysis
+- want to interactively explore hub data from the cloud without downloading it
+- want to save a subset of the hub's data (*e.g.*, forecasts for a specific date or target) to your local machine
+- want to save hub data in a different file format (*e.g.*, parquet to .csv)
+
+### Installing polars
+
+Use pip to install Polars:
+
+```sh
+python -m pip install polars
+```
+
+### Using Polars
+
+The examples below use the Polars
+[`scan_parquet()` function](https://docs.pola.rs/api/python/dev/reference/api/polars.scan_parquet.html), which returns a
+[LazyFrame](https://docs.pola.rs/api/python/stable/reference/lazyframe/index.html).
+LazyFrames do not perform computations until necessary, so any filtering and transforms you apply to the data are
+deferred until an explicit
+[`collect()` operation](https://docs.pola.rs/api/python/stable/reference/lazyframe/api/polars.LazyFrame.collect.html#polars.LazyFrame.collect).
+
+#### Accessing target data
+
+Get all oracle-output files into a single DataFrame.
+
+```python
+import polars as pl
+
+oracle_data = pl.scan_parquet(
+    "s3://covid-variant-nowcast-hub/target-data/oracle-output/*/*.parquet",
+    storage_options={"skip_signature": "true"}
+)
+
+# filter and transform as needed and collect into a dataframe, for example:
+oracle_dataframe = oracle_data.filter(pl.col("location") == "MA").collect()
+oracle_dataframe.head()
+# shape: (5, 5)
+# ┌──────────┬─────────────┬─────────────┬──────────────┬──────────────┐
+# │ location ┆ target_date ┆ clade       ┆ oracle_value ┆ nowcast_date │
+# │ ---      ┆ ---         ┆ ---         ┆ ---          ┆ ---          │
+# │ str      ┆ date        ┆ str         ┆ f64          ┆ date         │
+# ╞══════════╪═════════════╪═════════════╪══════════════╪══════════════╡
+# │ MA       ┆ 2024-09-08  ┆ 24A         ┆ 1.0          ┆ 2024-10-09   │
+# │ MA       ┆ 2024-09-08  ┆ 24B         ┆ 0.0          ┆ 2024-10-09   │
+# │ MA       ┆ 2024-09-08  ┆ 24C         ┆ 0.0          ┆ 2024-10-09   │
+# │ MA       ┆ 2024-09-08  ┆ 24E         ┆ 0.0          ┆ 2024-10-09   │
+# │ MA       ┆ 2024-09-08  ┆ recombinant ┆ 0.0          ┆ 2024-10-09   │
+# └──────────┴─────────────┴─────────────┴──────────────┴──────────────┘
+```
+
+Get target time series data.
+
+```python
+from datetime import datetime
+import polars as pl
+
+timeseries_data = pl.scan_parquet(
+    "s3://covid-variant-nowcast-hub/target-data/time-series/*/*/*.parquet",
+    storage_options={"skip_signature": "true"}
+)
+
+timeseries_dataframe = (
+    timeseries_data.filter(
+        pl.col("location") == "GA",
+        pl.col("nowcast_date") == datetime(2025, 1, 29)
+    )
+    .select(["location", "target_date", "clade", "observation"]) \
+    .collect()
+)
+timeseries_dataframe.head()
+# shape: (5, 4)
+# ┌──────────┬─────────────┬───────┬─────────────┐
+# │ location ┆ target_date ┆ clade ┆ observation │
+# │ ---      ┆ ---         ┆ ---   ┆ ---         │
+# │ str      ┆ date        ┆ str   ┆ f64         │
+# ╞══════════╪═════════════╪═══════╪═════════════╡
+# │ GA       ┆ 2024-10-29  ┆ 24A   ┆ 0.0         │
+# │ GA       ┆ 2024-10-29  ┆ 24B   ┆ 0.0         │
+# │ GA       ┆ 2024-10-29  ┆ 24C   ┆ 0.0         │
+# │ GA       ┆ 2024-10-29  ┆ 24E   ┆ 3.0         │
+# │ GA       ┆ 2024-10-29  ┆ 24F   ┆ 0.0         │
+# └──────────┴─────────────┴───────┴─────────────┘
+```
+
+#### Accessing model output data
+
+Get all model-output files.
+This example uses
+[glob patterns to read from data multiple files into a single dataset](https://docs.pola.rs/user-guide/io/multiple/#reading-into-a-single-dataframe).
+It also uses the [`streaming` option](https://docs.pola.rs/user-guide/concepts/_streaming/) when collecting data, which
+facilitates processing of datasets that don't fit into memory.
+
+```python
+import polars as pl
+
+# create a LazyFrame for model-output files
+lf = pl.scan_parquet(
+    "s3://covid-variant-nowcast-hub/model-output/*/*.parquet",
+    storage_options={"skip_signature": "true"}
+)
+
+# use a collect operation to materialize the LazyFrame into a DataFrame
+model_output = lf.collect(streaming=True)
+```
+
+> **💡 Tip** \
+> In addition to using the Polars API for manipulating data, you can also write
+> SQL against a Polars DataFrame.
+
+```python
+# ...continuing from the prior example
+model_output.sql("""
+    select
+      nowcast_date, target_date, location, clade, model_id, value
+    from self
+    where
+      nowcast_date = '2025-02-19'
+      and output_type = 'mean'
+    order by
+      target_date, location, clade, model_id
+""").head()
+# shape: (5, 6)
+# ┌──────────────┬─────────────┬──────────┬───────┬────────────┬──────────┐
+# │ nowcast_date ┆ target_date ┆ location ┆ clade ┆ model_id   ┆ value    │
+# │ ---          ┆ ---         ┆ ---      ┆ ---   ┆ ---        ┆ ---      │
+# │ date         ┆ date        ┆ str      ┆ str   ┆ str        ┆ f64      │
+# ╞══════════════╪═════════════╪══════════╪═══════╪════════════╪══════════╡
+# │ 2025-02-19   ┆ 2025-01-19  ┆ AL       ┆ 24A   ┆ UMass-HMLR ┆ 0.035073 │
+# │ 2025-02-19   ┆ 2025-01-19  ┆ AL       ┆ 24C   ┆ UMass-HMLR ┆ 0.011075 │
+# │ 2025-02-19   ┆ 2025-01-19  ┆ AL       ┆ 24E   ┆ UMass-HMLR ┆ 0.282744 │
+# │ 2025-02-19   ┆ 2025-01-19  ┆ AL       ┆ 24F   ┆ UMass-HMLR ┆ 0.342392 │
+# │ 2025-02-19   ┆ 2025-01-19  ┆ AL       ┆ 24H   ┆ UMass-HMLR ┆ 0.022094 │
+# └──────────────┴─────────────┴──────────┴───────┴────────────┴──────────┘
+```
+
+Get the model-output files for a specific team (all rounds).
+Like the prior example, this one uses glob patterns to read multiple files.
+
+```python
+import polars as pl
+
+lf = pl.scan_parquet(
+    "s3://covid-variant-nowcast-hub/model-output/UMass-HMLR/*.parquet",
+    storage_options={"skip_signature": "true"}
+)
+
+lf.select(
+    ["nowcast_date", "target_date", "clade", "location", "model_id", "value"]
+).collect().head()
+# shape: (5, 6)
+# ┌──────────────┬─────────────┬─────────────┬──────────┬────────────┬──────────┐
+# │ nowcast_date ┆ target_date ┆ clade       ┆ location ┆ model_id   ┆ value    │
+# │ ---          ┆ ---         ┆ ---         ┆ ---      ┆ ---        ┆ ---      │
+# │ date         ┆ date        ┆ str         ┆ str      ┆ str        ┆ f64      │
+# ╞══════════════╪═════════════╪═════════════╪══════════╪════════════╪══════════╡
+# │ 2024-10-09   ┆ 2024-09-08  ┆ 24A         ┆ AL       ┆ UMass-HMLR ┆ 0.008923 │
+# │ 2024-10-09   ┆ 2024-09-08  ┆ 24B         ┆ AL       ┆ UMass-HMLR ┆ 0.097792 │
+# │ 2024-10-09   ┆ 2024-09-08  ┆ 24C         ┆ AL       ┆ UMass-HMLR ┆ 0.002376 │
+# │ 2024-10-09   ┆ 2024-09-08  ┆ 24E         ┆ AL       ┆ UMass-HMLR ┆ 0.864681 │
+# │ 2024-10-09   ┆ 2024-09-08  ┆ recombinant ┆ AL       ┆ UMass-HMLR ┆ 0.024439 │
+# └──────────────┴─────────────┴─────────────┴──────────┴────────────┴──────────┘
+```
+
+- [Full documentation of the Polars Python API](https://docs.pola.rs/api/python/stable/reference/)
+
+</details>
+
+<!--------------------------------------------------- AWS CLI ------------------------------------------------------->
+
+<details>
+
+<summary>AWS CLI</summary>
+
+AWS provides a terminal-based command line interface (CLI) for exploring and downloading S3 files.
+This option is ideal if you:
+
+- plan to work with hub data offline but don't want to use git or GitHub
+- want to download a subset of the data (instead of the entire hub)
+- are using the data for an application that requires local storage or fast response times
+
+### Installing the AWS CLI
+
+- Install the AWS CLI using the
+[instructions here](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+- You can skip the instructions for setting up security credentials, since Hubverse data is public
+
+### Using the AWS CLI
+
+When using the AWS CLI, the `--no-sign-request` option is required, since it tells AWS to bypass a credential check
+(*i.e.*, `--no-sign-request` allows anonymous access to public S3 data).
+
+> [!NOTE]
+> Files in the bucket's `raw` directory should not be used for analysis (they're for internal use only).
+
+List all directories in the hub's S3 bucket:
+
+```sh
+aws s3 ls covid-variant-nowcast-hub --no-sign-request
+```
+
+List all files in the hub's bucket:
+
+```sh
+aws s3 ls covid-variant-nowcast-hub --recursive --no-sign-request
+```
+
+Download all of target-data contents to your current working directory:
+
+```sh
+aws s3 cp s3://covid-variant-nowcast-hub/target-data/ . --recursive --no-sign-request
+```
+
+Download the model-output files for a specific team:
+
+```sh
+aws s3 cp s3://covid-variant-nowcast-hub/model-output/UMass-HMLR/ . --recursive --no-sign-request
+```
+
+- [Full documentation for `aws s3 ls`](https://docs.aws.amazon.com/cli/latest/reference/s3/ls.html)
+- [Full documentation for `aws s3 cp`](https://docs.aws.amazon.com/cli/latest/reference/s3/cp.html)
+
+</details>
