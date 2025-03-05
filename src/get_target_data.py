@@ -358,7 +358,10 @@ def create_target_data(
             pl.col("target_date")
             >= datetime.fromisoformat(nowcast_string) - timedelta(days=31)
         )
-        .with_columns(pl.lit(nowcast_string).alias("nowcast_date"))
+        .with_columns(
+            pl.lit(nowcast_string).alias("nowcast_date"),
+            pl.lit(sequence_as_of_string).alias("as_of"),
+        )
         .rename({"observation": "oracle_value"})
     )
 
@@ -426,6 +429,7 @@ def write_target_data(
             ("clade", pa.string()),
             ("oracle_value", pa.float64()),
             ("nowcast_date", pa.date32()),
+            ("as_of", pa.date32()),
         ]
     )
     oracle_arrow = oracle_arrow.cast(oracle_schema)
@@ -577,7 +581,7 @@ def test_target_data():
 
     oracle = oracle.collect()
     expected_oracle_cols = set(
-        ["nowcast_date", "location", "target_date", "clade", "oracle_value"]
+        ["nowcast_date", "location", "target_date", "clade", "oracle_value", "as_of"]
     )
     assert set(oracle.columns) == expected_oracle_cols
     assert oracle.height == ts.height
@@ -679,6 +683,7 @@ def test_target_data_integration(caplog, tmp_path):
     assert oracle_schema_dict.get("target_date") is date
     assert oracle_schema_dict.get("clade") is str
     assert oracle_schema_dict.get("oracle_value") is float
+    assert oracle_schema_dict.get("as_of") is date
 
     # check data types when reading target data with Arrow
     ts_arrow = ds.dataset(str(ts_path), format="parquet")
@@ -697,3 +702,4 @@ def test_target_data_integration(caplog, tmp_path):
     assert oracle_schema.field("clade").type == pa.string()
     assert oracle_schema.field("oracle_value").type == pa.float64()
     assert oracle_schema.field("target_date").type == pa.date32()
+    assert oracle_schema.field("as_of").type == pa.date32()
