@@ -152,13 +152,13 @@ save_plots <- function(model_output_data,
                        page_by_location = TRUE,
                        plot_loess = TRUE) {
   if(page_by_location){
-    plots <- lapply(unique(model_output_data$location), function(.x)
+    plots <- lapply(sort(unique(model_output_data$location)), function(.x)
       plot_one_location(this_location = .x,
                         model_output_data = model_output_data,
                         target_data = target_data,
                         plot_loess = plot_loess))
   } else {
-    plots <- lapply(unique(model_output_data$clade), function(.x)
+    plots <- lapply(sort(unique(model_output_data$clade)), function(.x)
       plot_one_clade(this_clade = .x,
                      model_output_data = model_output_data,
                      target_data = target_data))
@@ -183,8 +183,8 @@ plot_one_location <- function(this_location, model_output_data, target_data, plo
     filter(location == this_location) |>
     group_by(target_date, clade, location) |>
     summarize(mean = mean(value),
-              q10 = quantile(value, probs = 0.1),
-              q90 = quantile(value, probs = 0.9)) |>
+              q10 = quantile(value, probs = 0.1, na.rm = T),
+              q90 = quantile(value, probs = 0.9, na.rm = T)) |>
     mutate(type = "prediction") |>
     rename(date = target_date,
            value = mean)
@@ -249,8 +249,8 @@ plot_one_clade <- function(this_clade, model_output_data, target_data){
     filter(clade == this_clade) |>
     group_by(target_date, clade, location) |>
     summarize(mean = mean(value),
-              q10 = quantile(value, probs = 0.1),
-              q90 = quantile(value, probs = 0.9)) |>
+              q10 = quantile(value, probs = 0.1, na.rm = T),
+              q90 = quantile(value, probs = 0.9, na.rm = T)) |>
     mutate(type = "prediction") |>
     rename(date = target_date,
            value = mean)
