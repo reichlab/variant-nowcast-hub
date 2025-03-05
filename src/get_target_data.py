@@ -135,6 +135,7 @@ def set_collection_max_date(ctx, param, value):
     value = value.replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
     return value
 
+
 def set_target_data_dir(ctx, param, value):
     """Set the target_data_dir default value to the hub's target-data directory."""
     if value is None:
@@ -195,7 +196,7 @@ def set_target_data_dir(ctx, param, value):
     help=(
         "Path object to the directory where the target data will be saved. Default is the hub's target-data directory. "
         "Specify '.' to save target data to the current working directory."
-    )
+    ),
 )
 def main(
     nowcast_date: datetime,
@@ -339,10 +340,7 @@ def create_target_data(
         .fill_null(strategy="zero")
         .with_columns(
             pl.lit(nowcast_string).alias("nowcast_date"),
-            pl.lit(sequence_as_of_string).alias("sequence_as_of"),
-            pl.lit(assignments.meta["tree_as_of"].strftime("%Y-%m-%d")).alias(
-                "tree_as_of"
-            ),
+            pl.lit(sequence_as_of_string).alias("as_of"),
         )
         .rename(
             {
@@ -390,7 +388,7 @@ def write_target_data(
 
     ts_output_path = (
         target_time_series_dir
-        / f"nowcast_date={nowcast_string}/sequence_as_of={sequence_as_of_string}"
+        / f"as_of={sequence_as_of_string}/nowcast_date={nowcast_string}"
     )
     ts_output_path.mkdir(exist_ok=True, parents=True)
     ts_output_path = ts_output_path / "timeseries.parquet"
@@ -405,8 +403,7 @@ def write_target_data(
             ("clade", pa.string()),
             ("observation", pa.float64()),
             ("nowcast_date", pa.date32()),
-            ("sequence_as_of", pa.date32()),
-            ("tree_as_of", pa.date32()),
+            ("as_of", pa.date32()),
         ]
     )
     time_series_arrow = time_series_arrow.cast(ts_schema)
@@ -558,8 +555,7 @@ def test_target_data():
             "clade",
             "observation",
             "nowcast_date",
-            "sequence_as_of",
-            "tree_as_of",
+            "as_of",
         ]
     )
     assert set(ts.columns) == expected_time_series_cols
@@ -569,8 +565,7 @@ def test_target_data():
     assert ts.get_column("target_date").max() == date(2024, 12, 4)
     assert ts.get_column("observation").sum() == 20
     assert ts.get_column("nowcast_date").unique().to_list() == ["2024-09-11"]
-    assert ts.get_column("sequence_as_of").unique().to_list() == ["2024-12-17"]
-    assert ts.get_column("tree_as_of").unique().to_list() == ["2024-08-01"]
+    assert ts.get_column("as_of").unique().to_list() == ["2024-12-17"]
 
     clade_counts = ts.sql(
         "select clade, sum(observation) as sum from self group by clade"
@@ -644,10 +639,6 @@ def test_target_data_integration(caplog, tmp_path):
     assert len(modeled_clades) == len(ts_clades)
     assert set(ts_clades) == (set(modeled_clades))
 
-    assert ts.get_column("tree_as_of").unique().to_list() == [
-        datetime(2024, 9, 9).date()
-    ]
-
     # check time series column data types
     ts_schema_dict = ts.schema.to_python()
     assert ts_schema_dict.get("location") is str
@@ -655,8 +646,7 @@ def test_target_data_integration(caplog, tmp_path):
     assert ts_schema_dict.get("clade") is str
     assert ts_schema_dict.get("observation") is float
     assert ts_schema_dict.get("nowcast_date") is date
-    assert ts_schema_dict.get("sequence_as_of") is date
-    assert ts_schema_dict.get("tree_as_of") is date
+    assert ts_schema_dict.get("as_of") is date
 
     # time series rows should = total target dates * total locations * total clades
     len(target_dates) * len(state_list) * len(modeled_clades) == ts.height
@@ -698,8 +688,7 @@ def test_target_data_integration(caplog, tmp_path):
     assert ts_schema.field("clade").type == pa.string()
     assert ts_schema.field("observation").type == pa.float64()
     assert ts_schema.field("target_date").type == pa.date32()
-    assert ts_schema.field("sequence_as_of").type == pa.date32()
-    assert ts_schema.field("tree_as_of").type == pa.date32()
+    assert ts_schema.field("as_of").type == pa.date32()
 
     oracle_arrow = ds.dataset(str(oracle_path), format="parquet")
     oracle_schema = oracle_arrow.schema
