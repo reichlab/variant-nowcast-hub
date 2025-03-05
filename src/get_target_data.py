@@ -404,7 +404,7 @@ def write_target_data(
             ("target_date", pa.date32()),
             ("location", pa.string()),
             ("clade", pa.string()),
-            ("observation", pa.float64()),
+            ("observation", pa.int64()),
             ("nowcast_date", pa.date32()),
             ("as_of", pa.date32()),
         ]
@@ -427,7 +427,7 @@ def write_target_data(
             ("location", pa.string()),
             ("target_date", pa.date32()),
             ("clade", pa.string()),
-            ("oracle_value", pa.float64()),
+            ("oracle_value", pa.int64()),
             ("nowcast_date", pa.date32()),
             ("as_of", pa.date32()),
         ]
@@ -648,7 +648,7 @@ def test_target_data_integration(caplog, tmp_path):
     assert ts_schema_dict.get("location") is str
     assert ts_schema_dict.get("target_date") is date
     assert ts_schema_dict.get("clade") is str
-    assert ts_schema_dict.get("observation") is float
+    assert ts_schema_dict.get("observation") is int
     assert ts_schema_dict.get("nowcast_date") is date
     assert ts_schema_dict.get("as_of") is date
 
@@ -682,7 +682,7 @@ def test_target_data_integration(caplog, tmp_path):
     assert oracle_schema_dict.get("location") is str
     assert oracle_schema_dict.get("target_date") is date
     assert oracle_schema_dict.get("clade") is str
-    assert oracle_schema_dict.get("oracle_value") is float
+    assert oracle_schema_dict.get("oracle_value") is int
     assert oracle_schema_dict.get("as_of") is date
 
     # check data types when reading target data with Arrow
@@ -691,7 +691,7 @@ def test_target_data_integration(caplog, tmp_path):
     assert ts_schema.field("nowcast_date").type == pa.date32()
     assert ts_schema.field("location").type == pa.string()
     assert ts_schema.field("clade").type == pa.string()
-    assert ts_schema.field("observation").type == pa.float64()
+    assert ts_schema.field("observation").type == pa.int64()
     assert ts_schema.field("target_date").type == pa.date32()
     assert ts_schema.field("as_of").type == pa.date32()
 
@@ -700,6 +700,6 @@ def test_target_data_integration(caplog, tmp_path):
     assert oracle_schema.field("nowcast_date").type == pa.date32()
     assert oracle_schema.field("location").type == pa.string()
     assert oracle_schema.field("clade").type == pa.string()
-    assert oracle_schema.field("oracle_value").type == pa.float64()
+    assert oracle_schema.field("oracle_value").type == pa.int64()
     assert oracle_schema.field("target_date").type == pa.date32()
     assert oracle_schema.field("as_of").type == pa.date32()
