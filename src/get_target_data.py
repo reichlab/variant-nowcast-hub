@@ -22,7 +22,7 @@ uv run --with-requirements src/requirements.txt --module pytest src/get_target_d
 # requires-python = ">=3.12,<3.13"
 # dependencies = [
 #   "click",
-#   "cladetime@git+https://github.com/reichlab/cladetime",
+#   "cladetime",
 #   "polars>=1.17.1,<1.18.0",
 #   "pyarrow>=18.1.0,<19.0.0",
 # ]
