@@ -77,7 +77,7 @@ plot_summary_graphs <- function(
   ## Daily plots
   save_path_daily = paste(save_path, model_id, "_daily_", s3_data_date, ".pdf", sep = "")
   suppressMessages(save_plots(model_output_data = dat,
-             target_data = targets_other_wk,
+             target_data = targets_other,
              save_path = save_path_daily,
              page_by_location = page_by_location))
 
