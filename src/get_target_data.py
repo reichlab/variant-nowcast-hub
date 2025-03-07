@@ -22,7 +22,7 @@ uv run --with-requirements src/requirements.txt --module pytest src/get_target_d
 # requires-python = ">=3.12,<3.13"
 # dependencies = [
 #   "click",
-#   "cladetime@git+https://github.com/reichlab/cladetime",
+#   "cladetime",
 #   "polars>=1.17.1,<1.18.0",
 #   "pyarrow>=18.1.0,<19.0.0",
 # ]
@@ -135,6 +135,7 @@ def set_collection_max_date(ctx, param, value):
     value = value.replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
     return value
 
+
 def set_target_data_dir(ctx, param, value):
     """Set the target_data_dir default value to the hub's target-data directory."""
     if value is None:
@@ -152,7 +153,7 @@ def set_target_data_dir(ctx, param, value):
     "--nowcast-date",
     type=click.DateTime(formats=["%Y-%m-%d"]),
     required=True,
-    help="The modeling round nowcast date (i.e., round_id) (YYYY-MM-DD). The tree as of date is set to this reference date minus two days.",
+    help="The modeling round nowcast date (i.e., round_id) (YYYY-MM-DD).",
 )
 @click.option(
     "--sequence-as-of",
@@ -176,7 +177,7 @@ def set_target_data_dir(ctx, param, value):
     required=False,
     default=None,
     callback=normalize_date,
-    help="Assign clades to sequences collected on or after this UTC date (YYYY-MM-DD). Default is the nowcast date minus 31 days.",
+    help="Assign clades to sequences collected on or after this UTC date (YYYY-MM-DD). Default is the nowcast date minus 90 days.",
 )
 @click.option(
     "--collection-max-date",
@@ -195,7 +196,7 @@ def set_target_data_dir(ctx, param, value):
     help=(
         "Path object to the directory where the target data will be saved. Default is the hub's target-data directory. "
         "Specify '.' to save target data to the current working directory."
-    )
+    ),
 )
 def main(
     nowcast_date: datetime,
