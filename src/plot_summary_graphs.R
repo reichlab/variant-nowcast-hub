@@ -77,7 +77,7 @@ plot_summary_graphs <- function(
   ## Daily plots
   save_path_daily = paste(save_path, model_id, "_daily_", s3_data_date, ".pdf", sep = "")
   suppressMessages(save_plots(model_output_data = dat,
-             target_data = targets_other_wk,
+             target_data = targets_other,
              save_path = save_path_daily,
              page_by_location = page_by_location))
 
@@ -132,7 +132,8 @@ plot_summary_graphs <- function(
   suppressMessages(save_plots(model_output_data = model_output_logit,
              target_data = target_logit,
              save_path = save_path_daily_logit,
-             page_by_location = page_by_location))
+             page_by_location = page_by_location,
+             plot_loess = FALSE))
 }
 
 
@@ -148,14 +149,16 @@ plot_summary_graphs <- function(
 save_plots <- function(model_output_data,
                        target_data,
                        save_path,
-                       page_by_location = TRUE) {
+                       page_by_location = TRUE,
+                       plot_loess = TRUE) {
   if(page_by_location){
-    plots <- lapply(unique(model_output_data$location), function(.x)
+    plots <- lapply(sort(unique(model_output_data$location)), function(.x)
       plot_one_location(this_location = .x,
                         model_output_data = model_output_data,
-                        target_data = target_data))
+                        target_data = target_data,
+                        plot_loess = plot_loess))
   } else {
-    plots <- lapply(unique(model_output_data$clade), function(.x)
+    plots <- lapply(sort(unique(model_output_data$clade)), function(.x)
       plot_one_clade(this_clade = .x,
                      model_output_data = model_output_data,
                      target_data = target_data))
@@ -172,17 +175,16 @@ save_plots <- function(model_output_data,
 #' @param model_output_data formatted model output data
 #' @param target_data formatted target data
 #'
-plot_one_location <- function(this_location, model_output_data, target_data){
+plot_one_location <- function(this_location, model_output_data, target_data, plot_loess = TRUE){
   require(dplyr)
   require(ggplot2)
   theme_set(theme_bw())
-
   mean_data_loc <- model_output_data |>
     filter(location == this_location) |>
     group_by(target_date, clade, location) |>
     summarize(mean = mean(value),
-              q10 = quantile(value, probs = 0.1),
-              q90 = quantile(value, probs = 0.9)) |>
+              q10 = quantile(value, probs = 0.1, na.rm = T),
+              q90 = quantile(value, probs = 0.9, na.rm = T)) |>
     mutate(type = "prediction") |>
     rename(date = target_date,
            value = mean)
@@ -196,19 +198,39 @@ plot_one_location <- function(this_location, model_output_data, target_data){
     ylim <- c(0, 1)
     transftitle <- ""
   }
-
-  p <- mean_data_loc |>
-    ggplot(aes(x=date, y=value)) +
-    geom_point(data = target_data_loc, aes(size = total))+
-    geom_smooth(data = target_data_loc, se=FALSE, aes(weight = total))+
-    geom_line(color = "red") +
-    geom_ribbon(aes(ymin = q10, ymax = q90), fill="red", alpha = .5) +
-    scale_y_continuous(name = "clade frequency") +
-    coord_cartesian(ylim = ylim) +
-    scale_x_date(NULL, date_breaks = "3 months", date_minor_breaks = "1 month") +
-    scale_size(name = "# of sequences") +
-    facet_wrap(~clade) +
-    ggtitle(paste(transftitle, "Observed and predicted frequencies of SARS-CoV-2 clades in", this_location))
+  
+  if(plot_loess){
+    p <- mean_data_loc |>
+      ggplot(aes(x=date, y=value)) +
+      geom_point(data = target_data_loc, aes(size = total), alpha = 0.6) +
+      geom_smooth(data = target_data_loc, se=FALSE, size = 0.8, alpha = 0.6,
+                  aes(weight = total),
+                  method = loess, method.args = list(span = 0.5, degree = 1))+
+      geom_line(color = "red") +
+      geom_ribbon(aes(ymin = q10, ymax = q90), fill="red", alpha = .5) +
+      scale_y_continuous(name = "clade frequency") +
+      coord_cartesian(ylim = ylim) +
+      scale_x_date(NULL, date_breaks = "3 months", date_minor_breaks = "1 month") +
+      scale_size(name = "# of sequences") +
+      facet_wrap(~clade) +
+      ggtitle(paste(transftitle, "Observed and predicted frequencies of SARS-CoV-2 clades in", this_location))
+    
+  }
+  else{
+    p <- mean_data_loc |>
+      ggplot(aes(x=date, y=value)) +
+      geom_point(data = target_data_loc, aes(size = total), alpha = 0.6) +
+      geom_line(color = "red") +
+      geom_ribbon(aes(ymin = q10, ymax = q90), fill="red", alpha = .5) +
+      scale_y_continuous(name = "clade frequency") +
+      coord_cartesian(ylim = ylim) +
+      scale_x_date(NULL, date_breaks = "3 months", date_minor_breaks = "1 month") +
+      scale_size(name = "# of sequences") +
+      facet_wrap(~clade) +
+      ggtitle(paste(transftitle, "Observed and predicted frequencies of SARS-CoV-2 clades in", this_location))
+  }
+  
+  
   return(p)
 }
 
@@ -227,8 +249,8 @@ plot_one_clade <- function(this_clade, model_output_data, target_data){
     filter(clade == this_clade) |>
     group_by(target_date, clade, location) |>
     summarize(mean = mean(value),
-              q10 = quantile(value, probs = 0.1),
-              q90 = quantile(value, probs = 0.9)) |>
+              q10 = quantile(value, probs = 0.1, na.rm = T),
+              q90 = quantile(value, probs = 0.9, na.rm = T)) |>
     mutate(type = "prediction") |>
     rename(date = target_date,
            value = mean)
