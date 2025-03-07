@@ -184,6 +184,8 @@ An additional alternative scoring option would be to compute Brier scores on eac
 
 Scores will be primarily reported as aggregated scores across all locations and dates. However, we will also report scores for individual locations and dates.
 
+For days and states with no observed sequences for any clade, no evaluation will be performed.
+
 ## Accessing variant nowcast hub data on the cloud
 
 To ensure greater access to the data created by and submitted to this hub, real-time copies of files in the following
