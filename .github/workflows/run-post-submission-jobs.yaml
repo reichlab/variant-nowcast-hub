@@ -124,7 +124,9 @@ jobs:
       - name: Move target and interim data to hub directory ➡️
         run: |
           echo "Merging new target data files into target-data directory"
+          mkdir -p ${{ github.workspace }}/target-data/time-series
           cp -R ${{ github.workspace }}/time-series/* ${{ github.workspace }}/target-data/time-series/
+          mkdir -p ${{ github.workspace }}/target-data/oracle-output
           cp -R ${{ github.workspace }}/oracle-output/* ${{ github.workspace }}/target-data/oracle-output/
           echo "Contents of target-data after merge:"
           ls -lR ${{ github.workspace }}/target-data/
