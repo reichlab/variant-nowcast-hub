@@ -153,7 +153,7 @@ def set_target_data_dir(ctx, param, value):
     "--nowcast-date",
     type=click.DateTime(formats=["%Y-%m-%d"]),
     required=True,
-    help="The modeling round nowcast date (i.e., round_id) (YYYY-MM-DD). The tree as of date is set to this reference date minus two days.",
+    help="The modeling round nowcast date (i.e., round_id) (YYYY-MM-DD).",
 )
 @click.option(
     "--sequence-as-of",
@@ -177,7 +177,7 @@ def set_target_data_dir(ctx, param, value):
     required=False,
     default=None,
     callback=normalize_date,
-    help="Assign clades to sequences collected on or after this UTC date (YYYY-MM-DD). Default is the nowcast date minus 31 days.",
+    help="Assign clades to sequences collected on or after this UTC date (YYYY-MM-DD). Default is the nowcast date minus 90 days.",
 )
 @click.option(
     "--collection-max-date",
