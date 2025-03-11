@@ -244,6 +244,15 @@ def main(
     if collection_min_date is None:
         collection_min_date = tree_as_of - timedelta(days=90)
 
+    print("--------------------------------------------------")
+    logger.info("ASSIGNING CLADES FOR:")
+    logger.info(f"nowcast_date: {nowcast_date}")
+    logger.info(f"sequence_as_of: {sequence_as_of}")
+    logger.info(f"tree_as_of: {tree_as_of}")
+    logger.info(f"collection_min_date: {collection_min_date}")
+    logger.info(f"collection_max_date: {collection_max_date}")
+    print("--------------------------------------------------")
+
     assignments = assign_clades(
         nowcast_date,
         sequence_as_of,
