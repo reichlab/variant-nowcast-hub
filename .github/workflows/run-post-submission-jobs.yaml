@@ -25,6 +25,7 @@ jobs:
     outputs:
       NOWCAST_DATE: ${{ steps.set-dates.outputs.NOWCAST_DATE }}
       SEQUENCE_AS_OF: ${{ steps.set-dates.outputs.SEQUENCE_AS_OF }}
+      ROUND_CLOSE_DATE: ${{ steps.set-dates.outputs.ROUND_CLOSE_DATE }}
       matrix: ${{ steps.set-dates.outputs.MATRIX_DATES }}
     steps:
       - name: Checkout 🛎️
@@ -36,22 +37,33 @@ jobs:
 
       - name: Set dates 🕰️
         id: set-dates
-        # Nowcast_date = round_id of the round that just closed for submissions.
-        # Sequence_as_of = date used to get the sequences for clade assignment.
-        # Matrix_dates = dates used for matrix in create-target-data job (including
-        # the round_id of the 91-day-old round that can now be officially closed).
+        # nowcast_date = round_id of the round that just closed for submissions,
+        #    defaults to the most recent Wednesday if not explicitly set (YYYY-MM-DD)
+        # submission_close_date = an alias for nowcast_date
+        # matrix_dates = an array of 14 round_ids in YYYY-MM-DD format, starting with
+        #    nowcast_date and going back 13 weeks
+        # round_close_date = 13 weeks (91 days) before the nowcast/submission_close date,
+        #    i.e., the earliest date in matrix_dates. this round is now "closed," because
+        #    we're generating the oracle output data required to score it.
+        # sequence_as_of = date used to get the sequences for clade assignment,
+        #    calculated as the round_close_date + 90 days
         run: |
           source ${GITHUB_WORKSPACE}/.github/shared/shared-functions.sh
           nowcast_date=$(get_latest_wednesday "${{ inputs.nowcast_date }}")
-          sequence_as_of=$(date -d "$nowcast_date - 1 day" +%Y-%m-%d)
+          submission_close_date=$nowcast_date
           matrix_dates=$(generate_weekly_dates "$nowcast_date" 13)
+          round_close_date=$(echo "$matrix_dates" | jq -r '.include | min | .["nowcast-date"]')
+          sequence_as_of=$(date -d "$round_close_date + 90 days" +%Y-%m-%d)
           echo "nowcast_date=$nowcast_date" >> $GITHUB_OUTPUT
+          echo "submission_close_date=$submission_close_date" >> $GITHUB_OUTPUT
+          echo "round_close_date=$round_close_date" >> $GITHUB_OUTPUT
           echo "sequence_as_of=$sequence_as_of" >> $GITHUB_OUTPUT
           echo "matrix_dates=$matrix_dates" >> $GITHUB_OUTPUT
 
           echo -e "\nDebug values:"
           echo "Nowcast date: $nowcast_date"
           echo "Sequence as of: $sequence_as_of"
+          echo "Round close date: $round_close_date"
           echo "Matrix dates: $matrix_dates"
 
   # Create target data for the round that closed 90 days ago.
@@ -100,7 +112,11 @@ jobs:
 
   target-data-pr:
     runs-on: ubuntu-latest
-    needs: create-target-data
+    needs: [get-all-dates, create-target-data]
+    env:
+      NOWCAST_DATE: ${{ needs.get-all-dates.outputs.nowcast_date }}
+      ROUND_CLOSE_DATE: ${{ needs.get-all-dates.outputs.round_close_date }}
+      SEQUENCE_AS_OF_DATE: ${{ needs.get-all-dates.outputs.sequence_as_of }}
 
     steps:
       - name: Checkout 🛎️
@@ -134,10 +150,10 @@ jobs:
       - name: Create PR for new target and interim data
         uses: ./.github/actions/create-pr
         with:
-          pr-prefix: "add-target-data"
+          pr-prefix: "add-target-data-and-close-submissions-${{ env.NOWCAST_DATE }}"
           file-path: target-data/
-          commit-message: "Add target data and interim files."
-          pr-body: "Created via GitHub Actions: generate target and interim data."
+          commit-message: "Add target data and interim files using sequence_as_of date ${{ env.SEQUENCE_AS_OF_DATE }}."
+          pr-body: "This PR creates the oracle output file needed to score round ${{ env.ROUND_CLOSE_DATE }}."
 
   create-location-date-sequence-counts:
     runs-on: ubuntu-latest
@@ -170,5 +186,5 @@ jobs:
         with:
           pr-prefix: "${{ env.NOWCAST_DATE }}-unscored-locations"
           file-path: auxiliary-data/unscored-location-dates/
-          commit-message: "Add unscored locations for round $NOWCAST_DATE"
+          commit-message: "Add unscored locations for round ${{ env.NOWCAST_DATE }}"
           pr-body: "Created via GitHub Actions: generate count of sequences collected by date/location for the past 31 days."
