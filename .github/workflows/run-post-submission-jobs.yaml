@@ -152,10 +152,8 @@ jobs:
         with:
           pr-prefix: "add-target-data-and-close-submissions-${{ env.NOWCAST_DATE }}"
           file-path: target-data/
-          commit-message: |
-            "Add target data and interim files using sequence_as_of date ${{ env.SEQUENCE_AS_OF_DATE }}."
-          pr-body: |
-            "This PR creates the oracle output file needed to score round ${{ env.ROUND_CLOSE_DATE }}."
+          commit-message: "Add target data and interim files using sequence_as_of date ${{ env.SEQUENCE_AS_OF_DATE }}."
+          pr-body: "This PR creates the oracle output file needed to score round ${{ env.ROUND_CLOSE_DATE }}."
 
   create-location-date-sequence-counts:
     runs-on: ubuntu-latest
@@ -188,5 +186,5 @@ jobs:
         with:
           pr-prefix: "${{ env.NOWCAST_DATE }}-unscored-locations"
           file-path: auxiliary-data/unscored-location-dates/
-          commit-message: "Add unscored locations for round $NOWCAST_DATE"
+          commit-message: "Add unscored locations for round ${{ env.NOWCAST_DATE }}"
           pr-body: "Created via GitHub Actions: generate count of sequences collected by date/location for the past 31 days."
