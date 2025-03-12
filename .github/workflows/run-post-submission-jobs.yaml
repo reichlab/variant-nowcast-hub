@@ -188,5 +188,5 @@ jobs:
         with:
           pr-prefix: "${{ env.NOWCAST_DATE }}-unscored-locations"
           file-path: auxiliary-data/unscored-location-dates/
-          commit-message: "Add unscored locations for round $NOWCAST_DATE"
+          commit-message: "Add unscored locations for round ${{ env.NOWCAST_DATE }}"
           pr-body: "Created via GitHub Actions: generate count of sequences collected by date/location for the past 31 days."
