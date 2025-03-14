@@ -47,9 +47,9 @@ runs:
           exit 0
         fi
 
-        git commit -m "${{ inputs.commit-message }} $PR_DATETIME"
+        git commit -m "${{ inputs.commit-message }}"
         git push -u origin HEAD
         gh pr create \
           --base main \
-          --title "${{ inputs.pr-prefix }} $PR_DATETIME" \
+          --title "${{ inputs.pr-prefix }}" \
           --body "${{ inputs.pr-body }}"

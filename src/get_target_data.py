@@ -22,7 +22,7 @@ uv run --with-requirements src/requirements.txt --module pytest src/get_target_d
 # requires-python = ">=3.12,<3.13"
 # dependencies = [
 #   "click",
-#   "cladetime@git+https://github.com/reichlab/cladetime",
+#   "cladetime",
 #   "polars>=1.17.1,<1.18.0",
 #   "pyarrow>=18.1.0,<19.0.0",
 # ]
@@ -135,6 +135,7 @@ def set_collection_max_date(ctx, param, value):
     value = value.replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
     return value
 
+
 def set_target_data_dir(ctx, param, value):
     """Set the target_data_dir default value to the hub's target-data directory."""
     if value is None:
@@ -152,7 +153,7 @@ def set_target_data_dir(ctx, param, value):
     "--nowcast-date",
     type=click.DateTime(formats=["%Y-%m-%d"]),
     required=True,
-    help="The modeling round nowcast date (i.e., round_id) (YYYY-MM-DD). The tree as of date is set to this reference date minus two days.",
+    help="The modeling round nowcast date (i.e., round_id) (YYYY-MM-DD).",
 )
 @click.option(
     "--sequence-as-of",
@@ -176,7 +177,7 @@ def set_target_data_dir(ctx, param, value):
     required=False,
     default=None,
     callback=normalize_date,
-    help="Assign clades to sequences collected on or after this UTC date (YYYY-MM-DD). Default is the nowcast date minus 31 days.",
+    help="Assign clades to sequences collected on or after this UTC date (YYYY-MM-DD). Default is the nowcast date minus 90 days.",
 )
 @click.option(
     "--collection-max-date",
@@ -195,7 +196,7 @@ def set_target_data_dir(ctx, param, value):
     help=(
         "Path object to the directory where the target data will be saved. Default is the hub's target-data directory. "
         "Specify '.' to save target data to the current working directory."
-    )
+    ),
 )
 def main(
     nowcast_date: datetime,
@@ -242,6 +243,15 @@ def main(
 
     if collection_min_date is None:
         collection_min_date = tree_as_of - timedelta(days=90)
+
+    print("--------------------------------------------------")
+    logger.info("ASSIGNING CLADES FOR:")
+    logger.info(f"nowcast_date: {nowcast_date}")
+    logger.info(f"sequence_as_of: {sequence_as_of}")
+    logger.info(f"tree_as_of: {tree_as_of}")
+    logger.info(f"collection_min_date: {collection_min_date}")
+    logger.info(f"collection_max_date: {collection_max_date}")
+    print("--------------------------------------------------")
 
     assignments = assign_clades(
         nowcast_date,
@@ -339,10 +349,7 @@ def create_target_data(
         .fill_null(strategy="zero")
         .with_columns(
             pl.lit(nowcast_string).alias("nowcast_date"),
-            pl.lit(sequence_as_of_string).alias("sequence_as_of"),
-            pl.lit(assignments.meta["tree_as_of"].strftime("%Y-%m-%d")).alias(
-                "tree_as_of"
-            ),
+            pl.lit(sequence_as_of_string).alias("as_of"),
         )
         .rename(
             {
@@ -360,7 +367,10 @@ def create_target_data(
             pl.col("target_date")
             >= datetime.fromisoformat(nowcast_string) - timedelta(days=31)
         )
-        .with_columns(pl.lit(nowcast_string).alias("nowcast_date"))
+        .with_columns(
+            pl.lit(nowcast_string).alias("nowcast_date"),
+            pl.lit(sequence_as_of_string).alias("as_of"),
+        )
         .rename({"observation": "oracle_value"})
     )
 
@@ -390,7 +400,7 @@ def write_target_data(
 
     ts_output_path = (
         target_time_series_dir
-        / f"nowcast_date={nowcast_string}/sequence_as_of={sequence_as_of_string}"
+        / f"as_of={sequence_as_of_string}/nowcast_date={nowcast_string}"
     )
     ts_output_path.mkdir(exist_ok=True, parents=True)
     ts_output_path = ts_output_path / "timeseries.parquet"
@@ -403,10 +413,9 @@ def write_target_data(
             ("target_date", pa.date32()),
             ("location", pa.string()),
             ("clade", pa.string()),
-            ("observation", pa.float64()),
+            ("observation", pa.int64()),
             ("nowcast_date", pa.date32()),
-            ("sequence_as_of", pa.date32()),
-            ("tree_as_of", pa.date32()),
+            ("as_of", pa.date32()),
         ]
     )
     time_series_arrow = time_series_arrow.cast(ts_schema)
@@ -427,8 +436,9 @@ def write_target_data(
             ("location", pa.string()),
             ("target_date", pa.date32()),
             ("clade", pa.string()),
-            ("oracle_value", pa.float64()),
+            ("oracle_value", pa.int64()),
             ("nowcast_date", pa.date32()),
+            ("as_of", pa.date32()),
         ]
     )
     oracle_arrow = oracle_arrow.cast(oracle_schema)
@@ -558,8 +568,7 @@ def test_target_data():
             "clade",
             "observation",
             "nowcast_date",
-            "sequence_as_of",
-            "tree_as_of",
+            "as_of",
         ]
     )
     assert set(ts.columns) == expected_time_series_cols
@@ -569,8 +578,7 @@ def test_target_data():
     assert ts.get_column("target_date").max() == date(2024, 12, 4)
     assert ts.get_column("observation").sum() == 20
     assert ts.get_column("nowcast_date").unique().to_list() == ["2024-09-11"]
-    assert ts.get_column("sequence_as_of").unique().to_list() == ["2024-12-17"]
-    assert ts.get_column("tree_as_of").unique().to_list() == ["2024-08-01"]
+    assert ts.get_column("as_of").unique().to_list() == ["2024-12-17"]
 
     clade_counts = ts.sql(
         "select clade, sum(observation) as sum from self group by clade"
@@ -582,7 +590,7 @@ def test_target_data():
 
     oracle = oracle.collect()
     expected_oracle_cols = set(
-        ["nowcast_date", "location", "target_date", "clade", "oracle_value"]
+        ["nowcast_date", "location", "target_date", "clade", "oracle_value", "as_of"]
     )
     assert set(oracle.columns) == expected_oracle_cols
     assert oracle.height == ts.height
@@ -644,19 +652,14 @@ def test_target_data_integration(caplog, tmp_path):
     assert len(modeled_clades) == len(ts_clades)
     assert set(ts_clades) == (set(modeled_clades))
 
-    assert ts.get_column("tree_as_of").unique().to_list() == [
-        datetime(2024, 9, 9).date()
-    ]
-
     # check time series column data types
     ts_schema_dict = ts.schema.to_python()
     assert ts_schema_dict.get("location") is str
     assert ts_schema_dict.get("target_date") is date
     assert ts_schema_dict.get("clade") is str
-    assert ts_schema_dict.get("observation") is float
+    assert ts_schema_dict.get("observation") is int
     assert ts_schema_dict.get("nowcast_date") is date
-    assert ts_schema_dict.get("sequence_as_of") is date
-    assert ts_schema_dict.get("tree_as_of") is date
+    assert ts_schema_dict.get("as_of") is date
 
     # time series rows should = total target dates * total locations * total clades
     len(target_dates) * len(state_list) * len(modeled_clades) == ts.height
@@ -688,7 +691,8 @@ def test_target_data_integration(caplog, tmp_path):
     assert oracle_schema_dict.get("location") is str
     assert oracle_schema_dict.get("target_date") is date
     assert oracle_schema_dict.get("clade") is str
-    assert oracle_schema_dict.get("oracle_value") is float
+    assert oracle_schema_dict.get("oracle_value") is int
+    assert oracle_schema_dict.get("as_of") is date
 
     # check data types when reading target data with Arrow
     ts_arrow = ds.dataset(str(ts_path), format="parquet")
@@ -696,15 +700,15 @@ def test_target_data_integration(caplog, tmp_path):
     assert ts_schema.field("nowcast_date").type == pa.date32()
     assert ts_schema.field("location").type == pa.string()
     assert ts_schema.field("clade").type == pa.string()
-    assert ts_schema.field("observation").type == pa.float64()
+    assert ts_schema.field("observation").type == pa.int64()
     assert ts_schema.field("target_date").type == pa.date32()
-    assert ts_schema.field("sequence_as_of").type == pa.date32()
-    assert ts_schema.field("tree_as_of").type == pa.date32()
+    assert ts_schema.field("as_of").type == pa.date32()
 
     oracle_arrow = ds.dataset(str(oracle_path), format="parquet")
     oracle_schema = oracle_arrow.schema
     assert oracle_schema.field("nowcast_date").type == pa.date32()
     assert oracle_schema.field("location").type == pa.string()
     assert oracle_schema.field("clade").type == pa.string()
-    assert oracle_schema.field("oracle_value").type == pa.float64()
+    assert oracle_schema.field("oracle_value").type == pa.int64()
     assert oracle_schema.field("target_date").type == pa.date32()
+    assert oracle_schema.field("as_of").type == pa.date32()
