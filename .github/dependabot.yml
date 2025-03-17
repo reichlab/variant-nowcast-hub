@@ -1,0 +1,15 @@
+# instruct GitHub dependabot to scan github actions for updates
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    # dependabot automatically checks .github/workflows/ and .github/actions/
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "python"
+    # variant-nowcast-hub data pipeline scripts are in `src`
+    directory: "/src/"
+    schedule:
+      interval: "weekly"
