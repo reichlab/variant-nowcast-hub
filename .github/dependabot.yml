@@ -8,7 +8,7 @@ updates:
     schedule:
       interval: "weekly"
 
-  - package-ecosystem: "python"
+  - package-ecosystem: "pip"
     # variant-nowcast-hub data pipeline scripts are in `src`
     directory: "/src/"
     schedule:
