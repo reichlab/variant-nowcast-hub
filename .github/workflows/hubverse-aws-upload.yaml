@@ -38,7 +38,7 @@ jobs:
     - name: Configure AWS credentials
       # request credentials to assume the hub's AWS role via OpenID Connect
       if: env.CLOUD_ENABLED == 'true'
-      uses: aws-actions/configure-aws-credentials@4fc4975a852c8cd99761e2de1f4ba73402e44dd9  #v4.0.3
+      uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722  #v4.1.0
       with:
         role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/${{ env.CLOUD_STORAGE_LOCATION }}
         aws-region: us-east-1
