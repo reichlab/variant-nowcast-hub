@@ -2,7 +2,7 @@
 team_name: "California Department of Public Health"  # No more than 50 characters
 team_abbr: "CADPH"  # Up to 16 alphanumeric characters or underscores
 
-model_name: "Clade Assessment Tool, awesome Multinomial regression"  # No more than 50 characters
+model_name: "Clade Assessment Tool, Multinomial regression"  # No more than 50 characters
 model_abbr: "CATaMaran"  # Up to 16 alphanumeric characters or underscores
 
 model_contributors:
