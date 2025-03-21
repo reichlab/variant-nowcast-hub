@@ -4,5 +4,5 @@
 # individual scripts' metadata block for ease of use).
 click
 cladetime@git+https://github.com/reichlab/cladetime
-polars>=1.17.1,<1.18.0
+polars>=1.17.1,<1.26.0
 pytest

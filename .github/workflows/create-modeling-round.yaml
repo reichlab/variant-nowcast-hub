@@ -24,12 +24,12 @@ jobs:
               src/
 
       - name: Install uv 🐍
-        uses: astral-sh/setup-uv@4db96194c378173c656ce18a155ffc14a9fc4355  #v5.2.2
+        uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231  #v5.3.1
         with:
           version: "0.5.30"
 
       - name: Set up R 📊
-        uses: r-lib/actions/setup-r@473c68190595b311a74f208fba61a8d8c0d4c247  #v2.11.1
+        uses: r-lib/actions/setup-r@14a7e741c1cb130261263aa1593718ba42cf443b  #v2.11.2
         with:
           r-version: 4.4.1
           install-r: true
@@ -39,7 +39,7 @@ jobs:
       - name: Set up renv 📦
         env:
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-        uses: r-lib/actions/setup-renv@473c68190595b311a74f208fba61a8d8c0d4c247  #v2.11.1
+        uses: r-lib/actions/setup-renv@14a7e741c1cb130261263aa1593718ba42cf443b  #v2.11.2
         with:
           working-directory: src
 
