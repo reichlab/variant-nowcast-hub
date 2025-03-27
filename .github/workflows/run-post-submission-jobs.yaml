@@ -96,7 +96,7 @@ jobs:
       - name: Create target data 🎯
         run: |
           echo "sequence_as_of: $SEQUENCE_AS_OF"
-          uv run get_target_data.py \
+          uv run --with-requirements requirements.txt get_target_data.py \
           --nowcast-date=${{ matrix.nowcast-date }} \
           --sequence-as-of=$SEQUENCE_AS_OF \
           --target-data-dir=${{ github.workspace }}
@@ -178,7 +178,7 @@ jobs:
 
       - name: Create file of sequence counts by location and date 🦠
         run: |
-          uv run get_location_date_counts.py --nowcast-date=$NOWCAST_DATE
+          uv run --with-requirements requirements.txt get_location_date_counts.py --nowcast-date=$NOWCAST_DATE
         working-directory: src
 
       - name: Create PR for sequence counts 🚀
