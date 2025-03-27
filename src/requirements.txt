@@ -2,7 +2,11 @@
 # directory's .py files. They're replicated here so we can use run pytest
 # to invoke scripts' test_ functions (the dependencies are also part of the
 # individual scripts' metadata block for ease of use).
-click
-cladetime@git+https://github.com/reichlab/cladetime
-polars>=1.17.1,<1.27.0
-pytest
+click>=8.1.8,<8.2.0
+cladetime>=0.3.0,<0.4.0
+# old Polars streaming engine is deprecated; recommendation is to pin < 1.23
+# until the new engine is released:
+# https://github.com/pola-rs/polars/issues/20947
+polars>=1.22.0,<1.23.0
+pyarrow>=19.0.1,<19.1.0
+pytest>=8.3.5,<8.4.0
