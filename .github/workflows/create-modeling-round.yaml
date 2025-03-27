@@ -47,7 +47,7 @@ jobs:
         env:
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          uv run get_clades_to_model.py
+          uv run --with-requirements requirements.txt get_clades_to_model.py
           Rscript make_round_config.R
         working-directory: src
 

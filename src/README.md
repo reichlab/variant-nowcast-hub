@@ -24,18 +24,19 @@ To run the script manually:
     brew install uv
     ```
 
-    (see [`uv` documentation](https://docs.astral.sh/uv/getting-started/installation/#installing-uv) for a full list of installation options)
+    (see [`uv` documentation](https://docs.astral.sh/uv/getting-started/installation/#installing-uv)
+    for a full list of installation options)
 
 2. From the root of the repo, run the following command:
 
     ```bash
-    uv run src/get_clades_to_model.py
+    uv run --with-requirements src/requirements.txt src/get_clades_to_model.py
     ```
 
 ## Adding a new modeling round to the hub
 
-`make_round_config.R` reads in the most recent clade list (see above) and uses it to generate a new modeling round, which is
-then appended to the hub's existing `hub-config/tasks.json` file.
+`make_round_config.R` reads in the most recent clade list (see above) and uses it to generate a new modeling round,
+which is then appended to the hub's existing `hub-config/tasks.json` file.
 
 To run the script manually (RStudio users):
 
@@ -74,7 +75,8 @@ the [`run-post-submission-jobs.yaml` GitHub workflow](https://github.com/reichla
 
 ### get_location_date_counts.py
 
-For each location used by this hub, `get_location_date_counts.py` generates a daily count of Sars-Cov-2 genome sequences collected.
+For each location used by this hub, `get_location_date_counts.py` generates a daily count of
+Sars-Cov-2 genome sequences collected.
 The output includes counts for each of the 31 days prior to the latest round's nowcast date (_i.e._, the round_id)
 This script writes its output to `auxiliary-data/unscored-location-dates/[round_id].csv`.
 
@@ -86,12 +88,13 @@ To run the script manually:
     brew install uv
     ```
 
-    (see [`uv` documentation](https://docs.astral.sh/uv/getting-started/installation/#installing-uv) for a full list of installation options)
+    (see [`uv` documentation](https://docs.astral.sh/uv/getting-started/installation/#installing-uv)
+    for a full list of installation options)
 
 2. From the root of the repo, run the following command:
 
     ```bash
-    uv run src/get_location_date_counts.py
+    uv run --with-requirements src/requirements.txt src/get_location_date_counts.py
     ```
 
 ### get_target_data.py
@@ -134,10 +137,11 @@ To run the script manually:
     brew install uv
     ```
 
-    (see [`uv` documentation](https://docs.astral.sh/uv/getting-started/installation/#installing-uv) for a full list of installation options)
+    (see [`uv` documentation](https://docs.astral.sh/uv/getting-started/installation/#installing-uv)
+    for a full list of installation options)
 
 2. From the root of the repo, run the following command:
 
     ```bash
-    uv run src/get_target_data.py --nowcast-date=2024-10-09
+    uv run --with-requirements src/requirements.txt src/get_target_data.py --nowcast-date=2024-10-09
     ```
