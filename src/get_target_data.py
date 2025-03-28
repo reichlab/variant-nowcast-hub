@@ -10,23 +10,13 @@ The script is scheduled to run every Wednesday evening (US Eastern)
 To run the script manually:
 1. Install uv on your machine: https://docs.astral.sh/uv/getting-started/installation/
 2. From the root of this repo:
-uv run src/get_target_data.py --nowcast-date=YYYY-MM-DD
+uv run --with-requirements src/requirements.txt src/get_target_data.py --nowcast-date=YYYY-MM-DD
 For example:
-`uv run src/get_target_data.py --nowcast-date=2024-10-09`
+`uv run --with-requirements src/requirements.txt src/get_target_data.py --nowcast-date=2024-10-09`
 
 To run the included tests manually (from the root of the repo):
 uv run --with-requirements src/requirements.txt --module pytest src/get_target_data.py
 """
-
-# /// script
-# requires-python = ">=3.12,<3.13"
-# dependencies = [
-#   "click",
-#   "cladetime",
-#   "polars>=1.17.1,<1.18.0",
-#   "pyarrow>=18.1.0,<19.0.0",
-# ]
-# ///
 
 import json
 from pathlib import Path

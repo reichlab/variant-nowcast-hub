@@ -9,17 +9,8 @@ The script is scheduled to run every Wednesday, after a modeling round closes.
 
 To run the script manually:
 1. Install uv on your machine: https://docs.astral.sh/uv/getting-started/installation/
-2. From the root of this repo: uv run src/get_location_date_counts.py
+2. From the root of this repo: uv run --with-requirements src/requirements.txt src/get_location_date_counts.py --nowcast-date=YYYY-MM-DD
 """
-
-# /// script
-# requires-python = ">=3.12,<3.13"
-# dependencies = [
-#   "click",
-#   "cladetime@git+https://github.com/reichlab/cladetime",
-#   "polars>=1.17.1,<1.18.0",
-# ]
-# ///
 
 import logging
 import os
