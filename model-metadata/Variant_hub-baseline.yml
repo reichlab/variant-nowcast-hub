@@ -22,7 +22,7 @@ model_contributors: [
 ]
 license: "CC-BY-4.0"
 team_funding: "This work has been supported by the National Institutes of General Medical Sciences (R35GM119582) and the US Centers for Disease Control and Prevention’s Center for Forecasting and Outbreak Analytics (NU38FT000008). The content is solely the responsibility of the authors and does not necessarily represent the official views of NIGMS, the National Institutes of Health, or CDC."
-methods: "A Bayesian multinomial logistic regression model at the national level. This model uses a linear in logit space model for the growth of the variants and makes the same predictions for each state. The model uses 50 days of data before the target date to make predictions and obtains MCMC draws for the posterior distrubtion using rstan. The model started submitting for the week of 2025/04/02; all submissions before that are retrospective."
+methods: "A Bayesian multinomial logistic regression model that makes predictions the national level. This model uses a linear in logit space model for the growth of the variants and makes the same predictions for each state. The model uses 50 days of data before the target date to make predictions and obtains MCMC draws for the posterior distrubtion using rstan. The model started submitting for the week of 2025/04/02; all submissions before that are retrospective."
 methods_url: "https://github.com/reichlab/variant-nowcast-hub/discussions/313"
 data_sources: "NextStrain"
 ensemble_of_models: false
