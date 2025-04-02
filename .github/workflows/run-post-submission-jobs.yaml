@@ -89,14 +89,14 @@ jobs:
               src/
 
       - name: Install uv 🐍
-        uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231  #v5.3.1
+        uses: astral-sh/setup-uv@0c5e2b8115b80b4c7c5ddf6ffdd634974642d182  #v5.4.1
         with:
           version: "0.5.30"
 
       - name: Create target data 🎯
         run: |
           echo "sequence_as_of: $SEQUENCE_AS_OF"
-          uv run get_target_data.py \
+          uv run --with-requirements requirements.txt get_target_data.py \
           --nowcast-date=${{ matrix.nowcast-date }} \
           --sequence-as-of=$SEQUENCE_AS_OF \
           --target-data-dir=${{ github.workspace }}
@@ -172,13 +172,13 @@ jobs:
               src/
 
       - name: Install uv 🐍
-        uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231  #v5.3.1
+        uses: astral-sh/setup-uv@0c5e2b8115b80b4c7c5ddf6ffdd634974642d182  #v5.4.1
         with:
           version: "0.5.30"
 
       - name: Create file of sequence counts by location and date 🦠
         run: |
-          uv run get_location_date_counts.py --nowcast-date=$NOWCAST_DATE
+          uv run --with-requirements requirements.txt get_location_date_counts.py --nowcast-date=$NOWCAST_DATE
         working-directory: src
 
       - name: Create PR for sequence counts 🚀
