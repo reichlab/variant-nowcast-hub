@@ -51,9 +51,16 @@ def get_next_wednesday(starting_date: datetime) -> str:
 
 
 def get_clades(
-    clade_counts: pl.LazyFrame, threshold: float, threshold_weeks: int, max_clades: int
+    filtered_metadata: pl.LazyFrame,
+    threshold: float,
+    threshold_weeks: int,
+    max_clades: int,
 ) -> list[str]:
     """Get a list of clades to forecast."""
+
+    clade_counts = sequence.summarize_clades(
+        filtered_metadata, group_by=["clade", "date", "location"]
+    )
 
     # based on the data's most recent date, get the week start three weeks ago (not including this week)
     max_day = clade_counts.select(pl.max("date")).collect().item()
@@ -98,7 +105,21 @@ def get_clades(
 
     variants = high_prev_variants.get_column("clade").to_list()[:max_clades]
 
+    # sort clade list before returning
+    variants.sort()
+
     return variants
+
+
+def get_metadata(ct: CladeTime, current_time: str) -> dict[str, dict | str]:
+    """Create metadata to store with the clade list."""
+    metadata: dict[str, dict | str] = dict(created_at=current_time)
+
+    ncov_metadata = ct.ncov_metadata
+    ncov_metadata["metadata_version_url"] = ct.url_ncov_metadata
+    metadata["ncov"] = ncov_metadata
+
+    return metadata
 
 
 def main(
@@ -107,7 +128,7 @@ def main(
     threshold: float = 0.01,
     threshold_weeks: int = 3,
     max_clades: int = 9,
-):
+) -> Path:
     """Get a list of clades to model and save to the hub's auxiliary-data folder."""
 
     class RoundData(TypedDict):
@@ -121,25 +142,23 @@ def main(
     ct = CladeTime()
     lf_metadata = ct.sequence_metadata
     lf_metadata_filtered = sequence.filter_metadata(lf_metadata)
-    counts = sequence.summarize_clades(
-        lf_metadata_filtered, group_by=["clade", "date", "location"]
+
+    clade_list = get_clades(
+        lf_metadata_filtered, threshold, threshold_weeks, max_clades
     )
-    clade_list = get_clades(counts, threshold, threshold_weeks, max_clades)
 
     # Sort clade list and add "other"
-    clade_list.sort()
     clade_list.append("other")
     logger.info(f"Clade list: {clade_list}")
 
     # Get metadata about the Nextstrain ncov pipeline run that
     # the clade list is based on
-    ncov_meta = ct.ncov_metadata
-    ncov_meta["metadata_version_url"] = ct.url_ncov_metadata
-    logger.info(f"Ncov metadata: {ncov_meta}")
+    metadata = get_metadata(ct, current_time)
+    logger.info(f"Round open metadata: {metadata}")
 
     round_data: RoundData = {
         "clades": clade_list,
-        "meta": {"created_at": current_time, "ncov": ncov_meta},
+        "meta": metadata,
     }
 
     clade_file = clade_output_path / f"{round_id}.json"
@@ -147,6 +166,7 @@ def main(
         json.dump(round_data, f, indent=4)
 
     logger.info(f"Clade list saved: {clade_file}")
+    return clade_file
 
 
 if __name__ == "__main__":
