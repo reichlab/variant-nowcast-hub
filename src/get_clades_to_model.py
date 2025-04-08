@@ -16,11 +16,17 @@ on the following Wednesday.
 To run the script manually:
 1. Install uv on your machine: https://docs.astral.sh/uv/getting-started/installation/
 2. From the root of this repo: uv run --with-requirements src/requirements.txt src/get_clades_to_model.py
+
+To run the included tests manually (from the root of the repo):
+uv run --with-requirements src/requirements.txt --module pytest src/get_clades_to_model.py
 """
 
+import os
 import json
 import logging
-from datetime import datetime, timedelta, timezone
+import uuid
+from datetime import date, datetime, timedelta, timezone
+from itertools import chain, repeat
 from pathlib import Path
 from typing import TypedDict
 
@@ -62,13 +68,17 @@ def get_clades(
         filtered_metadata, group_by=["clade", "date", "location"]
     )
 
-    # based on the data's most recent date, get the week start three weeks ago (not including this week)
+    # Based on the most recent sequence collection date and the threshold_weeks parameter,
+    # determine the minimum sequence collection date to consider when generating the clade list.
     max_day = clade_counts.select(pl.max("date")).collect().item()
     threshold_sundays_ago = max_day - timedelta(
+        # include max_day.weekday() because the week of the most recent collection date
+        # is not counted as part of the threshold_weeks
         days=max_day.weekday() + 7 * (threshold_weeks)
     )
 
-    # sum over weeks, combine states, and limit to just the past 3 weeks (not including current week)
+    # combine states and summarize clade counts over weeks, limiting to
+    # collection dates within the specified number of threshold weeks
     lf = (
         clade_counts.filter(pl.col("date") >= threshold_sundays_ago)
         .sort("date")
@@ -76,7 +86,7 @@ def get_clades(
         .agg(pl.col("count").sum())
     )
 
-    # create a separate frame with the total counts per week
+    # create a separate frame that combines clades and summarizes total sequence counts per week
     total_counts = lf.group_by("date").agg(pl.col("count").sum().alias("total_count"))
 
     # join with count data to add a total counts per day column
@@ -174,3 +184,106 @@ if __name__ == "__main__":
     round_id = get_next_wednesday(datetime.today())
     clade_output_path = Path(__file__).parents[1] / "auxiliary-data" / "modeled-clades"
     main(round_id, clade_output_path)
+
+
+##############################################################
+# Tests                                                      #
+##############################################################
+
+
+def get_test_data() -> pl.LazyFrame:
+    test_rows = 15
+    states = ["MA", "PA", "TX"]
+    dates = [date(2025, 2, 1), date(2025, 2, 12), date(2025, 2, 19)]
+    test_data = pl.DataFrame(
+        {
+            "clade": chain(
+                ["23A"], repeat("24E", 4), repeat("24F", 5), repeat("25A", 5)
+            ),
+            "country": ["USA"] * test_rows,
+            "date": [dates[i % len(dates)] for i in range(test_rows)],
+            "strain": [uuid.uuid4() for n in range(0, test_rows)],
+            "host": ["Homo sapiens"] * test_rows,
+            "location": [states[i % len(states)] for i in range(test_rows)],
+        }
+    ).lazy()
+
+    return test_data
+
+
+def test_get_clades_default_criteria():
+    """Test default clade inclusion criteria."""
+    test_data = get_test_data()
+    threshold = 0.01
+    threshold_weeks = 3
+    max_clades = 9
+
+    clade_list = get_clades(test_data, threshold, threshold_weeks, max_clades)
+    assert clade_list == ["23A", "24E", "24F", "25A"]
+
+
+def test_get_clades_smaller_max():
+    """Test smaller max_clades parameter."""
+    test_data = get_test_data()
+    threshold = 0.01
+    threshold_weeks = 3
+    max_clades = 2
+
+    clade_list = get_clades(test_data, threshold, threshold_weeks, max_clades)
+    assert clade_list == ["24F", "25A"]
+
+
+def test_get_clades_adjust_threshold_weeks():
+    """Test a smaller threshold_weeks parameter."""
+    test_data = get_test_data()
+    max_clades = 9
+    threshold = 0.01
+    threshold_weeks = 2
+
+    clade_list = get_clades(test_data, threshold, threshold_weeks, max_clades)
+    assert clade_list == ["24E", "24F", "25A"]
+
+
+def test_get_clades_adjust_threshold():
+    """Test a larger proportion threshold parameter."""
+    test_data = get_test_data()
+    max_clades = 9
+    threshold = 0.3
+    threshold_weeks = 3
+
+    clade_list = get_clades(test_data, threshold, threshold_weeks, max_clades)
+    assert clade_list == ["24E", "24F", "25A"]
+
+
+def test_metadata():
+    """Test that round open metadata is correct."""
+    current_time = datetime(2025, 2, 24, 2, 16, 22, tzinfo=timezone.utc).isoformat(
+        timespec="seconds"
+    )
+    round_open_date = datetime(2025, 2, 24)
+    ct = CladeTime(round_open_date)
+
+    meta = get_metadata(ct, current_time)
+    ncov_metadata = meta.get("ncov", {})
+
+    assert meta.get("created_at") == current_time
+    assert ncov_metadata.get("nextclade_dataset_version") == "2025-01-28--16-39-09Z"
+    assert ncov_metadata.get("nextclade_version_num") == "3.10.1"
+
+
+def test_end_to_end(monkeypatch, tmp_path):
+    """Test end-to-end functionality."""
+    round_id = "2025-02-26"
+    clade_file = main(round_id, tmp_path)
+    # Patch the CLADETIME_DEMO environment variable so the test will
+    # run against Nextstrain's 100k sample dataset instead of a full dataset.
+    envs = {"CLADETIME_DEMO": "true"}
+    monkeypatch.setattr(os, "environ", envs)
+
+    assert clade_file.name == f"{round_id}.json"
+    with open(clade_file, "r", encoding="utf-8") as f:
+        clade_dict = json.loads(f.read())
+    clade_list = clade_dict.get("clades", [])
+
+    # last item on list of clades to model should be "other"
+    assert clade_list[-1] == "other"
