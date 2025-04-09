@@ -70,6 +70,7 @@ def get_clades(
 
     # Based on the most recent sequence collection date and the threshold_weeks parameter,
     # determine the minimum sequence collection date to consider when generating the clade list.
+    # Inclusion Criteria: At least 2 sequences (across all weeks).
     max_day = clade_counts.select(pl.max("date")).collect().item()
     threshold_sundays_ago = max_day - timedelta(
         # include max_day.weekday() because the week of the most recent collection date
@@ -94,6 +95,22 @@ def get_clades(
         (pl.col("count") / pl.col("total_count")).alias("proportion")
     )
 
+    # Filter clades that appear at least twice in last threshold_sundays_ago weeks
+    filtered_clades = (
+        prop_dat.group_by('clade')
+        .agg(pl.col("count").sum().alias("date_counts"))
+        .filter(pl.col("date_counts") >= 2)
+        .collect()
+    )
+
+    # Get list of clades from above filter
+    filtered_clades = pl.Series(filtered_clades.select('clade')).to_list()
+
+    # Select only clades from above
+    prop_dat = prop_dat.filter(
+        pl.col("clade").is_in(filtered_clades)
+    )
+    
     # retrieve list of variants which have crossed the threshold over the past threshold_weeks
     high_prev_variants = (
         prop_dat.filter(pl.col("proportion") > threshold)
@@ -219,7 +236,7 @@ def test_get_clades_default_criteria():
     max_clades = 9
 
     clade_list = get_clades(test_data, threshold, threshold_weeks, max_clades)
-    assert clade_list == ["23A", "24E", "24F", "25A"]
+    assert clade_list == ["24E", "24F", "25A"]
 
 
 def test_get_clades_smaller_max():
