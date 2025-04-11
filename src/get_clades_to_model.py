@@ -25,7 +25,7 @@ import os
 import json
 import logging
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 from itertools import chain, repeat
 from pathlib import Path
 from typing import TypedDict
@@ -61,8 +61,11 @@ def get_clades(
     threshold: float,
     threshold_weeks: int,
     max_clades: int,
-) -> list[str]:
-    """Get a list of clades to forecast."""
+) -> tuple[list, pl.LazyFrame]:
+    """
+    Return list of clades to forecast and the LazyFrame used derive it.
+    The LazyFrame is returned so we can use it to capture some metadata.
+    """
 
     clade_counts = sequence.summarize_clades(
         filtered_metadata, group_by=["clade", "date", "location"]
@@ -97,23 +100,23 @@ def get_clades(
 
     # Filter clades that appear at least twice in last threshold_sundays_ago weeks
     filtered_clades = (
-        prop_dat.group_by('clade')
+        prop_dat.group_by("clade")
         .agg(pl.col("count").sum().alias("date_counts"))
         .filter(pl.col("date_counts") >= 2)
         .collect()
     )
 
     # Get list of clades from above filter
-    filtered_clades = pl.Series(filtered_clades.select('clade')).to_list()
+    filtered_clades = pl.Series(filtered_clades.select("clade")).to_list()
 
-    # Select only clades from above
-    prop_dat = prop_dat.filter(
-        pl.col("clade").is_in(filtered_clades)
-    )
-    
-    # retrieve list of variants which have crossed the threshold over the past threshold_weeks
+    # retrieve list of variants that have:
+    # 1. crossed the specified threshold (proportion) over the past threshold_weeks
+    # 2. have appeared at least twice in the last threshold_weeks
     high_prev_variants = (
-        prop_dat.filter(pl.col("proportion") > threshold)
+        prop_dat.filter(
+            pl.col("clade").is_in(filtered_clades),
+            pl.col("proportion") > threshold,
+        )
         .select("clade")
         .unique()
         .collect()
@@ -135,16 +138,35 @@ def get_clades(
     # sort clade list before returning
     variants.sort()
 
-    return variants
+    return variants, prop_dat
 
 
-def get_metadata(ct: CladeTime, current_time: str) -> dict[str, dict | str]:
+def get_metadata(ct: CladeTime, sequence_counts: pl.LazyFrame) -> dict[str, dict | str]:
     """Create metadata to store with the clade list."""
+    current_time = ct.sequence_as_of.isoformat(timespec="seconds")
     metadata: dict[str, dict | str] = dict(created_at=current_time)
 
+    # add metadata about nextstrain pipeline used to generate sequence metadata
+    # that informs our list of clades to model
     ncov_metadata = ct.ncov_metadata
     ncov_metadata["metadata_version_url"] = ct.url_ncov_metadata
     metadata["ncov"] = ncov_metadata
+
+    # add metadata about the number of sequences used to create the
+    # list of modeled clades
+    sequence_metadata: dict[str, dict | int] = {}
+    total_sequences = sequence_counts.select("count").sum().collect().item()
+    sequences_by_clade = (
+        sequence_counts.select("clade", "count")
+        .group_by("clade")
+        .agg(pl.col("count").sum())
+        .sort("clade")
+        .collect()
+    )
+
+    sequence_metadata["total_sequences"] = total_sequences
+    sequence_metadata["sequences_by_clade"] = dict(sequences_by_clade.iter_rows())
+    metadata["sequence_counts"] = sequence_metadata
 
     return metadata
 
@@ -162,15 +184,13 @@ def main(
         clades: list[str]
         meta: dict[str, dict | str]
 
-    current_time = datetime.now(timezone.utc).isoformat(timespec="seconds")
-
     # Get the clade list
     logger.info("Getting clade list")
     ct = CladeTime()
     lf_metadata = ct.sequence_metadata
     lf_metadata_filtered = sequence.filter_metadata(lf_metadata)
 
-    clade_list = get_clades(
+    clade_list, sequence_counts = get_clades(
         lf_metadata_filtered, threshold, threshold_weeks, max_clades
     )
 
@@ -180,7 +200,7 @@ def main(
 
     # Get metadata about the Nextstrain ncov pipeline run that
     # the clade list is based on
-    metadata = get_metadata(ct, current_time)
+    metadata = get_metadata(ct, sequence_counts)
     logger.info(f"Round open metadata: {metadata}")
 
     round_data: RoundData = {
@@ -235,7 +255,9 @@ def test_get_clades_default_criteria():
     threshold_weeks = 3
     max_clades = 9
 
-    clade_list = get_clades(test_data, threshold, threshold_weeks, max_clades)
+    clade_list, sequence_counts = get_clades(
+        test_data, threshold, threshold_weeks, max_clades
+    )
     assert clade_list == ["24E", "24F", "25A"]
 
 
@@ -246,7 +268,9 @@ def test_get_clades_smaller_max():
     threshold_weeks = 3
     max_clades = 2
 
-    clade_list = get_clades(test_data, threshold, threshold_weeks, max_clades)
+    clade_list, sequence_counts = get_clades(
+        test_data, threshold, threshold_weeks, max_clades
+    )
     assert clade_list == ["24F", "25A"]
 
 
@@ -257,7 +281,9 @@ def test_get_clades_adjust_threshold_weeks():
     threshold = 0.01
     threshold_weeks = 2
 
-    clade_list = get_clades(test_data, threshold, threshold_weeks, max_clades)
+    clade_list, sequence_counts = get_clades(
+        test_data, threshold, threshold_weeks, max_clades
+    )
     assert clade_list == ["24E", "24F", "25A"]
 
 
@@ -268,24 +294,38 @@ def test_get_clades_adjust_threshold():
     threshold = 0.3
     threshold_weeks = 3
 
-    clade_list = get_clades(test_data, threshold, threshold_weeks, max_clades)
+    clade_list, sequence_counts = get_clades(
+        test_data, threshold, threshold_weeks, max_clades
+    )
     assert clade_list == ["24E", "24F", "25A"]
 
 
 def test_metadata():
     """Test that round open metadata is correct."""
-    current_time = datetime(2025, 2, 24, 2, 16, 22, tzinfo=timezone.utc).isoformat(
-        timespec="seconds"
+    ct = CladeTime(datetime(2025, 2, 24, 2, 16, 22))
+
+    test_data = get_test_data()
+    threshold = 0.01
+    threshold_weeks = 3
+    max_clades = 9
+    clade_list, sequence_counts = get_clades(
+        test_data, threshold, threshold_weeks, max_clades
     )
-    round_open_date = datetime(2025, 2, 24)
-    ct = CladeTime(round_open_date)
 
-    meta = get_metadata(ct, current_time)
+    meta = get_metadata(ct, sequence_counts)
+
     ncov_metadata = meta.get("ncov", {})
-
-    assert meta.get("created_at") == current_time
+    assert meta.get("created_at") == "2025-02-24T02:16:22+00:00"
     assert ncov_metadata.get("nextclade_dataset_version") == "2025-01-28--16-39-09Z"
     assert ncov_metadata.get("nextclade_version_num") == "3.10.1"
+
+    sequence_count_metadata = meta.get("sequence_counts", {})
+    total_sequences = sequence_count_metadata.get("total_sequences", 0)
+    sequences_by_clade = sequence_count_metadata.get("sequences_by_clade", {})
+    assert total_sequences == 15
+    assert sequences_by_clade == {"23A": 1, "24E": 4, "24F": 5, "25A": 5}
+    # total sum of sequences by clade should = total number of sequences
+    assert total_sequences == sum(sequences_by_clade.values())
 
 
 def test_end_to_end(monkeypatch, tmp_path):
