@@ -98,7 +98,22 @@ We will not solicit estimates for the US as a whole, in part because evaluating 
 
 ### Predicted clades
 
-Each week the hub designates up to nine NextStrain clades with the highest reported prevalence of at least 1% across the US in any of the three complete [USA/CDC epidemiological weeks](https://ndc.services.cdc.gov/wp-content/uploads/MMWR_Week_overview.pdf) (a.k.a. MMWR weeks) preceding the Wednesday submission date. Any clades with prevalence of less than 1% are grouped into an “other” category for which predictions of combined prevalence are also collected. No more than 10 clades (including “other”) are selected in a given week. For details on the workflow that generates this list each week, see the [clade list section](#clade-list) below.
+Each week the hub designates up to nine NextStrain clades, based on the highest reported prevalence of those that
+meet the following criteria:
+
+- accounts for at least 1% of observations across the US
+- appears at least twice in any of the three complete
+  [USA/CDC epidemiological weeks](https://ndc.services.cdc.gov/wp-content/uploads/MMWR_Week_overview.pdf)
+  (a.k.a. MMWR weeks) preceding the Wednesday submission date
+
+Any clades with prevalence of less than 1% are grouped into an “other” category for which predictions of combined
+prevalence are also collected. No more than 10 clades (including “other”) are selected in a given week.
+
+**note**: Prior to the modeling round ending on 2025-04-16, a clade did not have to appear twice in the prior three MMWR
+weeks to be included. The Variant Nowcast Hub team added this criteria to ensure that clades are not selected based
+on a single observation.e.
+
+For details on the workflow that generates this list each week, see the [clade list section](#clade-list) below.
 
 #### Why use Nextstrain clades?
 
@@ -127,7 +142,11 @@ Genomic sequences tend to be reported weeks after being collected. Therefore, re
 Early Monday morning (~3am ET) prior to a Wednesday on which submissions are due, the hub generates a JSON file with two high-level properties:
 
 1. `clades`: an array of [NextClade clade names](https://clades.nextstrain.org/about) that will be accepted in submission files for the upcoming deadline.
-2. `meta`: metadata relevant to the upcoming round, including links to the Nextstrain sequence information and reference tree used to generate the above `clades` array.
+2. `meta`: metadata relevant to the upcoming round, including
+
+    - links to the Nextstrain sequence information
+    - the Nextclade dataset used to generate the above `clades` array
+    - the total number of sequences used to generate the round's clade list
 
 The JSON file will live in the `auxiliary-data/modeled-clades/` directory of the repository and will be named “YYYY-MM-DD.json” where “YYYY-MM-DD” is the date of the Wednesday on which submissions are due.
 
