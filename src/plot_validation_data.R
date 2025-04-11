@@ -1,13 +1,14 @@
-### 
-# Script to plot model output (UMass-HMLR default, others manually for now) 
+###
+# Script to plot model output (UMass-HMLR default, others manually for now)
 # with data available at reference date (training data) and data validated
-# through CladeTime 90+ days later for validation purposes. 
+# through CladeTime 90+ days later for validation purposes.
 
 # Currently does daily plots, but will be extended to weekly
 library("dplyr")
 library("ggplot2")
 library("arrow")
-here::i_am("src/plot_validation_data.R")
+options(dplyr.summarise.inform = FALSE) # Suppress message output for dplyr use
+#here::i_am("src/plot_validation_data.R")
 
 # Load validation data from target data dirs
 hub_path <- here::here()
@@ -24,6 +25,8 @@ df_retro <- arrow::read_parquet(targets_path_s3)
 
 # Model output file, just UMass for now
 df_model_output <- arrow::read_parquet(file.path(hub_path, "model-output/UMass-HMLR/2024-12-25-UMass-HMLR.parquet"))
+df_model_output_2 <- arrow::read_parquet(file.path(hub_path, "model-output/UGA-multicast/2024-12-25-UGA-multicast.parquet"))
+df_model_output_base <- arrow::read_parquet(file.path(hub_path, "model-output/Hub-baseline/2024-12-25-Hub-baseline.parquet"))
 
 clades <- unique(df_model_output$clade)
 
@@ -43,10 +46,13 @@ save_path = paste0(hub_path, "/plot_validation_by_location_", reference_date, ".
 pdf(save_path)
 unique_locs <- sort(unique(df_model_output$location))
 
+# string for printing purposes
+date_obs <- paste0("Available Data ", reference_date)
+
 for (this_location in unique_locs){
-  
+
   targets_retro_this_location <- targets_retro |> subset((location == this_location))
-  
+
   targets <- df_validation |>
     mutate(clade = ifelse(clade %in% clades, clade, "other")) |>
     tidyr::complete(location, target_date, clade, fill = list(observation=0)) |>
@@ -55,29 +61,71 @@ for (this_location in unique_locs){
     ungroup() |>
     mutate(value = ifelse(total == 0, 0, observation/total)) |>
     mutate(type = "target")
-  
+
   targets$target_date <- as.Date(targets$target_date)
-  
-  df_out_this_location <- df_model_output |> subset((location == this_location) & (output_type == "mean"))
-  
+
+  df_out_this_location <- df_model_output |>
+    subset((location == this_location) & (output_type == "sample")) |>
+    group_by(target_date, clade, location) |>
+    summarize(mean = mean(value),
+              q05 = quantile(value, probs = 0.05, na.rm = T),
+              q95 = quantile(value, probs = 0.95, na.rm = T)) |>
+    mutate(type = "prediction") |>
+    rename(value = mean)
+
+  df_out_this_location_2 <- df_model_output_2 |>
+    subset((location == this_location) & (output_type == "sample")) |>
+    group_by(target_date, clade, location) |>
+    summarize(mean = mean(value),
+              q05 = quantile(value, probs = 0.05, na.rm = T),
+              q95 = quantile(value, probs = 0.95, na.rm = T)) |>
+    mutate(type = "prediction") |>
+    rename(value = mean)
+
+  df_out_this_location_base <- df_model_output_base |>
+    subset((location == this_location) & (output_type == "sample")) |>
+    group_by(target_date, clade, location) |>
+    summarize(mean = mean(value),
+              q05 = quantile(value, probs = 0.05, na.rm = T),
+              q95 = quantile(value, probs = 0.95, na.rm = T)) |>
+    mutate(type = "prediction") |>
+    rename(value = mean)
+
+  # Add team column
+  df_out_this_location <- df_out_this_location %>% mutate(team = "UMass")
+  df_out_this_location_2 <- df_out_this_location_2 %>% mutate(team = "UGA")
+  df_out_this_location_base <- df_out_this_location_base %>% mutate(team = "Baseline")
+
+  # Combine data frames
+  df_out <- bind_rows(df_out_this_location, df_out_this_location_2, df_out_this_location_base)
+
   targets_this_location <- targets |> subset(location == this_location)
   colnames(targets_this_location)[3] <- "clade"
-  
-  p <- ggplot(df_out_this_location, aes(x = target_date, y = value)) + 
-    ggtitle(paste0("Daily Observed and Predicted Proportions \n", this_location, " - ", reference_date, "-UMass-HMLR")) + 
-    theme(legend.position = "bottom", legend.justification = "center", legend.title = element_blank()) + 
-    geom_point(data = targets_this_location, 
-               inherit.aes = FALSE,  
+
+  p <- ggplot(df_out, aes(x = target_date, y = value, color = team)) +
+    ggtitle(paste0("Daily Observed and Predicted Proportions \n", this_location, " Nowcast Date: ", reference_date)) +
+    theme(legend.position = "bottom", legend.justification = "center", legend.title = element_blank()) +
+    theme(legend.text=element_text(size=rel(0.4))) +
+    geom_point(data = targets_this_location,
+               inherit.aes = FALSE,
                mapping = aes(x = target_date, y = value, color = "darkorange", size = total),
-               alpha = 0.6) + 
-    geom_point(data = targets_retro_this_location, mapping = aes(x = date, y = value, color = "dodgerblue", size = total),
+               alpha = 0.6) +
+
+    geom_point(data = targets_retro_this_location,
+               mapping = aes(x = date, y = value, color = "dodgerblue", size = total),
                inherit.aes = FALSE,
                alpha = 0.6) +
-    scale_color_manual(labels = c("Validated Data 2025-03-25", paste0("Training Data ", reference_date)), values = c("darkorange", "dodgerblue")) + 
+    geom_line() +
+    geom_ribbon(aes(ymin = q05, ymax = q95, fill = team), alpha = 0.3, color = NA) +
+
+    # Breaks decides the legend order
+    # Default without breaks is in ALPHABETICAL ORDER of labels >.<
+    scale_color_manual(labels = c("Baseline", "Validated Data 2025-03-25", date_obs, "UGA", "UMass"),
+                       values = c("limegreen", "darkorange", "dodgerblue", "purple", "darkred"),
+                       aesthetics = c("fill", "color")) +
     scale_size(name = "# of sequences", range = c(1, 4)) +
-    geom_line(color = "red") + 
     facet_wrap(~clade)
-  
+
   print(p)
 }
 
