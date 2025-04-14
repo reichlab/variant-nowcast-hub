@@ -102,7 +102,7 @@ Each week the hub designates up to nine NextStrain clades, based on the highest 
 meet the following criteria:
 
 - accounts for at least 1% of observations across the US
-- appears at least twice in any of the three complete
+- has had at least two sequences present in the data across the last three complete
   [USA/CDC epidemiological weeks](https://ndc.services.cdc.gov/wp-content/uploads/MMWR_Week_overview.pdf)
   (a.k.a. MMWR weeks) preceding the Wednesday submission date
 
