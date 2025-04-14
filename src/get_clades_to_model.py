@@ -320,7 +320,7 @@ def test_metadata():
     assert ncov_metadata.get("nextclade_version_num") == "3.10.1"
 
     sequence_count_metadata = meta.get("sequence_counts", {})
-    total_sequences = sequence_count_metadata.get("total_sequences", 0)
+    total_sequences = sequence_count_metadata.get("total_sequences_last_3_weeks", 0)
     sequences_by_clade = sequence_count_metadata.get("sequences_by_clade", {})
     assert total_sequences == 15
     assert sequences_by_clade == {"23A": 1, "24E": 4, "24F": 5, "25A": 5}
