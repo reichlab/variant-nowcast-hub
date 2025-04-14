@@ -146,7 +146,7 @@ Early Monday morning (~3am ET) prior to a Wednesday on which submissions are due
 
     - links to the Nextstrain sequence information
     - the Nextclade dataset used to generate the above `clades` array
-    - the total number of sequences used to generate the round's clade list
+    - the total number of sequences from the last three weeks of data used to generate the round's clade list
 
 The JSON file will live in the `auxiliary-data/modeled-clades/` directory of the repository and will be named “YYYY-MM-DD.json” where “YYYY-MM-DD” is the date of the Wednesday on which submissions are due.
 
