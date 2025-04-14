@@ -101,7 +101,9 @@ We will not solicit estimates for the US as a whole, in part because evaluating 
 Each week the hub designates up to nine NextStrain clades, based on the highest reported prevalence of those that
 meet the following criteria:
 
-- accounts for at least 1% of observations across the US
+- accounts for at least 1% of observations across the US in any of the three complete
+  [USA/CDC epidemiological weeks](https://ndc.services.cdc.gov/wp-content/uploads/MMWR_Week_overview.pdf)
+  (a.k.a. MMWR weeks) preceding the Wednesday submission date
 - has had at least two sequences present in the data across the last three complete
   [USA/CDC epidemiological weeks](https://ndc.services.cdc.gov/wp-content/uploads/MMWR_Week_overview.pdf)
   (a.k.a. MMWR weeks) preceding the Wednesday submission date
