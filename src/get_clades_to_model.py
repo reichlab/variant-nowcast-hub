@@ -164,7 +164,7 @@ def get_metadata(ct: CladeTime, sequence_counts: pl.LazyFrame) -> dict[str, dict
         .collect()
     )
 
-    sequence_metadata["total_sequences"] = total_sequences
+    sequence_metadata["total_sequences_last_3_weeks"] = total_sequences
     sequence_metadata["sequences_by_clade"] = dict(sequences_by_clade.iter_rows())
     metadata["sequence_counts"] = sequence_metadata
 
