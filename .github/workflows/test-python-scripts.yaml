@@ -25,12 +25,10 @@ jobs:
       - name: Install dependencies 📦️
         run: |
           uv venv
-          uv pip install -r requirements.txt
-        working-directory: src
+          uv pip install -r src/requirements.txt
 
       - name: Run tests 🧪
         run: |
-          uv run --module pytest get_clades_to_model.py -s
-          uv run --module pytest get_location_date_counts.py -s
-          uv run --module pytest get_target_data.py -s
-        working-directory: src
+          uv run --module pytest src/get_clades_to_model.py -s
+          uv run --module pytest src/get_location_date_counts.py -s
+          uv run --module pytest src/get_target_data.py -s
