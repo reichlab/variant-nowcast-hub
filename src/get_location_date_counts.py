@@ -106,7 +106,7 @@ def get_location_date_counts(round_close_time: datetime) -> pl.DataFrame:
         .rename({"date": "target_date"})
     )
 
-    return grouped_all.collect(streaming=True)
+    return grouped_all.collect()
 
 
 def test_get_location_date_counts(monkeypatch):
