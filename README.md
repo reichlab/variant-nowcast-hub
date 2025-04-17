@@ -422,7 +422,7 @@ lf = pl.scan_parquet(
 )
 
 # use a collect operation to materialize the LazyFrame into a DataFrame
-model_output = lf.collect(streaming=True)
+model_output = lf.collect(engine="streaming")
 ```
 
 > **💡 Tip** \
