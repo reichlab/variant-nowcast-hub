@@ -10,6 +10,9 @@ The script is scheduled to run every Wednesday, after a modeling round closes.
 To run the script manually:
 1. Install uv on your machine: https://docs.astral.sh/uv/getting-started/installation/
 2. From the root of this repo: uv run --with-requirements src/requirements.txt src/get_location_date_counts.py --nowcast-date=YYYY-MM-DD
+
+To run the included tests manually (from the root of the repo):
+uv run --with-requirements src/requirements.txt --module pytest src/get_location_date_counts.py
 """
 
 import logging
@@ -55,9 +58,6 @@ def main(nowcast_date: datetime, output_path: Path):
 
     logger.info(f"Getting location/date counts for round {nowcast_date_str}")
     location_date_df = get_location_date_counts(round_close_time)
-
-    logger.info(f"Testing location/date counts for round {nowcast_date_str}")
-    test_counts(round_close_time, location_date_df)
 
     output_file = output_path / f"{nowcast_date_str}.csv"
     location_date_df.write_csv(output_file)
@@ -109,14 +109,23 @@ def get_location_date_counts(round_close_time: datetime) -> pl.DataFrame:
     return grouped_all.collect(streaming=True)
 
 
-def test_counts(round_close_time: datetime, computed_counts: pl.DataFrame):
+def test_get_location_date_counts(monkeypatch):
     """Run checks on location/date clade counts."""
 
-    ct = CladeTime(sequence_as_of=round_close_time.astimezone(ZoneInfo("UTC")))
+    # Patch the CLADETIME_DEMO environment variable so the test will
+    # run against Nextstrain's 100k sample dataset instead of a full dataset.
+    envs = {"CLADETIME_DEMO": "true"}
+    monkeypatch.setattr(os, "environ", envs)
 
-    # Get all rows in sequence metadata that have reported a sequence
-    # with a collection date in the 31 days prior to round_close
-    begin_date = round_close_time.date() - timedelta(days=31)
+    round_close_test_time = datetime(
+        2024, 11, 6, 20, 0, 0, tzinfo=ZoneInfo("US/Eastern")
+    )
+    computed_counts = get_location_date_counts(round_close_test_time)
+
+    # Pull the same set of sequence metadata from Nextstrain, filter by date,
+    # and compare overall record count to the one produced by get_location_date_counts
+    ct = CladeTime(sequence_as_of=round_close_test_time.astimezone(ZoneInfo("UTC")))
+    begin_date = round_close_test_time.date() - timedelta(days=31)
     test_data = sequence.filter_metadata(ct.sequence_metadata)
     test_data = test_data.filter(pl.col("date") >= begin_date).collect()
 
