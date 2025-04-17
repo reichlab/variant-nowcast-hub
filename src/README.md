@@ -162,4 +162,43 @@ To run the script manually:
 
 ## Workflows
 
-Coming soon!
+Many of the scripts in `variant-nowcast-hub/src` are run via scheduled
+[GitHub workflows](https://docs.github.com/en/actions/about-github-actions/understanding-github-actions#workflows),
+usually when a new round is ready to open or when a round closes for submissions.
+
+Per GitHub standards, the workflow definitions are `.yaml` files stored in this repo's
+[`.github/workflows/`](https://github.com/reichlab/variant-nowcast-hub/tree/main/.github/workflows) directory. The
+information below maps workflows to scripts in `src/` and describes how to re-run them if needed.[^1]
+
+### create-modeling-round.yaml
+
+This workflow generates the data required to open a new modeling round and opens a corresponding PR.
+
+- Scheduled to run on Mondays at 3 AM UTC
+- Runs the following scripts:
+
+    - `get_clades_to_model.py`
+    - `make_round_config.R`
+- Re-running:
+
+    - The round_id used by this workflow is calculated as the Wednesday following the run date.
+    - Therefore, it can be safely re-run on the Monday or Tuesday of the current round.
+
+### run-post-submission-jobs.yaml
+
+This workflow runs after submissions close for a round. It generates updated target-data and unscored-location-dates
+files for the specified round and opens a corresponding PR.
+
+- Scheduled to run on Thursdays at 12:20 or 1:20 AM UTC (depending on the month; best we could do to accommodate DST)
+- Runs the following scripts:
+
+    - `get_location_date_counts.py`
+    - `get_target_data.py`
+- Re-running:
+
+    - This workflow can be re-run manually for any past round_id.
+    - If a round_id is not specified, it will use the latest round as determined by the date
+      of the most recent Wednesday.
+
+[^1]: Not all workflows are listed here. Many of them are generic Hubverse actions and are documented in
+[`hubverse-actions`](https://github.com/hubverse-org/hubverse-actions).
