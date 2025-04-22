@@ -1,5 +1,5 @@
 # require core team member review for updates to GitHub workflows
-/.github/CODEOWNERS @reichlab/repo-writers
-/.github/actions/ @reichlab/repo-writers
-/.github/shared/ @reichlab/repo-writers
-/.github/workflows/ @reichlab/repo-writers
+/.github/CODEOWNERS @reichlab/repo-writers @reichlab/variant-nowcast-admins
+/.github/actions/ @reichlab/repo-writers @reichlab/variant-nowcast-admins
+/.github/shared/ @reichlab/repo-writers @reichlab/variant-nowcast-admins
+/.github/workflows/ @reichlab/repo-writers @reichlab/variant-nowcast-admins
