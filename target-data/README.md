@@ -3,40 +3,61 @@
 The United States SARS-CoV-2 Variant Nowcast Hub generates target data in both oracle output and time series formats
 as described in the [Hubverse user guide](https://hubverse.io/en/latest/user-guide/target-data.html).
 
+> [!TIP]
+> The GitHub workflow described below can be manually re-run if needed.
+
 ## Target data process
 
-Target data files are generated weekly, after a variant-nowcast-hub closes for submissions.
-If necessary, a set of target data files can also be generated
-manually.
+Target data files are generated weekly via the
+[`run-post-submission-jobs.yaml`](https://github.com/reichlab/variant-nowcast-hub/blob/main/.github/workflows/run-post-submission-jobs.yaml)
+GitHub workflow, which runs after submissions close for a round (early Thursday mornings UTC).
 
-- GitHub workflow: [`run-post-submission-jobs.yaml`](https://github.com/reichlab/variant-nowcast-hub/blob/main/.github/workflows/run-post-submission-jobs.yaml#L60)
-- Python script run by above workflow: [`get_target_data.py`](https://github.com/reichlab/variant-nowcast-hub/blob/main/src/get_target_data.py)
+The workflow has a single input parameter: `nowcast-date`. This YYYY-MM-DD date string represents a modeling
+round_id and defaults to the most recent Wednesday when not explicitly set.
+
+Using `nowcast-date` as a baseline, `run-post-submission-jobs.yaml` generates fourteen sets of oracle output and
+time series target data files:
+
+- (`nowcast_date` - 13 weeks): generates target data for the round that
+  is officially "closed" by the workflow run
+
+    - `nowcast_date` - 13 weeks (or 91 days) is also known as `round_close_date`
+    - target data from this run is used for scoring models
+
+- (`nowcast_date` - 12 weeks) through (`nowcast_date` - 0 weeks)
+
+    - `nowcast_date` - 0 weeks = the workflow's input parameter and is also
+      referred to as `submission_close_date`
+    - generates interim target data used to track model performance and
+      potentially for visualizations
 
 ### Dates
 
-There are four important dates used when creating a set of target data:
+For each of the fourteen modeling rounds listed above, `run-post-submission-jobs.yaml` executes
+[`src/get_target_data.py`](https://github.com/reichlab/variant-nowcast-hub/blob/main/src/get_target_data.py).
 
-- `nowcast_date`: The id of a modeling round (defaults to the most recent Wednesday but can be overridden).
-- `round_close_date`: The id of the modeling round that is now "closed" because 91 days have passed since
-  its nowcast_date (*i.e.*, this round's submissions can now be scored). Calculated as nowcast_date - 91 days.
-  This field is used to calculate `as_of` (see below) but is not included in the target data files.
-- `as_of`: The SARS-CoV-2 "snapshot" date used when generating target data. Calculated as the round_close_date + 90 days.
-- `tree_as_of`: The SARS-CoV-2 [reference tree](https://docs.nextstrain.org/projects/nextclade/en/stable/user/terminology.html#reference-tree-concept)
-  in use when the `nowcast_date` modeling round opened, usually nowcast_date - 2 days.
-  This field is used for clade assignments when generating target data but is not included in the target data files.
+The table below defines all `get_target_data.py` parameters. All dates are represented by strings in YYYY-MM-DD format.
+
+| date name | definition/used for | how it's calculated |
+|------------|-----------|------------------------------------|
+| `nowcast_date` | a modeling round id | passed by workflow: one of the 14 modeleing rounds being processed by the `run-post-submissions-jobs.yaml` workflow |
+| `sequence_as_of` | date used to retrieve Nexstrain SARS-CoV-2 sequences; `as_of` partition key value for time series output | passed by workflow: `round_close_date` + 90 days (a Tuesday). |
+| `target-data-dir` | where to save the target data files | passed by workflow: repo's `target-data` directory |
+| `tree_as_of` | The SARS-CoV-2 reference tree in use when the `nowcast_date` modeling round opened; used to assign clades to above sequences | `meta.created_at` value in the round's [modeled-clades](https://github.com/reichlab/variant-nowcast-hub/tree/main/auxiliary-data/modeled-clades) .json file (usually `nowcast_date` - 2 days) |
+| `collection_min_date` | use SARS-CoV-2 sequences collected on or after this date when generating time series target data | `tree_as_of` - 90 days |
+| `collection_max_date` | use SARS-CoV-2 sequences collected on or before this date when generating target data | `nowcast_date` + 10 days |
 
 ### Values
 
-The target data values (`oracle_value` for oracle data and `observation` for time series) are calculated by:
+At a high level, `get_target_data.py` calculates target data values by:
 
-1. Using the `nowcast_date` to determine other required dates as described above.
-2. Downloading the set of SARS-CoV-2 genome sequences that were available on the `as_of` date.
-3. Assigning clades to those sequences using the SARS-CoV-2 reference tree in effect on the `tree_as_of` date.
-4. Summarizing the number of sequences by location, target date, and clade.
+1. Downloading the set of SARS-CoV-2 genome sequences that were available on the `as_of` date.
+2. Assigning clades to those sequences using the SARS-CoV-2 reference tree in effect on the `tree_as_of` date.
+3. Summarizing the number of sequences by location, target date, and clade.
 
 ## Oracle output
 
-The hub's oracle output target data are published in parquet format and partitioned by `as_of`, a date in YYYY-MM-DD format.
+The hub's oracle output target data are published in parquet format and partitioned by `nowcast_date`.
 
 Oracle output files are used to evaluate model submissions and contain the following columns:
 
@@ -53,8 +74,8 @@ Oracle output files are used to evaluate model submissions and contain the follo
 
 The hub's time series target data are published in parquet format and partitioned by:
 
-- `as_of`, a date in YYYY-MM-DD format
-- `nowcast_date`, a date in YYYY-MM-DD format
+- `as_of`
+- `nowcast_date`
 
 Time series values are calculated by using SARS-CoV-2 sequence data and clade assignments as they existed on
 the `as_of` date.
