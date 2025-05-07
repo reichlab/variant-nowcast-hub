@@ -1,0 +1,541 @@
+---
+title: "CATaLog, Clade Assesment Tool a Logistic function"
+author: "Brent Siegel et al,"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    toc: yes
+  chunk_output_type: inline
+  html_document:
+    toc: true
+    editor_options: 
+      chunk_output_type: inline
+params: 
+  external_crosswalk: FALSE 
+  normal_run: FALSE #if eval run, fit terra and targets in the past 
+---
+
+#Parameters
+```{r}
+master_date <- Sys.Date()
+
+Maxfitdate <- master_date - 31
+
+#the length of days going back you want to fit the model on
+Daysback_l <- c(0:97) #max
+
+```
+
+```{r}
+
+library(kableExtra)
+library(tidyverse)
+library(DBI)
+library(config)
+library(lubridate)
+library(nnet)
+library(bbmle)
+library(mvtnorm)
+library(httr)
+library(jsonlite)
+library(stringr)
+library(arrow)
+library(dplyr)
+library(data.table)
+
+```
+
+
+##Sources 
+```{r}
+source("//mnt/projects/connect-izb/rmd_generate/variant/resources/cladeutils.R") #houses manual_clade_overwrite and clean_clades
+source("//mnt/projects/connect-izb/rmd_generate/variant/resources/pango_collate.R") 
+
+```
+
+##Reading in Terra
+```{r}
+if(params$normal_run == TRUE){
+  
+  terra_file <- which.max(as.Date(str_extract(list.files("//mnt/projects/connect-izb/rmd_generate/variant"), "(\\d)+"), format = "%Y%m%d"))
+
+terra_date <- max(as.Date(str_extract(list.files("//mnt/projects/connect-izb/rmd_generate/variant"), "(\\d)+"), format = "%Y%m%d"), na.rm = T)
+
+terra <- read_csv(paste0("//mnt/projects/connect-izb/rmd_generate/variant/",
+                         list.files("//mnt/projects/connect-izb/rmd_generate/variant")[terra_file]))[, -1]
+
+master_date <- Sys.Date()
+  
+} else { 
+  
+terraclade <- read_csv(paste0("//mnt/projects/connect-izb/rmd_generate/variant/Clade/clade_model_eval/terra_processed_K_targets/terraclade_", master_date, ".csv"))
+  
+}
+  
+```
+###Reading in crosswalk 
+####https://nextstrain.org/nextclade/sars-cov-2
+```{r}  {eval = external_crosswalk}
+
+#metadata file renamed to make indexing easier (metadata from)
+nextclade_data <- read_tsv("//mnt/projects/connect-izb/rmd_generate/variant/Clade/Crosswalks//nextstrain_metadata_1.tsv")
+
+
+crosswalkdat <- nextclade_data %>%
+  select(Nextclade_pango, clade_nextstrain) %>%
+  filter(!is.na(Nextclade_pango), !is.na(clade_nextstrain))
+
+```
+
+
+```{r}
+#checking for duplicatesd in each clade column
+
+#summary(duplicated(nextclade_data$Nextclade_pango)) # no dupe
+
+#length(unique(nextclade_data$Nextclade_pango)) == nrow(nextclade_data) #true
+
+#checking where discrepancies are in the clade columns 
+
+#dfn <- nextclade_data[(nextclade_data$clade_nextstrain != nextclade_data$clade_display) | is.na(nextclade_data$clade_nextstrain) | is.na(nextclade_data$clade_display),]
+#clade display is only how it's displayed, not different clade 
+
+#dfl <- nextclade_data[(nextclade_data$clade_nextstrain != nextclade_data$clade_membership) | is.na(nextclade_data$clade_membership) | is.na(nextclade_data$clade_nextstrain),]
+```
+
+
+###Merging the crosswalk with terra
+```{r}  {eval = external_crosswalk}
+
+#ensuring no na's for date or lineage and filtering to last n days
+terra2 <- terra1 %>%
+  select(collection_date, pango_lineage, percent_reference_coverage, ) %>%
+  filter(!is.na(pango_lineage), !is.na(collection_date)) %>%
+  filter(collection_date >= (Sys.Date()-97), collection_date < Sys.Date()) %>% 
+  collate_pangos(newcol="voc", 
+                 pangocol="pango_lineage") #collate pangos 
+
+
+terraclade <- left_join(terra2, crosswalkdat, by = c("voc" = "Nextclade_pango")) %>%
+  mutate(
+    clade_nextstrain = case_when(
+      str_detect(voc, "recombinant") ~ "recombinant",  
+      TRUE ~ clade_nextstrain  #if voc is recombinant make terraclade recombinant 
+    )
+  ) %>% 
+  rename(clade = clade_nextstrain)
+
+
+uncat.pango.n <- terraclade %>% 
+  filter(is.na(clade_nextstrain)) %>% 
+  count(pango_lineage)
+
+uncat.pango.names <- terraclade %>% 
+  filter(is.na(clade_nextstrain)) %>% 
+  pull(unique(pango_lineage))
+
+cat(uncat.pango.names, "Unclassified PANGOs via most current nextstrain build")
+
+kable(uncat.pango.n, booktabs = TRUE) %>%
+  kable_styling(font_size = 10)
+
+
+```
+
+###Borrowing GISAID obs
+####https://data.nextstrain.org/files/workflows/forecasts-ncov/gisaid/nextstrain_clades/usa.tsv.gz
+```{r}  {eval = external_crosswalk}
+
+GISAIDdat <- read_tsv("//mnt/projects/connect-izb/rmd_generate/variant/Clade/GISAID/usa.tsv.gz")%>%
+  filter(date >= Sys.Date()-97,
+         location == "California")
+
+
+#finding clades observations that are in gisaid and not terra post crosswalk 
+
+cladediff <- GISAIDdat %>% 
+  filter(!clade %in% terraclade$clade) %>%
+  distinct(clade) %>% 
+  pull(clade)
+
+#find the counts of clades via date which terra doesn't have
+
+nonterraobs <- GISAIDdat %>% rename("count" = "sequences") %>%
+  select(count, date, clade) %>% filter(clade == cladediff) 
+
+#add the rows to terra (we need a unique row for each observation so the code is gonna get convoluted)
+#I need to ungroup the counts (make a unique observation for each count)
+
+nonterraobs_ungrouped <- nonterraobs %>% 
+  uncount(count) %>%
+  rename("clade_nextstrain" = "clade",
+         "collection_date" = "date")
+
+#adding those rows into terra
+
+terraclade <- terraclade %>% bind_rows(nonterraobs_ungrouped)
+
+
+```
+
+#Directly Using Terra Clades
+```{r}
+if(params$normal_run == TRUE){
+    
+    terra2 <- terra %>%
+  select(collection_date, pango_lineage, nextclade_clade, percent_reference_coverage) %>%
+filter(!is.na(collection_date), !is.na(nextclade_clade)) %>%
+  filter(collection_date >= (Sys.Date()-97), collection_date < Sys.Date()) 
+
+ terraclade <- clean_clades(df = terra2, cladecol = "nextclade_clade") %>% 
+   rename(clade = nextclade_clade,
+          date = collection_date)
+ 
+ #once mapping is done and manual clade overwrite is updated proceed
+terraclade <- manual_clade_overwrite(terraclade, pangocol = "pango_lineage", cladecol = "clade")}
+
+```
+
+
+#Making wed plot inputs
+```{r}
+#Defining Wed, week of rolling average, date rounded to closest wednesday
+terraclade2 <- terraclade %>% 
+  filter(!is.na(clade)) %>% 
+   filter(date <= Sys.Date()) %>% 
+  filter(date >= Sys.Date() - max(Daysback_l)) %>% 
+    mutate(Wed = floor_date(date, "week", week_start = 3)) %>%
+  select(Wed, clade, date) 
+
+#grouping by region Wed, clade, and counting number of clade occurrences for that week
+terraclade_count <- terraclade2 %>%
+  count(Wed, clade, name = "nclade")
+
+
+#grouping by Wed only and summarizing the total clade occurrences per week, making cladeprop proportion and filtering by the max fit date 
+
+terraclade_count2 <- terraclade_count %>%
+  group_by(Wed) %>%
+  mutate(wedcladetot = sum(nclade)) %>% #summarize clade counts by each Wed
+  mutate(wedcladeprop = nclade/wedcladetot)
+```
+
+
+```{r}
+ggplot() +
+  geom_point(data = terraclade_count2,
+             aes(x = Wed, y = wedcladeprop, col = as.character(clade), size = nclade),
+             alpha = 0.5) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b '%y") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "", y = "Variant proportions", col = "", fill = "", title = paste0("Terra Crosswalk Proportions for fit date: ", 
+                                                                              master_date))
+
+```
+
+
+#Making model inputs
+```{r}
+#Model input dfs have an M4. prefix
+
+#note that even though our models are PLOTTED based on weekly averages, this model is fit on daily rolling averages
+
+#based on the last two plots we should filter out the most recent week of daily data to fit the model
+
+#nclade is the count of the specific clade on a given day 
+#cladetot is the total number of clades observed on a given day 
+
+##Don't confuse this with the Wed nclades and cladetots
+
+
+#filtering out most recent weeks using the largest date we want to fit (Maxfitdate)
+M4.terraclade2 <- terraclade2 %>% 
+  filter(date <= Maxfitdate) %>% 
+  filter(date >= Sys.Date() - max(Daysback_l))
+
+
+#making nclade column, number of a certain clade ie 24A per day
+M4.terraclade3 <- M4.terraclade2 %>%
+  count(date, clade, name = "nclade")
+  
+  
+#making cladetot, total number of clades per day
+M4.terraclade4 <- M4.terraclade3 %>%
+  group_by(date) %>%
+  mutate(cladetot = sum(nclade)) 
+
+
+#computing clade rolling average props 
+M4.terraclade5 <- M4.terraclade4 %>% 
+  group_by(clade) %>% 
+  mutate(
+    prop_clade = nclade / cladetot,
+    prop_7_clade = zoo::rollsum(nclade, 7, align = "left", na.pad = TRUE) / 
+                   zoo::rollsum(cladetot, 7, align = "left", na.pad = TRUE)
+  ) %>%
+  ungroup() %>%
+  mutate(region = "CA") %>%
+  rename("date" = date) 
+
+
+```
+
+
+#Fitting and extrapolating
+```{r}
+M4.3.log_fits_all <- expand.grid(clade = unique(M4.terraclade5$clade))
+                                 
+                                 
+M4.3.terra_logistic_preds_all <- bind_rows(apply(M4.3.log_fits_all, 1, function(x) {
+  cat(x[1], "\n")
+  
+  # Filter data frame to target clade 
+  df <- M4.terraclade5 %>% 
+    filter(clade == x[1])
+  
+
+  # Count total recent detections (within last 80 days)
+  n_recent_detections <- df %>% 
+    filter(date >= master_date - 80) %>% 
+    summarize(n_recent_detections = sum(nclade, na.rm = TRUE), .groups = "drop") %>%
+    pull(n_recent_detections)
+  
+   n_recent_detections <- n_recent_detections %||% 0
+   
+   # Count total unique observation dates
+  n_obs_dates <- df %>% 
+    group_by(clade) %>% 
+    summarize(n_obs_dates = n_distinct(date), .groups = "drop") %>% 
+    pull(n_obs_dates)
+
+  # Handle case where total_obs_dates might be NULL
+  n_obs_dates <- n_obs_dates %||% 0
+  
+   # Count total times where proportion exceeded 1%
+  n_grtr_than_x <- nrow(subset(df, prop_clade > .05))
+  
+  #null
+  n_grtr_than_x <- n_grtr_than_x %||% 0
+
+
+  # Check if clade should be skipped
+ 
+  if (n_recent_detections <= 10| n_obs_dates <= 10 | n_grtr_than_x <= 5) {
+    cat("filter v1.2: skipped, less than 10 recent detections or fewer than 10 total observation dates or less than 5 obs > 5% \n")
+    return(NULL)
+  }
+
+ 
+  here_proj <- est_prop(
+    df %>% 
+      mutate(days = date - min(date)) %>% 
+      rename("total" = cladetot,
+             "variant" = nclade) %>%
+      mutate(frequency = variant / total) %>%
+      select(date, variant, total, frequency), 
+    min(df$date), 
+    Sys.Date() + 80
+  )
+  
+  # Return the result as a tibble
+  tibble(
+         clade = x[1], 
+         prop_pred = here_proj$med,
+         prop_pred_lo = here_proj$lo,
+         prop_pred_hi = here_proj$hi,
+         date = here_proj$date,
+         model = "Terra - Logistic Proportion, v1.2")
+}))
+
+
+
+# Plotting
+ggplot() +
+  geom_line(data = M4.3.terra_logistic_preds_all,
+            aes(x = date, y = prop_pred, col = as.character(clade))) +
+  geom_point(data = terraclade_count2,
+             aes(x = Wed, y = wedcladeprop, col = as.character(clade), size = nclade),
+             alpha = 0.5) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b '%y") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "", y = "Clade proportions", col = "", fill = "", 
+       title = paste0("Terra Logistic Clades CA, fit on data from: ", master_date))
+
+
+```
+
+
+#Weekly clades .json (if eval run pull eval clades from cladetargets folder)
+```{r}
+
+if(params$normal_run == TRUE){ 
+  
+  response <- GET("https://api.github.com/repos/reichlab/variant-nowcast-hub/contents/auxiliary-data/modeled-clades")
+content <- content(response, "text")
+
+# Extract the most recent clades date
+rec.clades.date <- max(str_remove(fromJSON(content)$name, ".json"))
+
+
+cladelist_url <- paste0("https://raw.githubusercontent.com/reichlab/variant-nowcast-hub/main/auxiliary-data/modeled-clades/", rec.clades.date, ".json")
+cladelist <- fromJSON(cladelist_url)[[1]]
+
+
+
+#making missing clades list
+if (all(cladelist[!cladelist == "other"] %in% M4.3.terra_logistic_preds_all$clade)) {
+  print("All clades for the most recent round predicted")
+} else {
+  # Find clades that are missing
+  missing_clades <- unique(cladelist[!(cladelist %in% M4.3.terra_logistic_preds_all$clade)])
+  
+  print(paste("The following clades are missing:", paste(missing_clades, collapse = ", ")))
+}
+
+#making predicted, but not in most recent rounds cladelist 
+if (all(M4.3.terra_logistic_preds_all$clade %in% cladelist)) {
+  print("No predictions made outside of current round cladelist")
+} else { 
+  #find predictions that are outside of the cladelist 
+  
+  predsnotincurrentround <- unique(M4.3.terra_logistic_preds_all$clade[!(M4.3.terra_logistic_preds_all$clade %in% cladelist)])
+
+  print(paste("The following clades have been predicted, but are not on the most recent cladelist:", paste(predsnotincurrentround, collapse = ",")))
+} 
+} else {
+
+# Reading the cladelist
+cladelist <- read_csv(paste0("//mnt/projects/connect-izb/rmd_generate/variant/Clade/clade_model_eval/K_clade_weekly_targets/cladetargets_", master_date, ".csv"))[[1]]
+
+rec.clades.date <- master_date
+
+# Checking if all clades are predicted
+if (all(cladelist[!cladelist == "other"] %in% M4.3.terra_logistic_preds_all$clade)) {
+  print("All clades for the most recent round predicted")
+} else {
+  # Find clades that are missing
+  missing_clades <- unique(cladelist[!(cladelist %in% M4.3.terra_logistic_preds_all$clade)])
+  print(paste("The following clades are missing:", paste(missing_clades, collapse = ", ")))
+}
+
+# Checking for predictions outside of the current round cladelist
+if (all(M4.3.terra_logistic_preds_all$clade %in% cladelist)) {
+  print("No predictions made outside of current round cladelist")
+} else { 
+  # Find predictions that are outside of the cladelist
+  predsnotincurrentround <- unique(M4.3.terra_logistic_preds_all$clade[!(M4.3.terra_logistic_preds_all$clade %in% cladelist)])
+  print(paste("The following clades have been predicted, but are not on the most recent cladelist:", paste(predsnotincurrentround, collapse = ", ")))
+}
+
+} 
+  
+```
+
+
+#Submission (S prefix) Df
+
+```{r}
+# Define the prediction horizons
+nowcast_date <- as.Date(rec.clades.date)
+prediction.horizon.max <- nowcast_date + 10
+prediction.horizon.min <- nowcast_date - 31
+
+
+# Filter the data within the specified 42-day range, renaming adding target date and making nowcast date
+S.M4.3.terra_logistic_preds_all <- M4.3.terra_logistic_preds_all %>%
+  rename("target_date" = date) %>%
+  mutate("nowcast_date" = nowcast_date)
+
+if (exists("missing_clades")) {
+  S.1.M4.3.terra_logistic_preds_all <- expand.grid(
+    target_date = unique(S.M4.3.terra_logistic_preds_all$target_date),
+    clade = missing_clades
+  ) %>%
+    mutate(
+      prop_pred = 0.01,  # Setting non-predicted clades to 0.01
+      nowcast_date = nowcast_date,
+      region = "CA",
+      model = "CATaLog"
+    ) %>%
+    bind_rows(S.M4.3.terra_logistic_preds_all) %>%
+    select(-c("prop_pred_lo", "prop_pred_hi"))
+} else {
+  S.1.M4.3.terra_logistic_preds_all <- S.M4.3.terra_logistic_preds_all %>%
+    select(-c("prop_pred_lo", "prop_pred_hi"))
+}
+
+
+#otherizing clades which were predicted, but not on this weeks cladelist 
+S.2.M4.3.terra_logistic_preds_all <- S.1.M4.3.terra_logistic_preds_all %>%
+  mutate(
+    clade = case_when(
+      clade %in% cladelist ~ clade,    
+      !clade %in% cladelist ~ "other"  
+    )
+  ) %>% 
+  group_by(target_date, clade) %>%
+  summarize(prop_pred = sum(prop_pred))#adding any "other" values together based on date 
+
+#Making rolling average 
+S.3.M4.3.terra_logistic_preds_all <- S.2.M4.3.terra_logistic_preds_all %>% 
+  group_by(target_date) %>%
+  summarize(propsum = sum(prop_pred)) %>%
+  left_join(S.2.M4.3.terra_logistic_preds_all, by = "target_date")%>%
+  select(-propsum, everything(), propsum) 
+
+
+#standardizing 
+S.4.M4.3.terra_logistic_preds_all <- S.3.M4.3.terra_logistic_preds_all %>% 
+  mutate(standard_prop_pred = prop_pred/propsum) %>%
+  rename(value = standard_prop_pred) %>%
+  select(target_date, clade, value)
+
+```
+
+
+#Writing parquet
+```{r}
+S.5.M4.4.terra_logistic_preds_all <- S.4.M4.3.terra_logistic_preds_all %>%
+  mutate(
+    location = "CA",
+    output_type = "mean",
+    nowcast_date = nowcast_date,
+    output_type_id = as.character(NA)
+  ) %>%
+  select(nowcast_date, target_date, location, clade, output_type, output_type_id, value) %>%
+  filter(target_date <= prediction.horizon.max, target_date >= prediction.horizon.min) #filtering to target dates
+
+#ploting proportions
+ggplot() +
+  geom_histogram(data = S.5.M4.4.terra_logistic_preds_all,
+           aes(x = target_date, y = value, fill = as.character(clade)),
+           stat = "identity", position = "fill", alpha = 0.8) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b '%y") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "", y = "Proportion of Clades", fill = "", 
+       title = "Clade proportions, CA, Post standardization",
+                     subtitle = paste0("Fit on Terra data and using clade targets closest to: ", master_date))
+
+
+#performing final check
+S.5.M4.4.terra_logistic_preds_all %>% group_by(target_date) %>% summarize(sumdate = sum(value))
+
+#writing the parquet, if submission/ normal run write it to the hub repository
+#if not write to eval folder
+
+logistic_1_filepath <- "//mnt/projects/connect-izb/rmd_generate/variant/Clade/clade_model_eval/model-outputs/cdph-logistic-1"
+```
+
+#Save
+```{r}
+if (params$normal_run == TRUE) {
+  arrow::write_parquet(S.5.M4.4.terra_logistic_preds_all, paste0(nowcast_date, "-CADPH-CATaLog.parquet")) }
+
+  write_csv(S.5.M4.4.terra_logistic_preds_all, 
+            file.path(logistic_1_filepath, paste0(nowcast_date, "-cdph-logistic-1.csv")))
+arrow::write_parquet(S.5.M4.4.terra_logistic_preds_all, paste0(nowcast_date, "-CADPH-CATaLog.parquet"))
+
+```
