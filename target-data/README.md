@@ -91,6 +91,12 @@ Time series files are used for model estimation and plotting and contain the fol
 | clade | string | [Nextstrain clade](https://nextstrain.org/blog/2021-01-06-updated-SARS-CoV-2-clade-naming) that corresponds to the observation |
 | observation | integer | the observed total of sequences for a location, target_date, and Nextstrain clade |
 
+## Data Anomolies and Changes
+Occasionally, there are changes or anomalies in the data collection process; this section contains a record of these events for future use.
+### Data Changes
+The data collection process was updated the week of April 16, 2025 to retain more sequences. This means that data after that week will be different from the data before that week. [This thread](https://github.com/reichlab/cladetime/issues/113) has more details on the exact changes made.
+### Data Anomolies
+On May 13, 2025, a [bug](https://github.com/nextstrain/ncov-ingest/issues/500) was detected that resulted in less data being available than usual. A fix was implemented also on May 13. This lack of new data was present when the jobs that establish the target clades for the week and the target data saved to a separate s3 bucket were run. However, the [fix](https://github.com/nextstrain/ncov-ingest/pull/501) was in place by Wednesday evening with other variant hub jobs are run to establish target data for the week. There may be some resulting anomalies in the data from this week.
 ## Acknowledgments
 
 The United States SARS-CoV-2 Variant Nowcast Hub uses Genbank-based genome sequences
