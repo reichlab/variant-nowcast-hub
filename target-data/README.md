@@ -94,7 +94,7 @@ Time series files are used for model estimation and plotting and contain the fol
 ## Data Anomolies and Changes
 Occasionally, there are changes or anomalies in the data collection process; this section contains a record of these events for future use.
 ### Data Changes
-The data collection process was updated the week of April 16, 2025 to retain more sequences. This means that data after than week will be different from the data before that week. [This thread](https://github.com/reichlab/cladetime/issues/113) has more details on the exact changes made.
+The data collection process was updated the week of April 16, 2025 to retain more sequences. This means that data after that week will be different from the data before that week. [This thread](https://github.com/reichlab/cladetime/issues/113) has more details on the exact changes made.
 ### Data Anomolies
 On the week of May 14, 2025, there was a bug upstream in the data collection process that resulted in less data being available than usual; see [this thread](https://github.com/nextstrain/ncov-ingest/pull/501) for more details.
 ## Acknowledgments
