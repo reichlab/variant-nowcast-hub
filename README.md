@@ -26,7 +26,7 @@ the submission process, including an example file.
 
 ### Repository structure
 
-Hubervse-based modeling hubs have the following directory structure. Of these, only
+Hubverse-based modeling hubs have the following directory structure. Of these, only
 `hub-config/tasks.json`, `model-metadata`, and `model-output` are relevant to modelers.
 
 ```text
@@ -152,7 +152,7 @@ Early Monday morning (~3am ET) prior to a Wednesday on which submissions are due
 
 The JSON file will live in the `auxiliary-data/modeled-clades/` directory of the repository and will be named “YYYY-MM-DD.json” where “YYYY-MM-DD” is the date of the Wednesday on which submissions are due.
 
-This clade selection is based on the ["full open" NextStrain sequence metadata files](https://docs.nextstrain.org/projects/ncov/en/latest/reference/remote_inputs.html#remote-inputs-open-files), in particular [this file](https://data.nextstrain.org/files/ncov/open/metadata.tsv.zst) which is loaded and analyzed using [this script](https://github.com/reichlab/cladetime/blob/main/src/cladetime/get_clade_list.py). The NextStrain files are [typically updated daily in the late evening US eastern time](https://github.com/nextstrain/forecasts-ncov/actions/workflows/update-ncov-open-clade-counts.yaml) (it is only updated when new data are available). The hub pulls the most recent version of the file when the workflow runs each week. The precise lineage assignment model (sometimes referred to as a “reference tree”) that was used as well as the version of raw sequence data is stored as metadata, to facilitate reproducibility and evaluation.
+This clade selection is based on the ["full open" NextStrain sequence metadata files](https://docs.nextstrain.org/projects/ncov/en/latest/reference/remote_inputs.html#remote-inputs-open-files), in particular [this file](https://data.nextstrain.org/files/ncov/open/metadata.tsv.zst) which is loaded and analyzed using [this script](https://github.com/reichlab/variant-nowcast-hub/blob/main/src/get_clades_to_model.py). The NextStrain files are [typically updated daily in the late evening US eastern time](https://github.com/nextstrain/forecasts-ncov/actions/workflows/update-ncov-open-clade-counts.yaml) (it is only updated when new data are available). The hub pulls the most recent version of the file when the workflow runs each week. The precise lineage assignment model (sometimes referred to as a “reference tree”) that was used as well as the version of raw sequence data is stored as metadata, to facilitate reproducibility and evaluation.
 
 ### Tasks for primary evaluation
 
