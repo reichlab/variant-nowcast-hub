@@ -26,7 +26,7 @@ the submission process, including an example file.
 
 ### Repository structure
 
-Hubervse-based modeling hubs have the following directory structure. Of these, only
+Hubverse-based modeling hubs have the following directory structure. Of these, only
 `hub-config/tasks.json`, `model-metadata`, and `model-output` are relevant to modelers.
 
 ```text
