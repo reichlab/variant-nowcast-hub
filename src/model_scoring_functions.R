@@ -8,8 +8,8 @@
 #'
 #' @examples
 #' source("model_scoring_functions.R")
-#' df_score <- get_energy_scores(hub_path = here::here(), model_output_file = "UMass-HMLR/2024-10-16-UMass-HMLR.parquet",
-#' ref_date = "2024-10-16")
+#' df_score <- get_energy_scores(hub_path = here::here(), model_output_file = "UMass-HMLR/2024-12-18-UMass-HMLR.parquet",
+#' ref_date = "2024-12-18")
 here::i_am("src/model_scoring_functions.R")
 get_energy_scores <- function(
     hub_path = here::here(),
@@ -60,7 +60,7 @@ process_target_data <- function(hub_path = here::here(),
   # If all locations/dates requested
   if( return_all == TRUE){
 
-    # Subet to only locations modeled, but all dates
+    # Subset to only locations modeled, but all dates with no regard to hub exclusions
     targets <- df_validation |>
       subset(location %in% locs_modeled) |>
       arrange(location, target_date)
@@ -75,22 +75,31 @@ process_target_data <- function(hub_path = here::here(),
     df_unscored <- read_csv(unscored_path,
                             show_col_types = FALSE)
 
+    # No longer needed but keeping for reference
     # Load location data to match abbreviations to full name locations
-    load(file.path(hub_path, "auxiliary-data", "hub_locations.rda"))
-    locs_join <- hub_locations |>
-      dplyr::select(abbreviation, location_name) |>
-      rename(location = location_name)
+    # load(file.path(hub_path, "auxiliary-data", "hub_locations.rda"))
+    # locs_join <- hub_locations |>
+    #   dplyr::select(abbreviation, location_name) |>
+    #   rename(location = location_name)
 
-    df_unscored <- df_unscored |>
-      left_join(locs_join, by = c("location" = "location")) |>
-      select(abbreviation, target_date, count) |>
-      rename(location = abbreviation)
+    # No longer needed but keeping for reference
+    # df_unscored <- df_unscored |>
+    #   left_join(locs_join, by = c("location" = "location")) |>
+    #   select(abbreviation, target_date, count) |>
+    #   rename(location = abbreviation)
+
+    # Logic to exclude locations that have data during nowcast horizons
+    # filter dates where count > 0
+    dates_to_exclude <- df_unscored |>
+      filter( count > 0)
 
     # Remove location date combinations from unscored-location-dates file and subset to only locations modeled
     targets <- df_validation |>
-      anti_join(y = df_unscored, by = join_by(target_date, location)) |>
+      filter(target_date > (as.Date(ref_date) - 32)) |>
       subset(location %in% locs_modeled) |>
-      arrange(location, target_date)
+      arrange(location, target_date) |>
+      anti_join(y = dates_to_exclude, by = join_by(target_date, location))
+    ## Could add exclusion logic to return_all section above, but that's why it's called return_all
 
     return(list(targets, df_model_output))
   }
