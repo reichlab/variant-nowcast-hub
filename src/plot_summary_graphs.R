@@ -198,39 +198,43 @@ plot_one_location <- function(this_location, model_output_data, target_data, plo
     ylim <- c(0, 1)
     transftitle <- ""
   }
-  
+
   if(plot_loess){
     p <- mean_data_loc |>
       ggplot(aes(x=date, y=value)) +
-      geom_point(data = target_data_loc, aes(size = total), alpha = 0.6) +
+      geom_point(data = target_data_loc, aes(inherit.aes = FALSE, size = total), color = "dodgerblue", alpha = 0.6) +
       geom_smooth(data = target_data_loc, se=FALSE, size = 0.8, alpha = 0.6,
                   aes(weight = total),
                   method = loess, method.args = list(span = 0.5, degree = 1))+
-      geom_line(color = "red") +
-      geom_ribbon(aes(ymin = q10, ymax = q90), fill="red", alpha = .5) +
+      geom_line(color = "darkred") +
+      geom_ribbon(aes(ymin = q10, ymax = q90), fill="darkred", alpha = .5) +
       scale_y_continuous(name = "clade frequency") +
       coord_cartesian(ylim = ylim) +
       scale_x_date(NULL, date_breaks = "3 months", date_minor_breaks = "1 month") +
       scale_size(name = "# of sequences") +
       facet_wrap(~clade) +
+      geom_vline(xintercept = as.Date(s3_data_date)+2, color = "red", size = 0.4,
+                 linetype = 'dashed') +
       ggtitle(paste(transftitle, "Observed and predicted frequencies of SARS-CoV-2 clades in", this_location))
-    
+
   }
   else{
     p <- mean_data_loc |>
       ggplot(aes(x=date, y=value)) +
-      geom_point(data = target_data_loc, aes(size = total), alpha = 0.6) +
-      geom_line(color = "red") +
-      geom_ribbon(aes(ymin = q10, ymax = q90), fill="red", alpha = .5) +
+      geom_point(data = target_data_loc, aes(inherit.aes = FALSE, size = total), color = "dodgerblue", alpha = 0.6) +
+      geom_line(color = "darkred") +
+      geom_ribbon(aes(ymin = q10, ymax = q90), fill="darkred", alpha = .5) +
       scale_y_continuous(name = "clade frequency") +
       coord_cartesian(ylim = ylim) +
       scale_x_date(NULL, date_breaks = "3 months", date_minor_breaks = "1 month") +
       scale_size(name = "# of sequences") +
       facet_wrap(~clade) +
+      geom_vline(xintercept = as.Date(s3_data_date)+2, color = "red", size = 0.4,
+                 linetype = 'dashed') +
       ggtitle(paste(transftitle, "Observed and predicted frequencies of SARS-CoV-2 clades in", this_location))
   }
-  
-  
+
+
   return(p)
 }
 
@@ -267,14 +271,16 @@ plot_one_clade <- function(this_clade, model_output_data, target_data){
 
   p <- mean_data_loc |>
     ggplot(aes(x=date, y=value)) +
-    geom_point(data = target_data_clade, aes(size = total))+
+    geom_point(data = target_data_clade, aes(size = total), color = "dodgerblue", alpha = 0.6)+
     geom_smooth(data = target_data_clade, se=FALSE, aes(weight = total))+
-    geom_line(color = "red") +
-    geom_ribbon(aes(ymin = q10, ymax = q90), fill="red", alpha = .5) +
+    geom_line(color = "darkred") +
+    geom_ribbon(aes(ymin = q10, ymax = q90), fill="darkred", alpha = .5) +
     scale_y_continuous(limits = ylim, name = "clade frequency") +
     scale_x_date(NULL, date_breaks = "3 months", date_minor_breaks = "1 month") +
     scale_size(name = "# of sequences") +
     facet_wrap(~location) +
+    geom_vline(xintercept = as.Date(s3_data_date)+2, color = "red", size = 0.4,
+               linetype = 'dashed') +
     ggtitle(paste(transftitle, "Observed and predicted frequencies of SARS-CoV-2 clade", this_clade))
   return(p)
 }
