@@ -11,8 +11,8 @@
 
 #'
 #' @examples
-#' plot_summary_graphs(model_output_file = "LANL-CovTransformer/2024-11-13-LANL-CovTransformer.parquet",
-#'                     s3_data_date = "2024-11-11")
+#' plot_summary_graphs(model_output_file = "LANL-CovTransformer/2024-11-13-LANL-CovTransformer.parquet", s3_data_date = "2024-11-11")
+#' plot_summary_graphs(hub_path = "./", model_output_file = "UMass-HMLR/2025-06-04-UMass-HMLR.parquet", s3_data_date = "2025-06-02", save_path = "~/Desktop/", baseline_clade = "25A")
 plot_summary_graphs <- function(
     model_output_file = NULL,
     s3_data_date = NULL,
@@ -202,7 +202,7 @@ plot_one_location <- function(this_location, model_output_data, target_data, plo
   if(plot_loess){
     p <- mean_data_loc |>
       ggplot(aes(x=date, y=value)) +
-      geom_point(data = target_data_loc, aes(inherit.aes = FALSE, size = total), color = "dodgerblue", alpha = 0.6) +
+      geom_point(data = target_data_loc, aes(size = total), color = "dodgerblue", alpha = 0.6) +
       geom_smooth(data = target_data_loc, se=FALSE, size = 0.8, alpha = 0.6,
                   aes(weight = total),
                   method = loess, method.args = list(span = 0.5, degree = 1))+
@@ -221,7 +221,7 @@ plot_one_location <- function(this_location, model_output_data, target_data, plo
   else{
     p <- mean_data_loc |>
       ggplot(aes(x=date, y=value)) +
-      geom_point(data = target_data_loc, aes(inherit.aes = FALSE, size = total), color = "dodgerblue", alpha = 0.6) +
+      geom_point(data = target_data_loc, aes(size = total), color = "dodgerblue", alpha = 0.6) +
       geom_line(color = "darkred") +
       geom_ribbon(aes(ymin = q10, ymax = q90), fill="darkred", alpha = .5) +
       scale_y_continuous(name = "clade frequency") +
