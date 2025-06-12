@@ -11,8 +11,8 @@
 
 #'
 #' @examples
-#' plot_summary_graphs(model_output_file = "LANL-CovTransformer/2024-11-13-LANL-CovTransformer.parquet",
-#'                     s3_data_date = "2024-11-11")
+#' plot_summary_graphs(model_output_file = "LANL-CovTransformer/2024-11-13-LANL-CovTransformer.parquet", s3_data_date = "2024-11-11")
+#' plot_summary_graphs(hub_path = "./", model_output_file = "UMass-HMLR/2025-06-04-UMass-HMLR.parquet", s3_data_date = "2025-06-02", save_path = "~/Desktop/", baseline_clade = "25A")
 plot_summary_graphs <- function(
     model_output_file = NULL,
     s3_data_date = NULL,
@@ -69,17 +69,19 @@ plot_summary_graphs <- function(
   ## Weekly plots
   save_path_weekly = paste(save_path, model_id, "_weekly_", s3_data_date, ".pdf", sep = "")
   suppressMessages(save_plots(model_output_data = dat,
-             target_data = targets_other_wk,
-             save_path = save_path_weekly,
-             page_by_location = page_by_location))
+                              s3_data_date = s3_data_date,
+                              target_data = targets_other_wk,
+                              save_path = save_path_weekly,
+                              page_by_location = page_by_location))
 
 
   ## Daily plots
   save_path_daily = paste(save_path, model_id, "_daily_", s3_data_date, ".pdf", sep = "")
   suppressMessages(save_plots(model_output_data = dat,
-             target_data = targets_other,
-             save_path = save_path_daily,
-             page_by_location = page_by_location))
+                              s3_data_date = s3_data_date,
+                              target_data = targets_other,
+                              save_path = save_path_daily,
+                              page_by_location = page_by_location))
 
   ### plots on logit scale
 
@@ -122,18 +124,20 @@ plot_summary_graphs <- function(
   ## Logit weekly plots
   save_path_weekly_logit = paste(save_path, model_id, "_weekly_logit_", s3_data_date, ".pdf", sep = "")
   suppressMessages(save_plots(model_output_data = model_output_logit,
-             target_data = target_logit_wk,
-             save_path = save_path_weekly_logit,
-             page_by_location = page_by_location))
+                              s3_data_date = s3_data_date,
+                              target_data = target_logit_wk,
+                              save_path = save_path_weekly_logit,
+                              page_by_location = page_by_location))
 
 
   ## Logit plots daily
   save_path_daily_logit = paste(save_path, model_id, "_daily_logit_", s3_data_date, ".pdf", sep = "")
   suppressMessages(save_plots(model_output_data = model_output_logit,
-             target_data = target_logit,
-             save_path = save_path_daily_logit,
-             page_by_location = page_by_location,
-             plot_loess = FALSE))
+                              s3_data_date = s3_data_date,
+                              target_data = target_logit,
+                              save_path = save_path_daily_logit,
+                              page_by_location = page_by_location,
+                              plot_loess = FALSE))
 }
 
 
@@ -147,6 +151,7 @@ plot_summary_graphs <- function(
 #'
 #' @return nothing, just saves the plots
 save_plots <- function(model_output_data,
+                       s3_data_date,
                        target_data,
                        save_path,
                        page_by_location = TRUE,
@@ -155,11 +160,13 @@ save_plots <- function(model_output_data,
     plots <- lapply(sort(unique(model_output_data$location)), function(.x)
       plot_one_location(this_location = .x,
                         model_output_data = model_output_data,
+                        s3_data_date = s3_data_date,
                         target_data = target_data,
                         plot_loess = plot_loess))
   } else {
     plots <- lapply(sort(unique(model_output_data$clade)), function(.x)
       plot_one_clade(this_clade = .x,
+                     s3_data_date = s3_data_date,
                      model_output_data = model_output_data,
                      target_data = target_data))
   }
@@ -175,7 +182,7 @@ save_plots <- function(model_output_data,
 #' @param model_output_data formatted model output data
 #' @param target_data formatted target data
 #'
-plot_one_location <- function(this_location, model_output_data, target_data, plot_loess = TRUE){
+plot_one_location <- function(this_location, s3_data_date, model_output_data, target_data, plot_loess = TRUE){
   require(dplyr)
   require(ggplot2)
   theme_set(theme_bw())
@@ -198,39 +205,43 @@ plot_one_location <- function(this_location, model_output_data, target_data, plo
     ylim <- c(0, 1)
     transftitle <- ""
   }
-  
+
   if(plot_loess){
     p <- mean_data_loc |>
       ggplot(aes(x=date, y=value)) +
-      geom_point(data = target_data_loc, aes(size = total), alpha = 0.6) +
+      geom_point(data = target_data_loc, aes(size = total), color = "dodgerblue", alpha = 0.6) +
       geom_smooth(data = target_data_loc, se=FALSE, size = 0.8, alpha = 0.6,
                   aes(weight = total),
                   method = loess, method.args = list(span = 0.5, degree = 1))+
-      geom_line(color = "red") +
-      geom_ribbon(aes(ymin = q10, ymax = q90), fill="red", alpha = .5) +
+      geom_line(color = "darkred") +
+      geom_ribbon(aes(ymin = q10, ymax = q90), fill="darkred", alpha = .5) +
       scale_y_continuous(name = "clade frequency") +
       coord_cartesian(ylim = ylim) +
       scale_x_date(NULL, date_breaks = "3 months", date_minor_breaks = "1 month") +
       scale_size(name = "# of sequences") +
       facet_wrap(~clade) +
+      geom_vline(xintercept = as.Date(s3_data_date)+2, color = "red", size = 0.4,
+                 linetype = 'dashed') +
       ggtitle(paste(transftitle, "Observed and predicted frequencies of SARS-CoV-2 clades in", this_location))
-    
+
   }
   else{
     p <- mean_data_loc |>
       ggplot(aes(x=date, y=value)) +
-      geom_point(data = target_data_loc, aes(size = total), alpha = 0.6) +
-      geom_line(color = "red") +
-      geom_ribbon(aes(ymin = q10, ymax = q90), fill="red", alpha = .5) +
+      geom_point(data = target_data_loc, aes(size = total), color = "dodgerblue", alpha = 0.6) +
+      geom_line(color = "darkred") +
+      geom_ribbon(aes(ymin = q10, ymax = q90), fill="darkred", alpha = .5) +
       scale_y_continuous(name = "clade frequency") +
       coord_cartesian(ylim = ylim) +
       scale_x_date(NULL, date_breaks = "3 months", date_minor_breaks = "1 month") +
       scale_size(name = "# of sequences") +
       facet_wrap(~clade) +
+      geom_vline(xintercept = as.Date(s3_data_date)+2, color = "red", size = 0.4,
+                 linetype = 'dashed') +
       ggtitle(paste(transftitle, "Observed and predicted frequencies of SARS-CoV-2 clades in", this_location))
   }
-  
-  
+
+
   return(p)
 }
 
@@ -240,7 +251,7 @@ plot_one_location <- function(this_location, model_output_data, target_data, plo
 #' @param model_output_data formatted model output data
 #' @param target_data formatted target data
 #'
-plot_one_clade <- function(this_clade, model_output_data, target_data){
+plot_one_clade <- function(this_clade, s3_data_date, model_output_data, target_data){
   require(dplyr)
   require(ggplot2)
   theme_set(theme_bw())
@@ -267,14 +278,16 @@ plot_one_clade <- function(this_clade, model_output_data, target_data){
 
   p <- mean_data_loc |>
     ggplot(aes(x=date, y=value)) +
-    geom_point(data = target_data_clade, aes(size = total))+
+    geom_point(data = target_data_clade, aes(size = total), color = "dodgerblue", alpha = 0.6)+
     geom_smooth(data = target_data_clade, se=FALSE, aes(weight = total))+
-    geom_line(color = "red") +
-    geom_ribbon(aes(ymin = q10, ymax = q90), fill="red", alpha = .5) +
+    geom_line(color = "darkred") +
+    geom_ribbon(aes(ymin = q10, ymax = q90), fill="darkred", alpha = .5) +
     scale_y_continuous(limits = ylim, name = "clade frequency") +
     scale_x_date(NULL, date_breaks = "3 months", date_minor_breaks = "1 month") +
     scale_size(name = "# of sequences") +
     facet_wrap(~location) +
+    geom_vline(xintercept = as.Date(s3_data_date)+2, color = "red", size = 0.4,
+               linetype = 'dashed') +
     ggtitle(paste(transftitle, "Observed and predicted frequencies of SARS-CoV-2 clade", this_clade))
   return(p)
 }
