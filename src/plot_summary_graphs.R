@@ -69,17 +69,19 @@ plot_summary_graphs <- function(
   ## Weekly plots
   save_path_weekly = paste(save_path, model_id, "_weekly_", s3_data_date, ".pdf", sep = "")
   suppressMessages(save_plots(model_output_data = dat,
-             target_data = targets_other_wk,
-             save_path = save_path_weekly,
-             page_by_location = page_by_location))
+                              s3_data_date = s3_data_date,
+                              target_data = targets_other_wk,
+                              save_path = save_path_weekly,
+                              page_by_location = page_by_location))
 
 
   ## Daily plots
   save_path_daily = paste(save_path, model_id, "_daily_", s3_data_date, ".pdf", sep = "")
   suppressMessages(save_plots(model_output_data = dat,
-             target_data = targets_other,
-             save_path = save_path_daily,
-             page_by_location = page_by_location))
+                              s3_data_date = s3_data_date,
+                              target_data = targets_other,
+                              save_path = save_path_daily,
+                              page_by_location = page_by_location))
 
   ### plots on logit scale
 
@@ -122,18 +124,20 @@ plot_summary_graphs <- function(
   ## Logit weekly plots
   save_path_weekly_logit = paste(save_path, model_id, "_weekly_logit_", s3_data_date, ".pdf", sep = "")
   suppressMessages(save_plots(model_output_data = model_output_logit,
-             target_data = target_logit_wk,
-             save_path = save_path_weekly_logit,
-             page_by_location = page_by_location))
+                              s3_data_date = s3_data_date,
+                              target_data = target_logit_wk,
+                              save_path = save_path_weekly_logit,
+                              page_by_location = page_by_location))
 
 
   ## Logit plots daily
   save_path_daily_logit = paste(save_path, model_id, "_daily_logit_", s3_data_date, ".pdf", sep = "")
   suppressMessages(save_plots(model_output_data = model_output_logit,
-             target_data = target_logit,
-             save_path = save_path_daily_logit,
-             page_by_location = page_by_location,
-             plot_loess = FALSE))
+                              s3_data_date = s3_data_date,
+                              target_data = target_logit,
+                              save_path = save_path_daily_logit,
+                              page_by_location = page_by_location,
+                              plot_loess = FALSE))
 }
 
 
@@ -147,6 +151,7 @@ plot_summary_graphs <- function(
 #'
 #' @return nothing, just saves the plots
 save_plots <- function(model_output_data,
+                       s3_data_date,
                        target_data,
                        save_path,
                        page_by_location = TRUE,
@@ -155,11 +160,13 @@ save_plots <- function(model_output_data,
     plots <- lapply(sort(unique(model_output_data$location)), function(.x)
       plot_one_location(this_location = .x,
                         model_output_data = model_output_data,
+                        s3_data_date = s3_data_date,
                         target_data = target_data,
                         plot_loess = plot_loess))
   } else {
     plots <- lapply(sort(unique(model_output_data$clade)), function(.x)
       plot_one_clade(this_clade = .x,
+                     s3_data_date = s3_data_date,
                      model_output_data = model_output_data,
                      target_data = target_data))
   }
@@ -175,7 +182,7 @@ save_plots <- function(model_output_data,
 #' @param model_output_data formatted model output data
 #' @param target_data formatted target data
 #'
-plot_one_location <- function(this_location, model_output_data, target_data, plot_loess = TRUE){
+plot_one_location <- function(this_location, s3_data_date, model_output_data, target_data, plot_loess = TRUE){
   require(dplyr)
   require(ggplot2)
   theme_set(theme_bw())
@@ -244,7 +251,7 @@ plot_one_location <- function(this_location, model_output_data, target_data, plo
 #' @param model_output_data formatted model output data
 #' @param target_data formatted target data
 #'
-plot_one_clade <- function(this_clade, model_output_data, target_data){
+plot_one_clade <- function(this_clade, s3_data_date, model_output_data, target_data){
   require(dplyr)
   require(ggplot2)
   theme_set(theme_bw())
