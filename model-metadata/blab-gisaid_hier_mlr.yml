@@ -1,6 +1,6 @@
 team_name: "Bedford Lab"
 team_abbr: "blab"
-model_name: "GISAID-based Hierarchical Multinomial Logistic Regression"
+model_name: "GISAID-based Hierarchical MLR"
 model_abbr: "gisaid_hier_mlr"
 model_version: "1.0"
 model_contributors: [
@@ -32,7 +32,7 @@ model_contributors: [
 ]
 license: "CC-BY-4.0"
 team_funding: "This work has been supported by NIH NIGMS award R35 GM119774, Howard Hughes Medical Institute COVID-19 Collaboration Initiative award, National Science Foundation Graduate Research Fellowship Program under grant No. DGE1762114, and the Centers of Excellence for Influenza Research and Response (NIH NIAID contract 75N93021C00015). The content is solely the responsibility of the authors and does not necessarily represent the official views of NIGMS, the National Institutes of Health, or Howard Hughes Medical Institute."
-methods: "A Bayesian hierarchical multinomial logistic regression model for nowcasting COVID variants using variant counts based on GISAID sequences. Regression coefficents are modeled hierarchically across locations as described in Abousamra, Figgins and Bedford (PLOS Computational Biology, 2024)."
+methods: "A Bayesian hierarchical multinomial logistic regression (MLR) model for nowcasting COVID variants using variant counts based on GISAID sequences. Regression coefficents are modeled hierarchically across locations as described in Abousamra, Figgins and Bedford (PLOS Computational Biology, 2024)."
 methods_url: "https://github.com/nextstrain/forecasts-ncov/blob/main/README.md#usa-specific-models"
 data_sources: "GISAID"
 ensemble_of_models: false
