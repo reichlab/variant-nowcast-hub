@@ -13,7 +13,7 @@ input_models <- c("Hub-baseline", "UGA-multicast", "UMass-HMLR", "blab-gisaid_hi
 date <- Sys.Date()
 offset <- (as.POSIXlt(date)$wday - 3) %% 7
 target_date <- date - offset
-path_to_model <- "../model-output"
+path_to_model <- "./model-output"
 model_df <- data.frame()
 # loading in all of the models and giving them unique model_ids
 for(i in 1:length(input_models)){
