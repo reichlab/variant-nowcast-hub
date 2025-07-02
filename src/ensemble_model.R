@@ -4,38 +4,35 @@ require(dplyr)
 require(hubUtils)
 require(hubEnsembles)
 require(arrow)
+require(hubData)
 here::i_am("src/ensemble_model.R")
 # setting a seed to ensure reproducibility
 set.seed(40900)
-# the models used to create the ensemble
-input_models <- c("Hub-baseline", "UGA-multicast", "UMass-HMLR", "blab-gisaid_hier_mlr")
-# sets the last Wednesday as the date to create the ensemble for
+# sets the last Wednesday as the date to create the ensemble for by taking the current day,
+# finding what day of the week it is, and subtracting an offset to find the last Wednesday
 date <- Sys.Date()
 offset <- (as.POSIXlt(date)$wday - 3) %% 7
-target_date <- date - offset
+file_date <- date - offset
 path_to_model <- "./model-output"
-model_df <- data.frame()
-# loading in all of the models and giving them unique model_ids
-for(i in 1:length(input_models)){
-  model_date <- paste(target_date, input_models[i], sep = "-")
-  file_path <- file.path(path_to_model,input_models[i], model_date)
-  # if no submission for a model on the list, skip to the next model
-  if(!file.exists(file.path(paste(file_path, "parquet", sep = ".")))){
-    next
-  }
-  loaded_df <- arrow::read_parquet(paste(file_path, "parquet", sep = "."))
-  loaded_df$model_id <- rep(input_models[i], length(loaded_df$nowcast_date))
-  model_df <- rbind(model_df, loaded_df)
-}
-# keeping only the samples
-model_df <- filter(model_df, output_type == "sample")
+bucket_name <- "covid-variant-nowcast-hub"
+hub_bucket <- hubData::s3_bucket(bucket_name)
+hub_con <- hubData::connect_hub(hub_bucket, file_format = "parquet", skip_checks = TRUE)
+# loading in all of the models that contain samples for the week
+model_df <- hub_con %>%
+  dplyr::filter(nowcast_date == file_date, output_type == "sample") %>%
+  hubData::collect_hub() %>%
+  dplyr::select(model_id, nowcast_date, target_date, location, clade, value, output_type, output_type_id)
 # creating the hub-ensemble
-pooled_df <-  hubEnsembles::linear_pool(model_df, n_output_samples = 100, task_id_cols = c("location", "clade", "target_date"),
-              compound_taskid_set = c("location"))
+pooled_df <- hubEnsembles::linear_pool(
+  model_df,
+  n_output_samples = 100,
+  task_id_cols = c("location", "clade", "target_date"),
+  compound_taskid_set = c("location"))
 # removing the model_id column
 pooled_df <- pooled_df[, -1]
+# creating the path to save the model at
 model_name <- "Hub-ensemble"
-model_date <- paste(target_date, model_name, sep = "-")
+model_date <- paste(file_date, model_name, sep = "-")
 file_path <- file.path(path_to_model,model_name, model_date)
 # creating the directory if it doesn't exist
 if(!file.exists(file.path(path_to_model,model_name))){
