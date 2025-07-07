@@ -8,8 +8,7 @@
 #'
 #' @examples
 #' source("model_scoring_functions.R")
-#' df_score <- get_energy_scores(hub_path = here::here(), model_output_file = "UMass-HMLR/2024-12-18-UMass-HMLR.parquet",
-#' ref_date = "2024-12-18")
+#' df_score <- get_energy_scores(hub_path = here::here(), model_output_file = "UMass-HMLR/2024-12-18-UMass-HMLR.parquet", ref_date = "2024-12-18")
 here::i_am("src/model_scoring_functions.R")
 get_energy_scores <- function(
     hub_path = here::here(),
@@ -113,7 +112,7 @@ process_target_data <- function(hub_path = here::here(),
 #' @return Returns a data frame containing energy scores by location and date
 calc_energy_scores <- function(targets, df_model_output){
   # Energy Scores
-  columns <- c("es_score", "location", "target_date")
+  columns <- c("energy", "brier", "location", "target_date")
   df_scores <- data.frame(matrix(nrow = 0, ncol = length(columns)))
   colnames(df_scores) <- columns
 
@@ -145,7 +144,7 @@ calc_energy_scores <- function(targets, df_model_output){
 
       # If the observed counts are all 0, add NA ES
       if( sum(obs_count) == 0 ){
-        df_temp <- as.data.frame(x = list(NA, loc, as.Date(day)),
+        df_temp <- as.data.frame(x = list(NA, NA, loc, as.Date(day)),
                                  col.names = columns)
         df_scores <- rbind(df_scores, df_temp)
         next
@@ -195,8 +194,24 @@ calc_energy_scores <- function(targets, df_model_output){
       # Energy score for the 100*100 multinomial samples for day/loc
       es <- es_sample(y = obs_count, dat = samp_multinomial_counts)
 
+      ##### ADD LOGICAL FOR NO MEAN version
+      # Brier scores
+      df_mean <- subset(df_model_output,
+                        target_date == as.Date(day) &
+                          location == loc &
+                          output_type == "mean") |>
+        group_by(clade)
+
+      # Brier score calculation
+      brier_score <- 0
+      for(k in 1:length(obs_count)){
+        brier_score <- brier_score + obs_count[k]*(df_mean$value[k] - 1)^2 + (N - obs_count[k])*(df_mean$value[k])^2
+      }
+
+      brier_score <- 0.5*brier_score/(N) # Divide by 2 to get range [0,1]
+
       # Store energy scores to data frame
-      df_temp <- as.data.frame(x = list(es, loc, as.Date(day)),
+      df_temp <- as.data.frame(x = list(es, brier_score, loc, as.Date(day)),
                                col.names = columns)
       df_scores <- rbind(df_scores, df_temp)
     }
@@ -212,17 +227,17 @@ calc_energy_scores <- function(targets, df_model_output){
 #' The third element is a table summarizing the mean energy score by date.
 energy_summary <- function(df_scores){
   # Calculate overall energy score
-  mean_score <- mean(df_scores$es_score, na.rm = TRUE)
+  mean_score <- mean(df_scores$energy, na.rm = TRUE)
 
   # Calculate ES by location
   tbl_scores_loc <- df_scores |>
     group_by(location) |>
-    summarise(mean_score=mean(es_score, na.rm = TRUE))
+    summarise(mean_score=mean(energy, na.rm = TRUE))
 
   # Calculate ES by date
   tbl_scores_date <- df_scores |>
     group_by(target_date) |>
-    summarise(mean_score=mean(es_score, na.rm = TRUE))
+    summarise(mean_score=mean(energy, na.rm = TRUE))
 
   return(list(mean_score, tbl_scores_loc, tbl_scores_date))
 }
