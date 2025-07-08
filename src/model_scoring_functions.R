@@ -150,51 +150,56 @@ calc_energy_scores <- function(targets, df_model_output){
         next
       }
 
-      # MCMC sample of modeled COUNTS
-      df_samp <- subset(df_model_output,
-                        target_date == as.Date(day) &
-                          location == loc &
-                          output_type == "sample") |>
-        group_by(clade)
-
-      # Pivot wider to get to MCMC format for scoring
-      df_samp_wide <- pivot_wider(df_samp, names_from = output_type_id, values_from = value) |>
-        group_by(clade)
-      df_samp_wide <- subset(df_samp_wide,
-                             select = -c(nowcast_date, target_date,
-                                         clade, location, output_type))
-
-      # Convert samples to matrix for scoringRules syntax
-      samp_matrix <- as.matrix(df_samp_wide)
-
-      ## Implement Multinomial Sampling from the proportions
-      ## SCORE ON COUNTS
-
-      # Matrix to store 100 multinomial samples generated from each of 100 sample props
-      samp_multinomial_counts <- matrix(nrow = dim(samp_matrix)[1], ncol = 0)
-
       # Need the N for each loc/day from the validation data
       N <- sum(subset(targets,
                       location == loc & target_date == as.Date(day))$oracle_value)
 
-      # Generate 100 multinomial counts for each proportions col of samp_matrix
-      for(col in 1:dim(samp_matrix)[2]){
+      # MCMC sample of modeled COUNTS
+      if("sample" %in% unique(df_model_output$output_type)){
+        df_samp <- subset(df_model_output,
+                          target_date == as.Date(day) &
+                            location == loc &
+                            output_type == "sample") |>
+          group_by(clade)
 
-        # Get sample clade proportions from predictive distribution
-        samp_props <- samp_matrix[,col]
+        # Pivot wider to get to MCMC format for scoring
+        df_samp_wide <- pivot_wider(df_samp, names_from = output_type_id, values_from = value) |>
+          group_by(clade)
+        df_samp_wide <- subset(df_samp_wide,
+                               select = -c(nowcast_date, target_date,
+                                           clade, location, output_type))
 
-        # Generate 100 multinomial observations from samp_props
-        samp_counts <- rmultinom(n = 100, size = N, prob = samp_props)
+        # Convert samples to matrix for scoringRules syntax
+        samp_matrix <- as.matrix(df_samp_wide)
 
-        # Append each multinomial sample together for 10000 total
-        samp_multinomial_counts <- cbind(samp_multinomial_counts, samp_counts)
+        ## Implement Multinomial Sampling from the proportions
+        ## SCORE ON COUNTS
 
+        # Matrix to store 100 multinomial samples generated from each of 100 sample props
+        samp_multinomial_counts <- matrix(nrow = dim(samp_matrix)[1], ncol = 0)
+
+        # Generate 100 multinomial counts for each proportions col of samp_matrix
+        for(col in 1:dim(samp_matrix)[2]){
+
+          # Get sample clade proportions from predictive distribution
+          samp_props <- samp_matrix[,col]
+
+          # Generate 100 multinomial observations from samp_props
+          samp_counts <- rmultinom(n = 100, size = N, prob = samp_props)
+
+          # Append each multinomial sample together for 10000 total
+          samp_multinomial_counts <- cbind(samp_multinomial_counts, samp_counts)
+
+        }
+
+        # Energy score for the 100*100 multinomial samples for day/loc
+        es <- es_sample(y = obs_count, dat = samp_multinomial_counts)
+      }
+      else{
+        es <- NA_real_
       }
 
-      # Energy score for the 100*100 multinomial samples for day/loc
-      es <- es_sample(y = obs_count, dat = samp_multinomial_counts)
 
-      ##### ADD LOGICAL FOR NO MEAN version
       # Brier scores
 
       if("mean" %in% unique(df_model_output$output_type)){
