@@ -1,0 +1,29 @@
+team_name: "United States SARS-CoV-2 Variant Nowcast Hub"
+team_abbr: "Hub"
+model_name: "ensemble"
+model_abbr: "ensemble"
+model_version: "1.0"
+model_contributors: [
+  {
+    "name": "Nick G. Reich",
+    "affiliation": "Department of Biostatistics and Epidemiology, University of Massachussetts Amherst",
+    "email": "nick@umass.edu"
+  },
+  {
+    "name": "Isaac MacArthur",
+    "affiliation": "Department of Mathematics and Statistics, University of Massachussetts Amherst",
+    "email": "imacarthur@umass.edu"
+  },
+  {
+    "name": "Thomas Robacker",
+    "affiliation": "Department of Mathematics and Statistics, University of Massachussetts Amherst",
+    "email": "trobacker@umass.edu"
+  },
+]
+license: "CC-BY-4.0"
+team_funding: "This work has been supported by the National Institutes of General Medical Sciences (R35GM119582) and the US Centers for Disease Control and Prevention’s Center for Forecasting and Outbreak Analytics (NU38FT000008). The content is solely the responsibility of the authors and does not necessarily represent the official views of NIGMS, the National Institutes of Health, or CDC."
+methods: "An ensemble of the hub forecasts, created by taking an equally weighted sample of all forecasts that submit samples for a given week, using the function linear_pool from the hubEnsembles package."
+methods_url: "https://github.com/hubverse-org/hubEnsembles/tree/main"
+data_sources: "Other model submission files"
+ensemble_of_models: true
+ensemble_of_hub_models: true

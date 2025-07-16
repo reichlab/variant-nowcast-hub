@@ -8,8 +8,7 @@
 #'
 #' @examples
 #' source("model_scoring_functions.R")
-#' df_score <- get_energy_scores(hub_path = here::here(), model_output_file = "UMass-HMLR/2024-10-16-UMass-HMLR.parquet",
-#' ref_date = "2024-10-16")
+#' df_score <- get_energy_scores(hub_path = here::here(), model_output_file = "UMass-HMLR/2024-12-18-UMass-HMLR.parquet", ref_date = "2024-12-18")
 here::i_am("src/model_scoring_functions.R")
 get_energy_scores <- function(
     hub_path = here::here(),
@@ -60,7 +59,7 @@ process_target_data <- function(hub_path = here::here(),
   # If all locations/dates requested
   if( return_all == TRUE){
 
-    # Subet to only locations modeled, but all dates
+    # Subset to only locations modeled, but all dates with no regard to hub exclusions
     targets <- df_validation |>
       subset(location %in% locs_modeled) |>
       arrange(location, target_date)
@@ -75,22 +74,31 @@ process_target_data <- function(hub_path = here::here(),
     df_unscored <- read_csv(unscored_path,
                             show_col_types = FALSE)
 
+    # No longer needed but keeping for reference
     # Load location data to match abbreviations to full name locations
-    load(file.path(hub_path, "auxiliary-data", "hub_locations.rda"))
-    locs_join <- hub_locations |>
-      dplyr::select(abbreviation, location_name) |>
-      rename(location = location_name)
+    # load(file.path(hub_path, "auxiliary-data", "hub_locations.rda"))
+    # locs_join <- hub_locations |>
+    #   dplyr::select(abbreviation, location_name) |>
+    #   rename(location = location_name)
 
-    df_unscored <- df_unscored |>
-      left_join(locs_join, by = c("location" = "location")) |>
-      select(abbreviation, target_date, count) |>
-      rename(location = abbreviation)
+    # No longer needed but keeping for reference
+    # df_unscored <- df_unscored |>
+    #   left_join(locs_join, by = c("location" = "location")) |>
+    #   select(abbreviation, target_date, count) |>
+    #   rename(location = abbreviation)
+
+    # Logic to exclude locations that have data during nowcast horizons
+    # filter dates where count > 0
+    dates_to_exclude <- df_unscored |>
+      filter( count > 0)
 
     # Remove location date combinations from unscored-location-dates file and subset to only locations modeled
     targets <- df_validation |>
-      anti_join(y = df_unscored, by = join_by(target_date, location)) |>
+      filter(target_date > (as.Date(ref_date) - 32)) |>
       subset(location %in% locs_modeled) |>
-      arrange(location, target_date)
+      arrange(location, target_date) |>
+      anti_join(y = dates_to_exclude, by = join_by(target_date, location))
+    ## Could add exclusion logic to return_all section above, but that's why it's called return_all
 
     return(list(targets, df_model_output))
   }
@@ -104,7 +112,7 @@ process_target_data <- function(hub_path = here::here(),
 #' @return Returns a data frame containing energy scores by location and date
 calc_energy_scores <- function(targets, df_model_output){
   # Energy Scores
-  columns <- c("es_score", "location", "target_date")
+  columns <- c("energy", "brier", "location", "target_date")
   df_scores <- data.frame(matrix(nrow = 0, ncol = length(columns)))
   colnames(df_scores) <- columns
 
@@ -136,58 +144,94 @@ calc_energy_scores <- function(targets, df_model_output){
 
       # If the observed counts are all 0, add NA ES
       if( sum(obs_count) == 0 ){
-        df_temp <- as.data.frame(x = list(NA, loc, as.Date(day)),
+        df_temp <- as.data.frame(x = list(NA, NA, loc, as.Date(day)),
                                  col.names = columns)
         df_scores <- rbind(df_scores, df_temp)
         next
       }
 
-      # MCMC sample of modeled COUNTS
-      df_samp <- subset(df_model_output,
-                        target_date == as.Date(day) &
-                          location == loc &
-                          output_type == "sample") |>
-        group_by(clade)
-
-      # Pivot wider to get to MCMC format for scoring
-      df_samp_wide <- pivot_wider(df_samp, names_from = output_type_id, values_from = value) |>
-        group_by(clade)
-      df_samp_wide <- subset(df_samp_wide,
-                             select = -c(nowcast_date, target_date,
-                                         clade, location, output_type))
-
-      # Convert samples to matrix for scoringRules syntax
-      samp_matrix <- as.matrix(df_samp_wide)
-
-      ## Implement Multinomial Sampling from the proportions
-      ## SCORE ON COUNTS
-
-      # Matrix to store 100 multinomial samples generated from each of 100 sample props
-      samp_multinomial_counts <- matrix(nrow = dim(samp_matrix)[1], ncol = 0)
-
       # Need the N for each loc/day from the validation data
       N <- sum(subset(targets,
                       location == loc & target_date == as.Date(day))$oracle_value)
 
-      # Generate 100 multinomial counts for each proportions col of samp_matrix
-      for(col in 1:dim(samp_matrix)[2]){
+      # MCMC sample of modeled COUNTS
+      if("sample" %in% unique(df_model_output$output_type)){
+        df_samp <- subset(df_model_output,
+                          target_date == as.Date(day) &
+                            location == loc &
+                            output_type == "sample") |>
+          group_by(clade)
 
-        # Get sample clade proportions from predictive distribution
-        samp_props <- samp_matrix[,col]
+        # Pivot wider to get to MCMC format for scoring
+        df_samp_wide <- pivot_wider(df_samp, names_from = output_type_id, values_from = value) |>
+          group_by(clade)
+        df_samp_wide <- subset(df_samp_wide,
+                               select = -c(nowcast_date, target_date,
+                                           clade, location, output_type))
 
-        # Generate 100 multinomial observations from samp_props
-        samp_counts <- rmultinom(n = 100, size = N, prob = samp_props)
+        # Convert samples to matrix for scoringRules syntax
+        samp_matrix <- as.matrix(df_samp_wide)
 
-        # Append each multinomial sample together for 10000 total
-        samp_multinomial_counts <- cbind(samp_multinomial_counts, samp_counts)
+        ## Implement Multinomial Sampling from the proportions
+        ## SCORE ON COUNTS
 
+        # Matrix to store 100 multinomial samples generated from each of 100 sample props
+        samp_multinomial_counts <- matrix(nrow = dim(samp_matrix)[1], ncol = 0)
+
+        # Generate 100 multinomial counts for each proportions col of samp_matrix
+        for(col in 1:dim(samp_matrix)[2]){
+
+          # Get sample clade proportions from predictive distribution
+          samp_props <- samp_matrix[,col]
+
+          # Generate 100 multinomial observations from samp_props
+          samp_counts <- rmultinom(n = 100, size = N, prob = samp_props)
+
+          # Append each multinomial sample together for 10000 total
+          samp_multinomial_counts <- cbind(samp_multinomial_counts, samp_counts)
+
+        }
+
+        # Energy score for the 100*100 multinomial samples for day/loc
+        es <- es_sample(y = obs_count, dat = samp_multinomial_counts)
+      }
+      else{
+        es <- NA_real_
       }
 
-      # Energy score for the 100*100 multinomial samples for day/loc
-      es <- es_sample(y = obs_count, dat = samp_multinomial_counts)
+
+      # Brier scores
+
+      if("mean" %in% unique(df_model_output$output_type)){
+        # If output_type == "mean" present
+        df_mean <- subset(df_model_output,
+                          target_date == as.Date(day) &
+                            location == loc &
+                            output_type == "mean") |>
+          group_by(clade)
+
+        # Brier score calculation
+        brier_score <- 0
+        for(k in 1:length(obs_count)){
+          brier_score <- brier_score + obs_count[k]*(df_mean$value[k] - 1)^2 + (N - obs_count[k])*(df_mean$value[k])^2
+        }
+
+        brier_score <- 0.5*brier_score/(N) # Divide by 2 to get range [0,1]
+      } else{
+        # If no output_type == "mean" present
+        df_mean <- df_samp |> # already grouped by clade
+          summarise(mean_value = mean(value, na.rm = T)) |>
+          group_by(clade)
+
+        brier_score <- 0
+        for(k in 1:length(obs_count)){
+          brier_score <- brier_score + obs_count[k]*(df_mean$mean_value[k] - 1)^2 + (N - obs_count[k])*(df_mean$mean_value[k])^2
+        }
+        brier_score <- 0.5*brier_score/(N)
+      }
 
       # Store energy scores to data frame
-      df_temp <- as.data.frame(x = list(es, loc, as.Date(day)),
+      df_temp <- as.data.frame(x = list(es, brier_score, loc, as.Date(day)),
                                col.names = columns)
       df_scores <- rbind(df_scores, df_temp)
     }
@@ -203,17 +247,17 @@ calc_energy_scores <- function(targets, df_model_output){
 #' The third element is a table summarizing the mean energy score by date.
 energy_summary <- function(df_scores){
   # Calculate overall energy score
-  mean_score <- mean(df_scores$es_score, na.rm = TRUE)
+  mean_score <- mean(df_scores$energy, na.rm = TRUE)
 
   # Calculate ES by location
   tbl_scores_loc <- df_scores |>
     group_by(location) |>
-    summarise(mean_score=mean(es_score, na.rm = TRUE))
+    summarise(mean_score=mean(energy, na.rm = TRUE))
 
   # Calculate ES by date
   tbl_scores_date <- df_scores |>
     group_by(target_date) |>
-    summarise(mean_score=mean(es_score, na.rm = TRUE))
+    summarise(mean_score=mean(energy, na.rm = TRUE))
 
   return(list(mean_score, tbl_scores_loc, tbl_scores_date))
 }
