@@ -22,7 +22,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Get hub cloud config
       # save cloud-related fields from admin config as environment variables
@@ -38,7 +38,7 @@ jobs:
     - name: Configure AWS credentials
       # request credentials to assume the hub's AWS role via OpenID Connect
       if: env.CLOUD_ENABLED == 'true'
-      uses: aws-actions/configure-aws-credentials@59b441846ad109fa4a1549b73ef4e149c4bfb53b  #v4.3.0
+      uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df  #v4.2.1
       with:
         role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/${{ env.CLOUD_STORAGE_LOCATION }}
         aws-region: us-east-1

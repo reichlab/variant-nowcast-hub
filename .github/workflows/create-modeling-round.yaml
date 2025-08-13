@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout 🛎️
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
             # don't check out repo folders with large amounts of data
             # (e.g., model-output, target-data)
