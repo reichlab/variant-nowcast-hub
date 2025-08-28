@@ -22,6 +22,15 @@ get_energy_scores <- function(
   require("arrow")
   require("scoringRules")
 
+  # Extract the date from model_output_file for set.seed using regex
+  date_str <- sub(".*?(\\d{4}-\\d{2}-\\d{2}).*", "\\1", model_output_file)
+
+  # Remove dashes to get a numeric sequence string
+  date_str <- gsub("-", "", date_str)
+
+  # Set PRNG seed for reproducibility
+  set.seed(as.integer(date_str))
+
   data <- process_target_data(hub_path = hub_path,
                               model_output_file = model_output_file,
                               ref_date = as.Date(ref_date),
