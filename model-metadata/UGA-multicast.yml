@@ -6,8 +6,8 @@ model_version: "1.0"
 model_contributors: [
   {
     "name": "Spencer Fox",
-    "affiliation": "Department of Epidemiology and Biostatistics, University of Georgia",
-    "email": "sjfox@uga.edu"
+    "affiliation": "School of Informatics, Computing, and Cyber Systems, Northern Arizona University",
+    "email": "spencer.fox@nau.edu"
   },
   {
     "name": "Ehsan Suez",
