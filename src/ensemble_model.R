@@ -13,7 +13,7 @@ set.seed(40900)
 date <- Sys.Date()
 offset <- (as.POSIXlt(date)$wday - 3) %% 7
 file_date <- date - offset
-path_to_model <- "./model-output"
+path_to_model <- "../model-output"
 bucket_name <- "covid-variant-nowcast-hub"
 hub_bucket <- hubData::s3_bucket(bucket_name)
 hub_con <- hubData::connect_hub(hub_bucket, file_format = "parquet", skip_checks = TRUE)
