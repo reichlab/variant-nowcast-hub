@@ -121,7 +121,7 @@ process_target_data <- function(hub_path = here::here(),
 #' @return Returns a data frame containing energy scores by location and date
 calc_energy_scores <- function(targets, df_model_output){
   # Energy Scores
-  columns <- c("energy", "brier", "location", "target_date")
+  columns <- c("energy", "brier_point", "brier_dist", "location", "target_date")
   df_scores <- data.frame(matrix(nrow = 0, ncol = length(columns)))
   colnames(df_scores) <- columns
 
@@ -153,7 +153,7 @@ calc_energy_scores <- function(targets, df_model_output){
 
       # If the observed counts are all 0, add NA ES
       if( sum(obs_count) == 0 ){
-        df_temp <- as.data.frame(x = list(NA, NA, loc, as.Date(day)),
+        df_temp <- as.data.frame(x = list(NA, NA, NA, loc, as.Date(day)),
                                  col.names = columns)
         df_scores <- rbind(df_scores, df_temp)
         next
@@ -219,28 +219,48 @@ calc_energy_scores <- function(targets, df_model_output){
                             output_type == "mean") |>
           group_by(clade)
 
-        # Brier score calculation
-        brier_score <- 0
+        # Brier score calculation for the mean
+        brier_point <- 0
         for(k in 1:length(obs_count)){
-          brier_score <- brier_score + obs_count[k]*(df_mean$value[k] - 1)^2 + (N - obs_count[k])*(df_mean$value[k])^2
+          brier_point <- brier_point + obs_count[k]*(df_mean$value[k] - 1)^2 + (N - obs_count[k])*(df_mean$value[k])^2
         }
 
-        brier_score <- 0.5*brier_score/(N) # Divide by 2 to get range [0,1]
+        brier_point <- 0.5*brier_point/(N) # Divide by 2 to get range [0,1]
       } else{
         # If no output_type == "mean" present
         df_mean <- df_samp |> # already grouped by clade
           summarise(mean_value = mean(value, na.rm = T)) |>
           group_by(clade)
 
-        brier_score <- 0
+        brier_point <- 0
         for(k in 1:length(obs_count)){
-          brier_score <- brier_score + obs_count[k]*(df_mean$mean_value[k] - 1)^2 + (N - obs_count[k])*(df_mean$mean_value[k])^2
+          brier_point <- brier_point + obs_count[k]*(df_mean$mean_value[k] - 1)^2 + (N - obs_count[k])*(df_mean$mean_value[k])^2
         }
-        brier_score <- 0.5*brier_score/(N)
+        brier_point <- 0.5*brier_point/(N)
       }
 
-      # Store energy scores to data frame
-      df_temp <- as.data.frame(x = list(es, brier_score, loc, as.Date(day)),
+      # Brier distribution scores
+      if("sample" %in% unique(df_model_output$output_type)){
+        #browser()
+        brier_dist <- as.numeric()
+
+        for(col_index in 1:dim(df_samp_wide)[2]){
+          brier_dist_onecol <- 0
+          for(k in 1:length(obs_count)){
+            # print(df_samp_wide[k,col_index])
+            brier_dist_onecol <- brier_dist_onecol + obs_count[k]*(as.numeric(df_samp_wide[k,col_index]) - 1)^2 + (N - obs_count[k])*(as.numeric(df_samp_wide[k,col_index]))^2
+          }
+          brier_dist <- append(brier_dist, brier_dist_onecol)
+        }
+
+        brier_dist <- 0.5*mean(brier_dist)/(N)
+
+      } else {
+        brier_dist <- NA_real_
+      }
+
+      # Store scores to data frame
+      df_temp <- as.data.frame(x = list(es, brier_point, brier_dist, loc, as.Date(day)),
                                col.names = columns)
       df_scores <- rbind(df_scores, df_temp)
     }
