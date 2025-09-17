@@ -65,45 +65,39 @@ process_target_data <- function(hub_path = here::here(),
                            oracle_file, "oracle.parquet")
   df_validation <- arrow::read_parquet(oracle_path)
 
-  # If all locations/dates requested
-  if( return_all == TRUE){
+  # Pick out dates to score that were not used for any training
+  unscored_file <- paste0(ref_date, ".csv")
+  unscored_path <- file.path(hub_path, "auxiliary-data", "unscored-location-dates", unscored_file)
+  df_unscored <- read_csv(unscored_path,
+                          show_col_types = FALSE)
 
-    # Subset to only locations modeled, but all dates with no regard to hub exclusions
-    targets <- df_validation |>
-      subset(location %in% locs_modeled) |>
-      arrange(location, target_date)
+  # No longer needed but keeping for reference
+  # Load location data to match abbreviations to full name locations
+  # load(file.path(hub_path, "auxiliary-data", "hub_locations.rda"))
+  # locs_join <- hub_locations |>
+  #   dplyr::select(abbreviation, location_name) |>
+  #   rename(location = location_name)
 
-    return(list(targets, df_model_output))
-  } # Otherwise, subset according to hub scheme
-  else{
+  # Add T/F whether location should be scored according to Hub scheme
+  df_unscored <- df_unscored |>
+    mutate(scored = ifelse(count > 0, FALSE, TRUE)) |> # TRUE when there is NOT data present during the nowcast period as of submission period
+    select(location, target_date, scored) # Only covers nowcast dates, not forecast
 
-    # Pick out dates to score that were not used for any training
-    unscored_file <- paste0(ref_date, ".csv")
-    unscored_path <- file.path(hub_path, "auxiliary-data", "unscored-location-dates", unscored_file)
-    df_unscored <- read_csv(unscored_path,
-                            show_col_types = FALSE)
+  targets <- df_validation |>
+    filter(target_date > (as.Date(ref_date) - 32)) |>
+    filter(location %in% locs_modeled) |>
+    arrange(location, target_date) |>
+    left_join(df_unscored, by = join_by(location, target_date)) |> # Unique keys: target_date and location
+    mutate(scored = coalesce(scored, TRUE))  # default non-matches to TRUE - i.e the forecast dates are scored
 
-    # No longer needed but keeping for reference
-    # Load location data to match abbreviations to full name locations
-    # load(file.path(hub_path, "auxiliary-data", "hub_locations.rda"))
-    # locs_join <- hub_locations |>
-    #   dplyr::select(abbreviation, location_name) |>
-    #   rename(location = location_name)
-
-    # Add T/F whether location should be scored according to Hub scheme
-    df_unscored <- df_unscored |>
-      mutate(scored = ifelse(count > 0, FALSE, TRUE)) |> # TRUE when there is NOT data present during the nowcast period as of submission period
-      select(location, target_date, scored) # Only covers nowcast dates, not forecast
-
-    targets <- df_validation |>
-      filter(target_date > (as.Date(ref_date) - 32)) |>
-      filter(location %in% locs_modeled) |>
-      arrange(location, target_date) |>
-      left_join(df_unscored, by = join_by(location, target_date)) |> # Unique keys: target_date and location
-      mutate(scored = coalesce(scored, TRUE))  # default non-matches to TRUE - i.e the forecast dates are scored
-
-    return(list(targets, df_model_output))
+  # Logic for using all loc/dates or Hub scheme
+  if(return_all == FALSE){
+    targets <- targets |>
+      filter(scored == TRUE)
   }
+
+  #browser() # targets <- targets |> filter(location == "AZ")
+  return(list(targets, df_model_output))
 }
 
 #' Support function for calculating energy scores given target and model_output data
