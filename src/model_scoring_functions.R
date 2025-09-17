@@ -90,24 +90,17 @@ process_target_data <- function(hub_path = here::here(),
     #   dplyr::select(abbreviation, location_name) |>
     #   rename(location = location_name)
 
-    # No longer needed but keeping for reference
-    # df_unscored <- df_unscored |>
-    #   left_join(locs_join, by = c("location" = "location")) |>
-    #   select(abbreviation, target_date, count) |>
-    #   rename(location = abbreviation)
+    # Add T/F whether location should be scored according to Hub scheme
+    df_unscored <- df_unscored |>
+      mutate(scored = ifelse(count > 0, FALSE, TRUE)) |> # TRUE when there is NOT data present during the nowcast period as of submission period
+      select(location, target_date, scored) # Only covers nowcast dates, not forecast
 
-    # Logic to exclude locations that have data during nowcast horizons
-    # filter dates where count > 0
-    dates_to_exclude <- df_unscored |>
-      filter( count > 0)
-
-    # Remove location date combinations from unscored-location-dates file and subset to only locations modeled
     targets <- df_validation |>
       filter(target_date > (as.Date(ref_date) - 32)) |>
-      subset(location %in% locs_modeled) |>
+      filter(location %in% locs_modeled) |>
       arrange(location, target_date) |>
-      anti_join(y = dates_to_exclude, by = join_by(target_date, location))
-    ## Could add exclusion logic to return_all section above, but that's why it's called return_all
+      left_join(df_unscored, by = join_by(location, target_date)) |> # Unique keys: target_date and location
+      mutate(scored = coalesce(scored, TRUE))  # default non-matches to TRUE - i.e the forecast dates are scored
 
     return(list(targets, df_model_output))
   }
