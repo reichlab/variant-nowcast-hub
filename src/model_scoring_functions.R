@@ -4,7 +4,6 @@
 #' defaults to assume that variant-nowcast-hub/src is the working directory
 #' @param model_output_file character string, directory under variant-nowcast-hub/[team name]/[model output parquet file]
 #' @param ref_date character string, date corresponding to model submission deadline, also called nowcast date
-#' @param return_all boolean, whether to return energy scores for all locations and dates, default is FALSE to use hub scoring scheme
 #'
 #' @examples
 #' source("model_scoring_functions.R")
@@ -13,8 +12,7 @@ here::i_am("src/model_scoring_functions.R")
 get_energy_scores <- function(
     hub_path = here::here(),
     model_output_file = NULL,
-    ref_date = NULL,
-    return_all = FALSE
+    ref_date = NULL
 ){
   require("tidyr")
   require("dplyr")
@@ -36,8 +34,7 @@ get_energy_scores <- function(
                               ref_date = as.Date(ref_date))
 
   df_scores <- calc_energy_scores(targets = data[[1]],
-                                  df_model_output = data[[2]],
-                                  return_all = return_all)
+                                  df_model_output = data[[2]])
 
   return(df_scores)
 }
@@ -89,7 +86,7 @@ process_target_data <- function(hub_path = here::here(),
     mutate(scored = coalesce(scored, TRUE))  # default non-matches to TRUE - i.e the forecast dates are scored
 
   # For testing:
-  #browser() # targets <- targets |> filter(location == "AZ") then type `c` to continue
+  # browser() # e.g.: targets <- targets |> filter(location == "AZ") then type `c` to continue
   return(list(targets, df_model_output))
 }
 
@@ -97,11 +94,9 @@ process_target_data <- function(hub_path = here::here(),
 #'
 #' @param targets data frame, of target data
 #' @param df_model_output data frame, of model output
-#' @param return_all boolean, inherited from [get_energy_scores] to return scores.
-#'
 #'
 #' @return Returns a data frame containing energy scores by location and date
-calc_energy_scores <- function(targets, df_model_output, return_all = return_all){
+calc_energy_scores <- function(targets, df_model_output){
   # Energy Scores
   columns <- c("energy", "brier_point", "brier_dist", "location", "target_date", "scored")
   df_scores <- data.frame(matrix(nrow = 0, ncol = length(columns)))
@@ -129,15 +124,6 @@ calc_energy_scores <- function(targets, df_model_output, return_all = return_all
       scored <- df_obs$scored[1]
       if(is.na(scored)){
         scored <- FALSE
-      }
-
-      # If return_all = FALSE , score only those with scored == TRUE
-      if( return_all == FALSE & scored == FALSE){
-        df_temp <- as.data.frame(x = list(NA, NA, NA,
-                                          loc, as.Date(day), scored),
-                                 col.names = columns)
-        df_scores <- rbind(df_scores, df_temp)
-        next
       }
 
       # Observed counts by clade
