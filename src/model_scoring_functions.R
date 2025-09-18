@@ -4,7 +4,6 @@
 #' defaults to assume that variant-nowcast-hub/src is the working directory
 #' @param model_output_file character string, directory under variant-nowcast-hub/[team name]/[model output parquet file]
 #' @param ref_date character string, date corresponding to model submission deadline, also called nowcast date
-#' @param return_all boolean, whether to return energy scores for all locations and dates, default is FALSE to use hub scoring scheme
 #'
 #' @examples
 #' source("model_scoring_functions.R")
@@ -13,8 +12,7 @@ here::i_am("src/model_scoring_functions.R")
 get_energy_scores <- function(
     hub_path = here::here(),
     model_output_file = NULL,
-    ref_date = NULL,
-    return_all = FALSE
+    ref_date = NULL
 ){
   require("tidyr")
   require("dplyr")
@@ -33,8 +31,7 @@ get_energy_scores <- function(
 
   data <- process_target_data(hub_path = hub_path,
                               model_output_file = model_output_file,
-                              ref_date = as.Date(ref_date),
-                              return_all = return_all)
+                              ref_date = as.Date(ref_date))
 
   df_scores <- calc_energy_scores(targets = data[[1]],
                                   df_model_output = data[[2]])
@@ -48,13 +45,11 @@ get_energy_scores <- function(
 #' defaults to assume that variant-nowcast-hub/src is the working directory
 #' @param model_output_file character string, directory under variant-nowcast-hub/[team name]/[model output parquet file]
 #' @param ref_date character string, date corresponding to model submission deadline, also called nowcast date
-#' @param return_all boolean, inherited from [get_energy_scores] to return scores.
 #'
 #' @return List of two data frames. First element is the target data, second element is the model_output data
 process_target_data <- function(hub_path = here::here(),
                                 model_output_file,
-                                ref_date,
-                                return_all = return_all){
+                                ref_date){
   # Load model output
   df_model_output <- arrow::read_parquet(file.path(hub_path, "model-output", model_output_file))
   locs_modeled <- sort(unique(df_model_output$location))
@@ -65,52 +60,34 @@ process_target_data <- function(hub_path = here::here(),
                            oracle_file, "oracle.parquet")
   df_validation <- arrow::read_parquet(oracle_path)
 
-  # If all locations/dates requested
-  if( return_all == TRUE){
+  # Pick out dates to score that were not used for any training
+  unscored_file <- paste0(ref_date, ".csv")
+  unscored_path <- file.path(hub_path, "auxiliary-data", "unscored-location-dates", unscored_file)
+  df_unscored <- read_csv(unscored_path,
+                          show_col_types = FALSE)
 
-    # Subset to only locations modeled, but all dates with no regard to hub exclusions
-    targets <- df_validation |>
-      subset(location %in% locs_modeled) |>
-      arrange(location, target_date)
+  # No longer needed but keeping for reference
+  # Load location data to match abbreviations to full name locations
+  # load(file.path(hub_path, "auxiliary-data", "hub_locations.rda"))
+  # locs_join <- hub_locations |>
+  #   dplyr::select(abbreviation, location_name) |>
+  #   rename(location = location_name)
 
-    return(list(targets, df_model_output))
-  } # Otherwise, subset according to hub scheme
-  else{
+  # Add T/F whether location should be scored according to Hub scheme
+  df_unscored <- df_unscored |>
+    mutate(scored = ifelse(count > 0, FALSE, TRUE)) |> # TRUE when there is NOT data present during the nowcast period as of submission period
+    select(location, target_date, scored) # Only covers nowcast dates, not forecast
 
-    # Pick out dates to score that were not used for any training
-    unscored_file <- paste0(ref_date, ".csv")
-    unscored_path <- file.path(hub_path, "auxiliary-data", "unscored-location-dates", unscored_file)
-    df_unscored <- read_csv(unscored_path,
-                            show_col_types = FALSE)
+  targets <- df_validation |>
+    filter(target_date > (as.Date(ref_date) - 32)) |>
+    filter(location %in% locs_modeled) |>
+    arrange(location, target_date) |>
+    left_join(df_unscored, by = join_by(location, target_date)) |> # Unique keys: target_date and location
+    mutate(scored = coalesce(scored, TRUE))  # default non-matches to TRUE - i.e the forecast dates are scored
 
-    # No longer needed but keeping for reference
-    # Load location data to match abbreviations to full name locations
-    # load(file.path(hub_path, "auxiliary-data", "hub_locations.rda"))
-    # locs_join <- hub_locations |>
-    #   dplyr::select(abbreviation, location_name) |>
-    #   rename(location = location_name)
-
-    # No longer needed but keeping for reference
-    # df_unscored <- df_unscored |>
-    #   left_join(locs_join, by = c("location" = "location")) |>
-    #   select(abbreviation, target_date, count) |>
-    #   rename(location = abbreviation)
-
-    # Logic to exclude locations that have data during nowcast horizons
-    # filter dates where count > 0
-    dates_to_exclude <- df_unscored |>
-      filter( count > 0)
-
-    # Remove location date combinations from unscored-location-dates file and subset to only locations modeled
-    targets <- df_validation |>
-      filter(target_date > (as.Date(ref_date) - 32)) |>
-      subset(location %in% locs_modeled) |>
-      arrange(location, target_date) |>
-      anti_join(y = dates_to_exclude, by = join_by(target_date, location))
-    ## Could add exclusion logic to return_all section above, but that's why it's called return_all
-
-    return(list(targets, df_model_output))
-  }
+  # For testing:
+  # browser() # e.g.: targets <- targets |> filter(location == "AZ") then type `c` to continue
+  return(list(targets, df_model_output))
 }
 
 #' Support function for calculating energy scores given target and model_output data
@@ -121,7 +98,7 @@ process_target_data <- function(hub_path = here::here(),
 #' @return Returns a data frame containing energy scores by location and date
 calc_energy_scores <- function(targets, df_model_output){
   # Energy Scores
-  columns <- c("energy", "brier", "location", "target_date")
+  columns <- c("energy", "brier_point", "brier_dist", "location", "target_date", "scored")
   df_scores <- data.frame(matrix(nrow = 0, ncol = length(columns)))
   colnames(df_scores) <- columns
 
@@ -143,9 +120,10 @@ calc_energy_scores <- function(targets, df_model_output){
       df_obs <- subset(targets, target_date == as.Date(day) & location == loc) |>
         group_by(clade)
 
-      # If there is no such observation, skip to next day
-      if( nrow(df_obs) == 0 ){
-        next
+      # Scored location/date pair?
+      scored <- df_obs$scored[1]
+      if(is.na(scored)){
+        scored <- FALSE
       }
 
       # Observed counts by clade
@@ -153,7 +131,7 @@ calc_energy_scores <- function(targets, df_model_output){
 
       # If the observed counts are all 0, add NA ES
       if( sum(obs_count) == 0 ){
-        df_temp <- as.data.frame(x = list(NA, NA, loc, as.Date(day)),
+        df_temp <- as.data.frame(x = list(NA, NA, NA, loc, as.Date(day), scored),
                                  col.names = columns)
         df_scores <- rbind(df_scores, df_temp)
         next
@@ -219,28 +197,48 @@ calc_energy_scores <- function(targets, df_model_output){
                             output_type == "mean") |>
           group_by(clade)
 
-        # Brier score calculation
-        brier_score <- 0
+        # Brier score calculation for the mean
+        brier_point <- 0
         for(k in 1:length(obs_count)){
-          brier_score <- brier_score + obs_count[k]*(df_mean$value[k] - 1)^2 + (N - obs_count[k])*(df_mean$value[k])^2
+          brier_point <- brier_point + obs_count[k]*(df_mean$value[k] - 1)^2 + (N - obs_count[k])*(df_mean$value[k])^2
         }
 
-        brier_score <- 0.5*brier_score/(N) # Divide by 2 to get range [0,1]
+        brier_point <- 0.5*brier_point/(N) # Divide by 2 to get range [0,1]
       } else{
         # If no output_type == "mean" present
         df_mean <- df_samp |> # already grouped by clade
           summarise(mean_value = mean(value, na.rm = T)) |>
           group_by(clade)
 
-        brier_score <- 0
+        brier_point <- 0
         for(k in 1:length(obs_count)){
-          brier_score <- brier_score + obs_count[k]*(df_mean$mean_value[k] - 1)^2 + (N - obs_count[k])*(df_mean$mean_value[k])^2
+          brier_point <- brier_point + obs_count[k]*(df_mean$mean_value[k] - 1)^2 + (N - obs_count[k])*(df_mean$mean_value[k])^2
         }
-        brier_score <- 0.5*brier_score/(N)
+        brier_point <- 0.5*brier_point/(N)
       }
 
-      # Store energy scores to data frame
-      df_temp <- as.data.frame(x = list(es, brier_score, loc, as.Date(day)),
+      # Brier distribution scores
+      if("sample" %in% unique(df_model_output$output_type)){
+        brier_dist <- as.numeric()
+
+        for(col_index in 1:dim(df_samp_wide)[2]){
+          brier_dist_onecol <- 0
+          for(k in 1:length(obs_count)){
+            # print(df_samp_wide[k,col_index])
+            brier_dist_onecol <- brier_dist_onecol + obs_count[k]*(as.numeric(df_samp_wide[k,col_index]) - 1)^2 + (N - obs_count[k])*(as.numeric(df_samp_wide[k,col_index]))^2
+          }
+          brier_dist <- append(brier_dist, brier_dist_onecol)
+        }
+
+        brier_dist <- 0.5*mean(brier_dist)/(N)
+
+      } else {
+        brier_dist <- NA_real_
+      }
+
+      # Store scores to data frame
+      df_temp <- as.data.frame(x = list(es, brier_point, brier_dist,
+                                        loc, as.Date(day), scored),
                                col.names = columns)
       df_scores <- rbind(df_scores, df_temp)
     }
