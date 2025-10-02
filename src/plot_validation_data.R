@@ -33,6 +33,8 @@ clades <- unique(df_model_output$clade)
 targets_retro <- df_retro |>
   filter(!is.na(date), date >= (as.Date(s3_data_date) - 150)) |>
   mutate(clade = ifelse(clade %in% clades, clade, "other")) |>
+  group_by(location, date, clade) |>
+  summarise(count = sum(count, na.rm = TRUE), .groups = "drop") |>
   tidyr::complete(location, date, clade, fill = list(count=0)) |>
   group_by(location, date) |>
   mutate(total = sum(count)) |>
@@ -55,11 +57,13 @@ for (this_location in unique_locs){
 
   targets <- df_validation |>
     mutate(clade = ifelse(clade %in% clades, clade, "other")) |>
-    tidyr::complete(location, target_date, clade, fill = list(observation=0)) |>
+    group_by(location, target_date, clade) |>
+    summarise(observation = sum(observation, na.rm = TRUE), .groups = "drop") |>
+    tidyr::complete(location, target_date, clade, fill = list(observation = 0)) |>
     group_by(location, target_date) |>
     mutate(total = sum(observation)) |>
     ungroup() |>
-    mutate(value = ifelse(total == 0, 0, observation/total)) |>
+    mutate(value = ifelse(total == 0, 0, observation / total)) |>
     mutate(type = "target")
 
   targets$target_date <- as.Date(targets$target_date)
