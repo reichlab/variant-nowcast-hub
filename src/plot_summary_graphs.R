@@ -45,10 +45,11 @@ plot_summary_graphs <- function(
     filter(!is.na(date), date >= "2024-01-01") |>
     mutate(clade = ifelse(clade %in% clades, clade, "other")) |>
     tidyr::complete(location, date, clade, fill = list(count=0)) |>
-    group_by(location, date) |>
+    group_by(location, date, clade) |>
+    summarise(count = sum(count, na.rm = TRUE)) |>
     mutate(total = sum(count)) |>
-    ungroup() |>
     mutate(value = ifelse(total == 0, 0, count/total)) |>
+    ungroup() |>
     mutate(type = "target")
 
   targets_other_wk <- targets_other |>
