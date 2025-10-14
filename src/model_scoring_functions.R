@@ -70,7 +70,7 @@ process_target_data <- function(hub_path = here::here(),
     select(location, target_date, scored) # Only covers nowcast dates, not forecast
 
   targets <- df_validation |>
-    filter(target_date > (as.Date(ref_date))) |>
+    filter(target_date > (as.Date(ref_date) - 32)) |>
     filter(location %in% locs_modeled) |>
     arrange(location, target_date) |>
     left_join(df_unscored, by = join_by(location, target_date)) |> # Unique keys: target_date and location
