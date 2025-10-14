@@ -51,7 +51,8 @@ process_target_data <- function(hub_path = here::here(),
                                 model_output_file,
                                 ref_date){
   # Load model output
-  df_model_output <- arrow::read_parquet(file.path(hub_path, "model-output", model_output_file))
+  df_model_output <- arrow::read_parquet(file.path(hub_path, "model-output", model_output_file)) |>
+    arrange(location, target_date, output_type_id, clade)
   locs_modeled <- sort(unique(df_model_output$location))
 
   # Load validation data
@@ -72,7 +73,7 @@ process_target_data <- function(hub_path = here::here(),
   targets <- df_validation |>
     filter(target_date > (as.Date(ref_date) - 32)) |>
     filter(location %in% locs_modeled) |>
-    arrange(location, target_date) |>
+    arrange(location, target_date, clade) |>
     left_join(df_unscored, by = join_by(location, target_date)) |> # Unique keys: target_date and location
     mutate(scored = coalesce(scored, TRUE))  # default non-matches to TRUE - i.e the forecast dates are scored
 
@@ -109,8 +110,7 @@ calc_energy_scores <- function(targets, df_model_output){
 
       # Validated observed counts
       df_obs <- targets |>
-        filter(target_date == as.Date(day), location == loc) |>
-        group_by(clade)
+        filter(target_date == as.Date(day), location == loc)
 
       # Scored location/date pair?
       scored <- df_obs$scored[1]
@@ -138,12 +138,10 @@ calc_energy_scores <- function(targets, df_model_output){
         df_samp <- subset(df_model_output,
                           target_date == as.Date(day) &
                             location == loc &
-                            output_type == "sample") |>
-          group_by(clade)
+                            output_type == "sample")
 
         # Pivot wider to get to MCMC format for scoring
-        df_samp_wide <- pivot_wider(df_samp, names_from = output_type_id, values_from = value) |>
-          group_by(clade)
+        df_samp_wide <- pivot_wider(df_samp, names_from = output_type_id, values_from = value)
         df_samp_wide <- subset(df_samp_wide,
                                select = -c(nowcast_date, target_date,
                                            clade, location, output_type))
@@ -186,8 +184,7 @@ calc_energy_scores <- function(targets, df_model_output){
         df_mean <- subset(df_model_output,
                           target_date == as.Date(day) &
                             location == loc &
-                            output_type == "mean") |>
-          group_by(clade)
+                            output_type == "mean")
 
         # Brier score calculation for the mean
         brier_point <- 0
@@ -199,8 +196,7 @@ calc_energy_scores <- function(targets, df_model_output){
       } else{
         # If no output_type == "mean" present
         df_mean <- df_samp |> # already grouped by clade
-          summarise(mean_value = mean(value, na.rm = T)) |>
-          group_by(clade)
+          summarise(mean_value = mean(value, na.rm = T))
 
         brier_point <- 0
         for(k in 1:length(obs_count)){
