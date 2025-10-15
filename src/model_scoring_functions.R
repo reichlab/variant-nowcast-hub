@@ -187,22 +187,15 @@ calc_energy_scores <- function(targets, df_model_output){
                             output_type == "mean")
 
         # Brier score calculation for the mean
-        brier_point <- 0
-        for(k in 1:length(obs_count)){
-          brier_point <- brier_point + obs_count[k]*(df_mean$value[k] - 1)^2 + (N - obs_count[k])*(df_mean$value[k])^2
-        }
+        # Divide by 2 to get range [0,1]
+        0.5 * sum(obs_count*(df_mean$value - 1)^2 + (N - obs_count)*(df_mean$value)^2) / N
 
-        brier_point <- 0.5*brier_point/(N) # Divide by 2 to get range [0,1]
       } else{
         # If no output_type == "mean" present
         df_mean <- df_samp |> # already grouped by clade
           summarise(mean_value = mean(value, na.rm = T))
 
-        brier_point <- 0
-        for(k in 1:length(obs_count)){
-          brier_point <- brier_point + obs_count[k]*(df_mean$mean_value[k] - 1)^2 + (N - obs_count[k])*(df_mean$mean_value[k])^2
-        }
-        brier_point <- 0.5*brier_point/(N)
+        0.5 * sum(obs_count*(df_mean$value - 1)^2 + (N - obs_count)*(df_mean$value)^2) / N
       }
 
       # Brier distribution scores
@@ -210,11 +203,7 @@ calc_energy_scores <- function(targets, df_model_output){
         brier_dist <- as.numeric()
 
         for(col_index in 1:dim(df_samp_wide)[2]){
-          brier_dist_onecol <- 0
-          for(k in 1:length(obs_count)){
-            # print(df_samp_wide[k,col_index])
-            brier_dist_onecol <- brier_dist_onecol + obs_count[k]*(as.numeric(df_samp_wide[k,col_index]) - 1)^2 + (N - obs_count[k])*(as.numeric(df_samp_wide[k,col_index]))^2
-          }
+          brier_dist_onecol <- sum(obs_count*(df_mean$value - 1)^2 + (N - obs_count)*(df_mean$value)^2)
           brier_dist <- append(brier_dist, brier_dist_onecol)
         }
 
