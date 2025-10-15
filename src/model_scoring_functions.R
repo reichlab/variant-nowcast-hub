@@ -99,18 +99,14 @@ calc_energy_scores <- function(targets, df_model_output){
   for(loc in locs){
     for(day in dates){
 
-      # Storage for ES
-      es <- as.numeric()
+      # Default values of scores
+      es <- NA_real_
+      brier_point <- NA_real_
+      brier_dist <- NA_real_
 
       # Validated observed counts
       df_obs <- targets |>
         filter(target_date == as.Date(day), location == loc)
-
-      # Scored location/date pair?
-      scored <- df_obs$scored[1]
-      if(is.na(scored)){
-        scored <- FALSE
-      }
 
       # Observed counts by clade
       obs_count <- df_obs$oracle_value
@@ -159,9 +155,6 @@ calc_energy_scores <- function(targets, df_model_output){
         # Energy score for the 100*100 multinomial samples for day/loc
         es <- es_sample(y = obs_count, dat = samp_multinomial_counts)
       }
-      else{
-        es <- NA_real_
-      }
 
       # Brier scores
 
@@ -190,8 +183,6 @@ calc_energy_scores <- function(targets, df_model_output){
           sum(obs_count * (p_col - 1)^2 + (N - obs_count) * p_col^2)
         })
         brier_dist <- 0.5 * mean(brier_dist) / N
-      } else {
-        brier_dist <- NA_real_
       }
 
       # Store scores as a data frame but to a list
