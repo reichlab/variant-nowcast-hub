@@ -90,9 +90,7 @@ process_target_data <- function(hub_path = here::here(),
 #' @return Returns a data frame containing energy scores by location and date
 calc_energy_scores <- function(targets, df_model_output){
   # Energy Scores
-  columns <- c("energy", "brier_point", "brier_dist", "location", "target_date", "scored")
-  df_scores <- data.frame(matrix(nrow = 0, ncol = length(columns)))
-  colnames(df_scores) <- columns
+  score_list <- list() # list to keep track of scores
 
   locs <- sort(unique(targets$location))
   dates <- sort(unique(targets$target_date))
@@ -100,10 +98,6 @@ calc_energy_scores <- function(targets, df_model_output){
   # Loop over each day at each location
   for(loc in locs){
     for(day in dates){
-
-      # For debugging and satisfaction
-      # print(loc)
-      # print(as.Date(day))
 
       # Storage for ES
       es <- as.numeric()
@@ -123,9 +117,14 @@ calc_energy_scores <- function(targets, df_model_output){
 
       # If the observed counts are all 0, add NA ES
       if( sum(obs_count) == 0 ){
-        df_temp <- as.data.frame(x = list(NA, NA, NA, loc, as.Date(day), scored),
-                                 col.names = columns)
-        df_scores <- rbind(df_scores, df_temp)
+        score_list[[length(score_list) + 1]] <- data.frame(
+          energy = NA_real_,
+          brier_point = NA_real_,
+          brier_dist = NA_real_,
+          location = loc,
+          target_date = as.Date(day),
+          scored = scored
+        )
         next
       }
 
@@ -150,24 +149,12 @@ calc_energy_scores <- function(targets, df_model_output){
         samp_matrix <- as.matrix(df_samp_wide)
 
         ## Implement Multinomial Sampling from the proportions
-        ## SCORE ON COUNTS
+        ## Score on counts
 
         # Matrix to store 100 multinomial samples generated from each of 100 sample props
-        samp_multinomial_counts <- matrix(nrow = dim(samp_matrix)[1], ncol = 0)
-
-        # Generate 100 multinomial counts for each proportions col of samp_matrix
-        for(col in 1:dim(samp_matrix)[2]){
-
-          # Get sample clade proportions from predictive distribution
-          samp_props <- samp_matrix[,col]
-
-          # Generate 100 multinomial observations from samp_props
-          samp_counts <- rmultinom(n = 100, size = N, prob = samp_props)
-
-          # Append each multinomial sample together for 10000 total
-          samp_multinomial_counts <- cbind(samp_multinomial_counts, samp_counts)
-
-        }
+        samp_multinomial_counts <- do.call(cbind, lapply(1:ncol(samp_matrix), function(col) {
+          rmultinom(n = 100, size = N, prob = samp_matrix[, col])
+        }))
 
         # Energy score for the 100*100 multinomial samples for day/loc
         es <- es_sample(y = obs_count, dat = samp_multinomial_counts)
@@ -175,7 +162,6 @@ calc_energy_scores <- function(targets, df_model_output){
       else{
         es <- NA_real_
       }
-
 
       # Brier scores
 
@@ -188,39 +174,39 @@ calc_energy_scores <- function(targets, df_model_output){
 
         # Brier score calculation for the mean
         # Divide by 2 to get range [0,1]
-        0.5 * sum(obs_count*(df_mean$value - 1)^2 + (N - obs_count)*(df_mean$value)^2) / N
+        brier_point <- 0.5 / N * sum(obs_count*(df_mean$value - 1)^2 + (N - obs_count)*(df_mean$value)^2)
 
       } else{
         # If no output_type == "mean" present
-        df_mean <- df_samp |> # already grouped by clade
+        df_mean <- df_samp |>
+          group_by(clade) |> # Group by clade to calculate mean of each one, already arranged
           summarise(mean_value = mean(value, na.rm = T))
-
-        0.5 * sum(obs_count*(df_mean$value - 1)^2 + (N - obs_count)*(df_mean$value)^2) / N
+        brier_point <- 0.5 / N * sum(obs_count*(df_mean$mean_value - 1)^2 + (N - obs_count)*(df_mean$mean_value)^2)
       }
 
       # Brier distribution scores
       if("sample" %in% unique(df_model_output$output_type)){
-        brier_dist <- as.numeric()
-
-        for(col_index in 1:dim(df_samp_wide)[2]){
-          brier_dist_onecol <- sum(obs_count*(df_mean$value - 1)^2 + (N - obs_count)*(df_mean$value)^2)
-          brier_dist <- append(brier_dist, brier_dist_onecol)
-        }
-
-        brier_dist <- 0.5*mean(brier_dist)/(N)
-
+        brier_dist <- apply(df_samp_wide, 2, function(p_col) {
+          sum(obs_count * (p_col - 1)^2 + (N - obs_count) * p_col^2)
+        })
+        brier_dist <- 0.5 * mean(brier_dist) / N
       } else {
         brier_dist <- NA_real_
       }
 
-      # Store scores to data frame
-      df_temp <- as.data.frame(x = list(es, brier_point, brier_dist,
-                                        loc, as.Date(day), scored),
-                               col.names = columns)
-      df_scores <- rbind(df_scores, df_temp)
+      # Store scores as a data frame but to a list
+      score_list[[length(score_list) + 1]] <- data.frame(
+        energy = es,
+        brier_point = brier_point,
+        brier_dist = brier_dist,
+        location = loc,
+        target_date = as.Date(day),
+        scored = scored
+      )
     }
   }
-  return(df_scores)
+  # bind rows of data frames in scores_list (faster than appending)
+  return(dplyr::bind_rows(score_list))
 }
 
 #' Function to quickly get some summaries of the energy scores
