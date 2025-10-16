@@ -107,6 +107,7 @@ calc_energy_scores <- function(targets, df_model_output){
       # Validated observed counts
       df_obs <- targets |>
         filter(target_date == as.Date(day), location == loc)
+      scored <- df_obs$scored[1] # To track scored date/loc pair for return
 
       # Observed counts by clade
       obs_count <- df_obs$oracle_value
