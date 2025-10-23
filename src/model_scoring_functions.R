@@ -136,6 +136,10 @@ calc_energy_scores <- function(targets, df_model_output){
                             location == loc &
                             output_type == "sample")
 
+        # tests that clades are ordered identically
+        if(!all(rep(df_obs$clade, 100) == df_samp$clade))
+          error("Clades in observed data do not match clades in sample model output.")
+
         # Pivot wider to get to MCMC format for scoring
         df_samp_wide <- pivot_wider(df_samp, names_from = output_type_id, values_from = value)
         df_samp_wide <- subset(df_samp_wide,
@@ -158,13 +162,16 @@ calc_energy_scores <- function(targets, df_model_output){
       }
 
       # Brier scores
-
       if("mean" %in% unique(df_model_output$output_type)){
         # If output_type == "mean" present
         df_mean <- subset(df_model_output,
                           target_date == as.Date(day) &
                             location == loc &
                             output_type == "mean")
+
+        # tests that clades are ordered identically
+        if(!all(df_obs$clade == df_mean$clade))
+          error("Clades in observed data do not match clades in sample model output.")
 
         # Brier score calculation for the mean
         # Divide by 2 to get range [0,1]
@@ -175,6 +182,11 @@ calc_energy_scores <- function(targets, df_model_output){
         df_mean <- df_samp |>
           group_by(clade) |> # Group by clade to calculate mean of each one, already arranged
           summarise(mean_value = mean(value, na.rm = T))
+
+        # tests that clades are ordered identically
+        if(!all(df_obs$clade == df_mean$clade))
+          error("Clades in observed data do not match clades in sample model output.")
+
         brier_point <- 0.5 / N * sum(obs_count*(df_mean$mean_value - 1)^2 + (N - obs_count)*(df_mean$mean_value)^2)
       }
 
