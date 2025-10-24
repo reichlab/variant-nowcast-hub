@@ -14,27 +14,33 @@ options(dplyr.summarise.inform = FALSE) # Suppress message output for dplyr use
 hub_path <- here::here()
 
 # Using newest Hub target data format
-df_validation <- arrow::read_parquet(paste0(hub_path, "/target-data/time-series/as_of=2025-03-25/nowcast_date=2024-12-25/timeseries.parquet"))
+#df_validation <- arrow::read_parquet(paste0(hub_path, "/target-data/time-series/as_of=2025-03-25/nowcast_date=2024-12-25/timeseries.parquet"))
+df_validation <- arrow::read_parquet(paste0(hub_path, "/target-data/time-series/as_of=2025-03-18/nowcast_date=2024-12-18/timeseries.parquet"))
+
 
 # Meta data for getting data available on reference date
-reference_date <- "2024-12-25" # Date for nowcasting submission
+#reference_date <- "2024-12-25" # Date for nowcasting submission
+reference_date <- "2024-12-18" # Date for nowcasting submission
 s3_data_date <- as.character(as.Date(reference_date) - 2)
 targets_path_s3 <- paste0("https://covid-clade-counts.s3.amazonaws.com/",
                           s3_data_date, "_covid_clade_counts.parquet")
 df_retro <- arrow::read_parquet(targets_path_s3)
 
 # Model output file, just UMass for now
-df_model_output <- arrow::read_parquet(file.path(hub_path, "model-output/UMass-HMLR/2024-12-25-UMass-HMLR.parquet"))
-df_model_output_2 <- arrow::read_parquet(file.path(hub_path, "model-output/UGA-multicast/2024-12-25-UGA-multicast.parquet"))
-df_model_output_base <- arrow::read_parquet(file.path(hub_path, "model-output/Hub-baseline/2024-12-25-Hub-baseline.parquet"))
+# df_model_output <- arrow::read_parquet(file.path(hub_path, "model-output/UMass-HMLR/2024-12-18-UMass-HMLR.parquet"))
+# df_model_output_2 <- arrow::read_parquet(file.path(hub_path, "model-output/UGA-multicast/2024-12-18-UGA-multicast.parquet"))
+# df_model_output_base <- arrow::read_parquet(file.path(hub_path, "model-output/Hub-baseline/2024-12-18-Hub-baseline.parquet"))
+
+df_model_output <- arrow::read_parquet(file.path(hub_path, paste0("model-output/UMass-HMLR/", reference_date, "-Umass-HMLR.parquet")))
+df_model_output_2 <- arrow::read_parquet(file.path(hub_path, paste0("model-output/UGA-multicast/", reference_date, "-UGA-multicast.parquet")))
+df_model_output_base <- arrow::read_parquet(file.path(hub_path, paste0("model-output/Hub-baseline/", reference_date, "-Hub-baseline.parquet")))
+
 
 clades <- unique(df_model_output$clade)
 
 targets_retro <- df_retro |>
   filter(!is.na(date), date >= (as.Date(s3_data_date) - 150)) |>
   mutate(clade = ifelse(clade %in% clades, clade, "other")) |>
-  group_by(location, date, clade) |>
-  summarise(count = sum(count, na.rm = TRUE), .groups = "drop") |>
   tidyr::complete(location, date, clade, fill = list(count=0)) |>
   group_by(location, date) |>
   mutate(total = sum(count)) |>
@@ -57,13 +63,11 @@ for (this_location in unique_locs){
 
   targets <- df_validation |>
     mutate(clade = ifelse(clade %in% clades, clade, "other")) |>
-    group_by(location, target_date, clade) |>
-    summarise(observation = sum(observation, na.rm = TRUE), .groups = "drop") |>
-    tidyr::complete(location, target_date, clade, fill = list(observation = 0)) |>
+    tidyr::complete(location, target_date, clade, fill = list(observation=0)) |>
     group_by(location, target_date) |>
     mutate(total = sum(observation)) |>
     ungroup() |>
-    mutate(value = ifelse(total == 0, 0, observation / total)) |>
+    mutate(value = ifelse(total == 0, 0, observation/total)) |>
     mutate(type = "target")
 
   targets$target_date <- as.Date(targets$target_date)
@@ -121,10 +125,12 @@ for (this_location in unique_locs){
                alpha = 0.6) +
     geom_line() +
     geom_ribbon(aes(ymin = q05, ymax = q95, fill = team), alpha = 0.3, color = NA) +
+    geom_vline(xintercept = as.Date(reference_date), color = "red", size = 0.4,
+               linetype = 'dashed')  +
 
     # Breaks decides the legend order
-    # Default without breaks is in ALPHABETICAL ORDER of labels >.<
-    scale_color_manual(labels = c("Baseline", "Validated Data 2025-03-25", date_obs, "UGA", "UMass"),
+    # Default without breaks is in ALPHABETICAL ORDER of labels >.< ## 2025-03-25
+    scale_color_manual(labels = c("Baseline", "Validated Data 2025-03-18", date_obs, "UGA", "UMass"),
                        values = c("limegreen", "darkorange", "dodgerblue", "purple", "darkred"),
                        aesthetics = c("fill", "color")) +
     scale_size(name = "# of sequences", range = c(1, 4)) +
