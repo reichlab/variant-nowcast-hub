@@ -138,7 +138,7 @@ calc_energy_scores <- function(targets, df_model_output){
 
         # tests that clades are ordered identically
         if(!all(rep(df_obs$clade, 100) == df_samp$clade))
-          error("Clades in observed data do not match clades in sample model output.")
+          stop("Samples Issue: Clades in observed data do not match clades in sample model output.")
 
         # Pivot wider to get to MCMC format for scoring
         df_samp_wide <- pivot_wider(df_samp, names_from = output_type_id, values_from = value)
@@ -171,7 +171,7 @@ calc_energy_scores <- function(targets, df_model_output){
 
         # tests that clades are ordered identically
         if(!all(df_obs$clade == df_mean$clade))
-          error("Clades in observed data do not match clades in sample model output.")
+          stop("Brier Score Issue: Clades in observed data do not match clades in mean model output.")
 
         # Brier score calculation for the mean
         # Divide by 2 to get range [0,1]
@@ -185,7 +185,7 @@ calc_energy_scores <- function(targets, df_model_output){
 
         # tests that clades are ordered identically
         if(!all(df_obs$clade == df_mean$clade))
-          error("Clades in observed data do not match clades in sample model output.")
+          stop("Brier Score Issue: Clades in observed data do not match clades in aggregated sample model output.")
 
         brier_point <- 0.5 / N * sum(obs_count*(df_mean$mean_value - 1)^2 + (N - obs_count)*(df_mean$mean_value)^2)
       }
