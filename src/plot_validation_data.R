@@ -13,7 +13,7 @@ options(dplyr.summarise.inform = FALSE) # Suppress message output for dplyr use
 #hub_path <- here::here()
 
 #' function create_validation_plots
-#' @param nowcate_date the date for which the models are plotted, should be a Wednesday after 10-09-24
+#' @param nowcate_date the date for which the models are plotted, a date object, should be a Wednesday after 10-09-24
 #' @param models, character vector, the full names of the models to be plotted, i.e. c("UMass-HMLR)
 #' @param hub_path the path to the hub, defualt is .. as the script is meant to be ran out of the src folder
 #' @param save_path where the output should be saved, defualt is .., for the hub main page
@@ -21,15 +21,32 @@ options(dplyr.summarise.inform = FALSE) # Suppress message output for dplyr use
 create_validation_plots <- function(nowcast_date, models, hub_path = "..", save_path = ".."){
   #putting the models in alphabetical order
   models <- sort(models)
-  df_validation <- arrow::read_parquet(paste0(hub_path, "/target-data/oracle-output/nowcast_date=",as.Date(nowcast_date), "/oracle.parquet"))
+  # ensuring that nowcast_date is a date
+  nowcast_date <- as.Date(nowcast_date)
+
+  validation_path <- file.path(hub_path,
+                               "target-data",
+                               "oracle-output",
+                               paste0("nowcast_date=",
+                                      nowcast_date),
+                               "oracle.parquet")
+  df_validation <- arrow::read_parquet(validation_path)
   # getting the data for the nowcast date
-  df_retro_path<- paste0(hub_path, "/target-data/time-series/as_of=",as.Date(nowcast_date - 1), "/nowcast_date=", as.Date(nowcast_date), "/timeseries.parquet")
+  df_retro_path <- file.path(hub_path,
+                             "target-data",
+                             "time-series",
+                             paste0("as_of=", as.Date(nowcast_date) - 1),
+                             paste0("nowcast_date=", nowcast_date),
+                             "timeseries.parquet")
   df_retro <- arrow::read_parquet(df_retro_path)
   # loading the selected models
   models_list <- list()
   for(model in models){
-    model_path <- file.path(hub_path, paste0("model-output/", model, "/", nowcast_date, "-", model, ".parquet"))
-    df_model_output <- arrow::read_parquet(file.path(hub_path, paste0("model-output/", model, "/", nowcast_date, "-", model, ".parquet")))
+    model_path <- file.path(hub_path,
+                            "model-output",
+                            model,
+                             paste0(nowcast_date, "-", model, ".parquet"))
+    df_model_output <- arrow::read_parquet(model_path)
     models_list[[model]] <- df_model_output
   }
   clades <- unique(models_list[[models[1]]]$clade)
@@ -44,7 +61,8 @@ create_validation_plots <- function(nowcast_date, models, hub_path = "..", save_
     ungroup() |>
     mutate(type = "target")
   # Create a PDF file to save the plots
-  save_path_full = paste0(save_path, "/plot_validation_by_location_", nowcast_date, ".pdf")
+  save_path_full = file.path(save_path,
+                             paste0("plot_validation_by_location_", nowcast_date, ".pdf"))
   pdf(save_path_full)
   # getting the names for the locations
   unique_locs <- sort(c(state.abb, "PR", "DC"))
@@ -126,7 +144,7 @@ create_validation_plots <- function(nowcast_date, models, hub_path = "..", save_
       geom_ribbon(aes(ymin = q05, ymax = q95, fill = team), alpha = 0.3, color = NA) +
       geom_vline(
         xintercept = as.Date(nowcast_date),
-        color = "red", size = 0.4, linetype = "dashed"
+        color = "red", linewidth = 0.4, linetype = "dashed"
       ) +
       scale_color_manual(
         name   = NULL,
@@ -135,7 +153,7 @@ create_validation_plots <- function(nowcast_date, models, hub_path = "..", save_
           # must include colors for all elements in legend_order
           setNames(
             c("darkorange", "red", "dodgerblue",
-              rep_len(c("purple", "darkred", "limegreen"), length(models_with_predictions))),
+              rep_len(c("purple", "darkred", "limegreen", "darkblue", "black"), length(models_with_predictions))),
             legend_order
           )
         ),
