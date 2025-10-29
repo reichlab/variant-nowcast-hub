@@ -136,7 +136,9 @@ combine_scores_tsv <- function(hub_path = "../"){
                            "energy",
                            "scored",
                            "status"
-  )]
+  )] |> rename(model_id = team)
+
+
 
   # Write to TSV
   write_tsv(final_df, "../auxiliary-data/scores/scores.tsv")
