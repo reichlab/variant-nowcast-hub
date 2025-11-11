@@ -120,6 +120,7 @@ create_validation_plots <- function(nowcast_date, models, hub_path = "..", save_
     # manually specify breaks in the desired order
     legend_order <- c(validated_label, nowcast_label, obs_label, models_with_predictions)
     if(arrows){
+      # df needed to create the arrows
       paired_df <- dplyr::left_join(
         targets_retro_this_location,
         targets_this_location,
