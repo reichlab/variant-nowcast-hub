@@ -20,6 +20,10 @@ This file will be updated weekly as target data is available for scoring.
   - If a model submitted `sample`s but no `mean`, it is the Brier score of the mean of the 100 samples.
 - `brier_dist`: the average Brier score (score across the provided sample distribution) of all 100 samples:
   - This is `NA` for models that do not submit `sample`s.
+  - Note: In principle, by Jensen's inequality, it's expected that the `brier_point` scores
+  are always less than or equal to the `brier_dist` scores. However, analysis has shown that 
+  due to instances where submitted means may be based on samples not included on the 100 submitted 
+  for `sample` submissions, there exist observations where this statement is not true.
 - `energy`: the energy score for this `location` and `target_date`:
   - This is only available for models that submit `sample`s.
 - `scored`: whether this `location` and `target_date` pair should be scored according 
@@ -36,4 +40,4 @@ The majority of submissions had no trouble, indicated by `success`.
 
 To get a data frame in R of all model submissions that should be scored according
 to the Hub schema: in the repo directory, use
-`df <- read_tsv("./auxiliary-data/scores/scores.tsv") |> filter(scored = T)`
+`df <- read_tsv("./auxiliary-data/scores/scores.tsv") |> filter(scored == T)`
