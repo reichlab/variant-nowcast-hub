@@ -15,10 +15,11 @@ options(dplyr.summarise.inform = FALSE) # Suppress message output for dplyr use
 #' function create_validation_plots
 #' @param nowcate_date the date for which the models are plotted, a date object, should be a Wednesday after 10-09-24
 #' @param models, character vector, the full names of the models to be plotted, i.e. c("UMass-HMLR)
-#' @param hub_path the path to the hub, defualt is .. as the script is meant to be ran out of the src folder
-#' @param save_path where the output should be saved, defualt is .., for the hub main page
+#' @param hub_path the path to the hub, default is .. as the script is meant to be ran out of the src folder
+#' @param save_path where the output should be saved, default is .., for the hub main page
+#' @param arrows plot arrows to show the difference between the data at the nowcast and validation dates, default false
 #' @example create_validation_plots(nowcast_date = as.Date("2024-12-25"), models = c("UMass-HMLR","Hub-baseline", "UGA-multicast"))
-create_validation_plots <- function(nowcast_date, models, hub_path = "..", save_path = ".."){
+create_validation_plots <- function(nowcast_date, models, hub_path = "..", save_path = "..", arrows = FALSE){
   #putting the models in alphabetical order
   models <- sort(models)
   # ensuring that nowcast_date is a date
@@ -118,52 +119,112 @@ create_validation_plots <- function(nowcast_date, models, hub_path = "..", save_
 
     # manually specify breaks in the desired order
     legend_order <- c(validated_label, nowcast_label, obs_label, models_with_predictions)
-
-    p <- ggplot(df_out, aes(x = target_date, y = value, color = team)) +
-      ggtitle(paste0("Daily Observed and Predicted Proportions \n",
-                     this_location, " Nowcast Date: ", nowcast_date)) +
-      theme(
-        legend.position = "bottom",
-        legend.justification = "center",
-        legend.title = element_blank(),
-        legend.text = element_text(size = rel(0.4))
-      ) +
-      geom_point(
-        data = targets_this_location,
-        inherit.aes = FALSE,
-        mapping = aes(x = target_date, y = value, color = validated_label, size = total),
-        alpha = 0.6
-      ) +
-      geom_point(
-        data = targets_retro_this_location,
-        mapping = aes(x = target_date, y = value, color = obs_label, size = total),
-        inherit.aes = FALSE,
-        alpha = 0.6
-      ) +
-      geom_line() +
-      geom_ribbon(aes(ymin = q05, ymax = q95, fill = team), alpha = 0.3, color = NA) +
-      geom_vline(
-        xintercept = as.Date(nowcast_date),
-        color = "red", linewidth = 0.4, linetype = "dashed"
-      ) +
-      scale_color_manual(
-        name   = NULL,
-        breaks = legend_order,  # <<---- sets the order in the legend
-        values = c(
-          # must include colors for all elements in legend_order
-          setNames(
-            c("darkorange", "red", "dodgerblue",
-              rep_len(c("purple", "darkred", "limegreen", "darkblue", "black"), length(models_with_predictions))),
-            legend_order
-          )
-        ),
-        aesthetics = c("fill", "color")
-      ) +
-      scale_size(name = "# of sequences", range = c(1, 4)) +
-      facet_wrap(~clade)
+    if(arrows){
+      paired_df <- dplyr::left_join(
+        targets_retro_this_location,
+        targets_this_location,
+        by = c("target_date", "clade"),
+        suffix = c("_retro", "_this")
+      )
+      p <- ggplot(df_out, aes(x = target_date, y = value, color = team)) +
+        ggtitle(paste0("Daily Observed and Predicted Proportions \n",
+                       this_location, " Nowcast Date: ", nowcast_date)) +
+        theme(
+          legend.position = "bottom",
+          legend.justification = "center",
+          legend.title = element_blank(),
+          legend.text = element_text(size = rel(0.4))
+        ) +
+        geom_segment(
+          data = paired_df,
+          inherit.aes = FALSE,
+          mapping = aes(
+            x = target_date, xend = target_date,
+            y = value_retro, yend = value_this
+          ),
+          color = "black",
+          alpha = 0.5,
+          arrow = arrow(length = unit(0.08, "inches"), type = "closed", ends = "last")  # add arrow
+        )+
+        geom_point(
+          data = targets_this_location,
+          inherit.aes = FALSE,
+          mapping = aes(x = target_date, y = value, color = validated_label, size = total),
+          alpha = 0.6
+        ) +
+        geom_point(
+          data = targets_retro_this_location,
+          mapping = aes(x = target_date, y = value, color = obs_label, size = total),
+          inherit.aes = FALSE,
+          alpha = 0.6
+        ) +
+        geom_line() +
+        geom_ribbon(aes(ymin = q05, ymax = q95, fill = team), alpha = 0.3, color = NA) +
+        geom_vline(
+          xintercept = as.Date(nowcast_date),
+          color = "red", linewidth = 0.4, linetype = "dashed"
+        ) +
+        scale_color_manual(
+          name   = NULL,
+          breaks = legend_order,  # <<---- sets the order in the legend
+          values = c(
+            # must include colors for all elements in legend_order
+            setNames(
+              c("darkorange", "red", "dodgerblue",
+                rep_len(c("purple", "darkred", "limegreen", "darkblue", "black"), length(models_with_predictions))),
+              legend_order
+            )
+          ),
+          aesthetics = c("fill", "color")
+        ) +
+        scale_size(name = "# of sequences", range = c(1, 4)) +
+        facet_wrap(~clade)
+    } else{
+      p <- ggplot(df_out, aes(x = target_date, y = value, color = team)) +
+        ggtitle(paste0("Daily Observed and Predicted Proportions \n",
+                       this_location, " Nowcast Date: ", nowcast_date)) +
+        theme(
+          legend.position = "bottom",
+          legend.justification = "center",
+          legend.title = element_blank(),
+          legend.text = element_text(size = rel(0.4))
+        ) +
+        geom_point(
+          data = targets_this_location,
+          inherit.aes = FALSE,
+          mapping = aes(x = target_date, y = value, color = validated_label, size = total),
+          alpha = 0.6
+        ) +
+        geom_point(
+          data = targets_retro_this_location,
+          mapping = aes(x = target_date, y = value, color = obs_label, size = total),
+          inherit.aes = FALSE,
+          alpha = 0.6
+        ) +
+        geom_line() +
+        geom_ribbon(aes(ymin = q05, ymax = q95, fill = team), alpha = 0.3, color = NA) +
+        geom_vline(
+          xintercept = as.Date(nowcast_date),
+          color = "red", linewidth = 0.4, linetype = "dashed"
+        ) +
+        scale_color_manual(
+          name   = NULL,
+          breaks = legend_order,  # <<---- sets the order in the legend
+          values = c(
+            # must include colors for all elements in legend_order
+            setNames(
+              c("darkorange", "red", "dodgerblue",
+                rep_len(c("purple", "darkred", "limegreen", "darkblue", "black"), length(models_with_predictions))),
+              legend_order
+            )
+          ),
+          aesthetics = c("fill", "color")
+        ) +
+        scale_size(name = "# of sequences", range = c(1, 4)) +
+        facet_wrap(~clade)
+    }
 
     print(p)
-
   }
 
   # Close the PDF file
