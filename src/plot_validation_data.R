@@ -15,11 +15,11 @@ options(dplyr.summarise.inform = FALSE) # Suppress message output for dplyr use
 #' function create_validation_plots
 #' @param nowcate_date the date for which the models are plotted, a date object, should be a Wednesday after 10-09-24
 #' @param models, character vector, the full names of the models to be plotted, i.e. c("UMass-HMLR)
-#' @param hub_path the path to the hub, default is .. as the script is meant to be ran out of the src folder
-#' @param save_path where the output should be saved, default is .., for the hub main page
+#' @param hub_path the path to the hub, default is .
+#' @param save_path where the output should be saved, default is ., for the hub main page
 #' @param arrows plot arrows to show the difference between the data at the nowcast and validation dates, default false
 #' @example create_validation_plots(nowcast_date = as.Date("2024-12-25"), models = c("UMass-HMLR","Hub-baseline", "UGA-multicast"))
-create_validation_plots <- function(nowcast_date, models, hub_path = "..", save_path = "..", arrows = FALSE){
+create_validation_plots <- function(nowcast_date, models, hub_path = ".", save_path = ".", arrows = FALSE){
   #putting the models in alphabetical order
   models <- sort(models)
   # ensuring that nowcast_date is a date
