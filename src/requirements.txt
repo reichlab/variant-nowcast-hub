@@ -2,7 +2,7 @@
 # directory's .py files. They're replicated here so we can use run pytest
 # to invoke scripts' test_ functions (the dependencies are also part of the
 # individual scripts' metadata block for ease of use).
-click>=8.1.8,<8.3.0
+click>=8.1.8,<8.4.0
 cladetime>=0.3.0,<0.4.0
 # old Polars streaming engine is deprecated; recommendation is to pin < 1.23
 # until the new engine is released:
