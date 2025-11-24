@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout 🛎️
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install uv 🐍
         uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6  #v6.6.1
