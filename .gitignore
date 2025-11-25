@@ -11,3 +11,6 @@
 **/__pycache__
 
 .pre-commit-config.yaml
+
+# Claude Code configuration
+CLAUDE.md
