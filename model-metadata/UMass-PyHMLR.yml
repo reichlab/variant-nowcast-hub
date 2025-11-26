@@ -27,7 +27,7 @@ model_contributors: [
 ]
 license: "CC-BY-4.0"
 team_funding: "This work has been supported by the National Institutes of General Medical Sciences (R35GM119582) and the US Centers for Disease Control and Prevention’s Center for Forecasting and Outbreak Analytics (NU38FT000008). The content is solely the responsibility of the authors and does not necessarily represent the official views of NIGMS, the National Institutes of Health, or CDC."
-methods: "A Bayesian hierarchical multinomial logistic regression (MLR) model with Dirichlet-Multinomial observation process and location-specific concentration parameters. The model uses hierarchical hyperpriors on intercepts (alpha) and slopes (beta) to enable partial pooling across locations and clades. Location-specific concentration parameters allow the model to adaptively learn appropriate uncertainty levels for each location based on data characteristics. Linear trends are modeled in logit space with standardized time variables. Implemented using PyMC with NUTS sampling (15,000 draws, 3,000 warmup, 1 chain)."
+methods: "A Bayesian hierarchical multinomial logistic regression model with Dirichlet-Multinomial observation process. The model uses hierarchical hyperpriors to enable partial pooling across locations and clades. Location-specific concentration parameters allow the model to adaptively learn appropriate uncertainty levels for each location. Linear trends are modeled in logit space with standardized time variables."
 methods_url: "https://github.com/trobacker/pymc_modeling"
 data_sources: "COVID Variant Nowcast Hub S3 target data"
 ensemble_of_models: false
