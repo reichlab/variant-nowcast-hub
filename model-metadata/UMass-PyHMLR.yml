@@ -1,0 +1,35 @@
+team_name: "UMass Amherst"
+team_abbr: "UMass"
+model_name: "PyMC Hierarchical Multinomial Logistic Regression"
+model_abbr: "PyHMLR"
+model_version: "1.0"
+model_contributors: [
+  {
+    "name": "Thomas Robacker",
+    "affiliation": "University of Massachusetts Amherst",
+    "email": "trobacker@umass.edu"
+  },
+  {
+    "name": "Isaac MacArthur",
+    "affiliation": "Department of Mathematics and Statistics, University of Massachussetts Amherst",
+    "email": "imacarthur@umass.edu"
+  },
+  {
+    "name": "Maryclare Griffin",
+    "affiliation": "Department of Mathematics and Statistics, University of Massachussetts Amherst",
+    "email": "maryclaregri@umass.edu"
+  },
+  {
+    "name": "Nick G. Reich",
+    "affiliation": "Department of Biostatistics and Epidemiology, University of Massachussetts Amherst",
+    "email": "nick@umass.edu"
+  }
+]
+license: "CC-BY-4.0"
+team_funding: "This work has been supported by the National Institutes of General Medical Sciences (R35GM119582) and the US Centers for Disease Control and Prevention’s Center for Forecasting and Outbreak Analytics (NU38FT000008). The content is solely the responsibility of the authors and does not necessarily represent the official views of NIGMS, the National Institutes of Health, or CDC."
+methods: "A Bayesian hierarchical multinomial logistic regression model with Dirichlet-Multinomial observation process. The model uses hierarchical hyperpriors to enable partial pooling across locations and clades. Location-specific concentration parameters allow the model to adaptively learn appropriate uncertainty levels for each location. Linear trends are modeled in logit space with standardized time variables."
+methods_url: "https://github.com/trobacker/pymc_modeling"
+data_sources: "COVID Variant Nowcast Hub S3 target data"
+ensemble_of_models: false
+ensemble_of_hub_models: false
+repo_url: "https://github.com/trobacker/pymc_modeling"
