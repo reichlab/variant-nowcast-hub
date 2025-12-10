@@ -331,6 +331,22 @@ def test_metadata():
     assert total_sequences == sum(sequences_by_clade.values())
 
 
+def test_unavailable_date_error():
+    """Test that CladeTime raises error for dates before data availability window."""
+    import pytest
+    from cladetime.exceptions import CladeTimeDataUnavailableError
+
+    # Test with date before minimum (2025-09-29)
+    with pytest.raises(CladeTimeDataUnavailableError) as excinfo:
+        CladeTime(datetime(2024, 10, 15, 0, 0, 0))
+
+    # Verify error message contains key information
+    error_message = str(excinfo.value)
+    assert "2025-09-29" in error_message
+    assert "90 days" in error_message
+    assert "2024-10-15" in error_message
+
+
 def test_end_to_end(monkeypatch, tmp_path):
     """Test end-to-end functionality."""
     round_id = "2025-02-26"
