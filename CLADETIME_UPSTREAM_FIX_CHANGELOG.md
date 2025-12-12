@@ -29,8 +29,6 @@ While CladeTime 0.4.0 includes breaking changes, **they do NOT affect variant-no
 - **Minimum `tree_as_of` date**: Now 2024-10-09 (via Hub fallback)
 - **New error handling**: Raises `CladeTimeDataUnavailableError` for unavailable dates instead of silently defaulting
 
-**Why VNH is unaffected**: VNH workflows always call `CladeTime()` with no date parameters, which defaults to the current date. Current dates are well within the availability window (>= 2025-09-29).
-
 ## What Changed in This PR
 
 ✅ **Updated CladeTime dependency** in `src/requirements.txt`:
@@ -56,7 +54,7 @@ cladetime>=0.4.0,<0.5.0
 1. **Merge this PR** to update VNH's CladeTime dependency
 
 2. **Re-run failed workflows** to verify the fix:
-   - Manually trigger `run-post-submission-jobs.yaml` for dates that previously failed (2025-08-06 onwards)
+   - Manually trigger `run-post-submission-jobs.yaml` for dates that previously failed (2025-10-15 onwards, reaching the 90 day threshold)
    - Verify target data generation succeeds
    - Check that metadata versions match Hub archive values
 
@@ -85,7 +83,7 @@ These files are already being generated automatically by `get_clades_to_model.py
 
 **Timeline:**
 - Hub opened: October 9, 2024
-- Modeled-clades archives: September 2024 onwards (60+ weeks)
+- Modeled-clades archives: 2024-09-11 onwards (60+ weeks)
 - Workflow requirement: Current round + 13 weeks back (~14 weeks)
 - Nextstrain S3 retention: 90 days
 
