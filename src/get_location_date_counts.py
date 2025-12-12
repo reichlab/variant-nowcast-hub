@@ -117,8 +117,9 @@ def test_get_location_date_counts(monkeypatch):
     envs = {"CLADETIME_DEMO": "true"}
     monkeypatch.setattr(os, "environ", envs)
 
+    # Updated to use date >= 2025-09-29 (CladeTime 0.4.0 minimum)
     round_close_test_time = datetime(
-        2024, 11, 6, 20, 0, 0, tzinfo=ZoneInfo("US/Eastern")
+        2025, 10, 15, 20, 0, 0, tzinfo=ZoneInfo("US/Eastern")
     )
     computed_counts = get_location_date_counts(round_close_test_time)
 

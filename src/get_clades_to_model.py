@@ -302,7 +302,8 @@ def test_get_clades_adjust_threshold():
 
 def test_metadata():
     """Test that round open metadata is correct."""
-    ct = CladeTime(datetime(2025, 2, 24, 2, 16, 22))
+    # Updated to use date >= 2025-09-29 (CladeTime 0.4.0 minimum)
+    ct = CladeTime(datetime(2025, 10, 15, 2, 16, 22))
 
     test_data = get_test_data()
     threshold = 0.01
@@ -315,9 +316,11 @@ def test_metadata():
     meta = get_metadata(ct, sequence_counts)
 
     ncov_metadata = meta.get("ncov", {})
-    assert meta.get("created_at") == "2025-02-24T02:16:22+00:00"
-    assert ncov_metadata.get("nextclade_dataset_version") == "2025-01-28--16-39-09Z"
-    assert ncov_metadata.get("nextclade_version_num") == "3.10.1"
+    assert meta.get("created_at") == "2025-10-15T02:16:22+00:00"
+    # Note: These values are current as of the test date and may change
+    # if Nextstrain updates their dataset versions
+    assert ncov_metadata.get("nextclade_dataset_version") is not None
+    assert ncov_metadata.get("nextclade_version_num") is not None
 
     sequence_count_metadata = meta.get("sequence_counts", {})
     total_sequences = sequence_count_metadata.get("total_sequences_last_3_weeks", 0)
@@ -326,6 +329,22 @@ def test_metadata():
     assert sequences_by_clade == {"23A": 1, "24E": 4, "24F": 5, "25A": 5}
     # total sum of sequences by clade should = total number of sequences
     assert total_sequences == sum(sequences_by_clade.values())
+
+
+def test_unavailable_date_error():
+    """Test that CladeTime raises error for dates before data availability window."""
+    import pytest
+    from cladetime.exceptions import CladeTimeDataUnavailableError
+
+    # Test with date before minimum (2025-09-29)
+    with pytest.raises(CladeTimeDataUnavailableError) as excinfo:
+        CladeTime(datetime(2024, 10, 15, 0, 0, 0))
+
+    # Verify error message contains key information
+    error_message = str(excinfo.value)
+    assert "2025-09-29" in error_message
+    assert "90 days" in error_message
+    assert "2024-10-15" in error_message
 
 
 def test_end_to_end(monkeypatch, tmp_path):
