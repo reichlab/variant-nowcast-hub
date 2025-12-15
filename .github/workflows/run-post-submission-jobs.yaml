@@ -131,7 +131,7 @@ jobs:
               src/
 
       - name: Download target data 📥
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           pattern: target-data-*
           merge-multiple: true
