@@ -24,7 +24,7 @@ jobs:
               src/
 
       - name: Install uv 🐍
-        uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6  #v6.6.1
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867  #v7.1.6
         with:
           version: "0.5.30"
 
