@@ -258,152 +258,118 @@ calc_energy_scores <- function(targets, df_model_output){
 #'
 #' @param targets data frame, of target data
 #' @param df_model_output data frame, of model output
+#' @param desired_quantiles vector of the quantiles 
 #'
 #' @return Returns a data frame containing coverage by location, date, and clade
-calc_coverage <- function(targets, df_model_output){
+calc_coverage <- function(targets, df_model_output,
+                          desired_quantiles = c(0.05, 0.25, 0.5, 0.75, 0.95)){
   require("scoringutils")
   require("dplyr")
   
-  df_to_score <- df_model_output |> 
-    left_join(targets,
-              by = c("clade", "target_date","location", 
-                     "nowcast_date")) |>
-    filter(isTRUE(scored))
-  
-  forecast_obj <- scoringutils::as_forecast_quantile(
-    df_to_score,
-    forecast_unit = c(
-      "location",
-      "target_date", "clade"
-    ),
-    observed = "oracle_value",
-    predicted = "value",
-    quantile_level = "quantile_level"
-  )
-  
-  # Energy Scores
-  score_list <- list() # list to keep track of scores
   
   locs <- sort(unique(targets$location))
   dates <- sort(unique(targets$target_date))
-  
+  if(!"sample" %in% unique(df_model_output$output_type)){
+    return(NULL)
+  }
   # Loop over each day at each location
+  all_coverage <- c()
   for(loc in locs){
     for(day in dates){
-      
-      # Default values of scores
-      es <- NA_real_
-      brier_point <- NA_real_
-      brier_dist <- NA_real_
-      
+  
       # Validated observed counts
       df_obs <- targets |>
         filter(target_date == as.Date(day), location == loc)
       scored <- df_obs$scored[1] # To track scored date/loc pair for return
-      
-      # Observed counts by clade
-      obs_count <- df_obs$oracle_value
-      
-      # If the observed counts are all 0, add NA ES
-      if( sum(obs_count) == 0 ){
-        score_list[[length(score_list) + 1]] <- data.frame(
-          energy = NA_real_,
-          brier_point = NA_real_,
-          brier_dist = NA_real_,
-          location = loc,
-          target_date = as.Date(day),
-          scored = scored
-        )
-        next
-      }
-      
-      # Need the N for each loc/day from the validation data
-      N <- sum(subset(targets,
-                      location == loc & target_date == as.Date(day))$oracle_value)
-      
-      # MCMC sample of modeled COUNTS
-      if("sample" %in% unique(df_model_output$output_type)){
-        df_samp <- subset(df_model_output,
-                          target_date == as.Date(day) &
-                            location == loc &
-                            output_type == "sample")
-        
-        # tests that clades are ordered identically
-        if(!all(rep(df_obs$clade, 100) == df_samp$clade))
-          stop("Samples Issue: Clades in observed data do not match clades in sample model output.")
-        
-        # Pivot wider to get to MCMC format for scoring
-        df_samp_wide <- pivot_wider(df_samp, names_from = output_type_id, values_from = value)
-        df_samp_wide <- subset(df_samp_wide,
-                               select = -c(nowcast_date, target_date,
-                                           clade, location, output_type))
-        
-        # Convert samples to matrix for scoringRules syntax
-        samp_matrix <- as.matrix(df_samp_wide)
-        
-        ## Implement Multinomial Sampling from the proportions
-        ## Score on counts
-        
-        # Matrix to store 100 multinomial samples generated from each of 100 sample props
-        samp_multinomial_counts <- do.call(cbind, lapply(1:ncol(samp_matrix), function(col) {
-          rmultinom(n = 100, size = N, prob = samp_matrix[, col])
-        }))
-        
-        # Energy score for the 100*100 multinomial samples for day/loc
-        es <- es_sample(y = obs_count, dat = samp_multinomial_counts)
-      }
-      
-      # Brier scores
-      if("mean" %in% unique(df_model_output$output_type)){
-        # If output_type == "mean" present
-        df_mean <- subset(df_model_output,
-                          target_date == as.Date(day) &
-                            location == loc &
-                            output_type == "mean")
-        
-        # tests that clades are ordered identically
-        if(!all(df_obs$clade == df_mean$clade))
-          stop("Brier Score Issue: Clades in observed data do not match clades in mean model output.")
-        
-        # Brier score calculation for the mean
-        # Divide by 2 to get range [0,1]
-        brier_point <- 0.5 / N * sum(obs_count*(df_mean$value - 1)^2 + (N - obs_count)*(df_mean$value)^2)
-        
-      } else{
-        # If no output_type == "mean" present
-        df_mean <- df_samp |>
-          group_by(clade) |> # Group by clade to calculate mean of each one, already arranged
-          summarise(mean_value = mean(value, na.rm = T))
-        
-        # tests that clades are ordered identically
-        if(!all(df_obs$clade == df_mean$clade))
-          stop("Brier Score Issue: Clades in observed data do not match clades in aggregated sample model output.")
-        
-        brier_point <- 0.5 / N * sum(obs_count*(df_mean$mean_value - 1)^2 + (N - obs_count)*(df_mean$mean_value)^2)
-      }
-      
-      # Brier distribution scores
-      if("sample" %in% unique(df_model_output$output_type)){
-        brier_dist <- apply(df_samp_wide, 2, function(p_col) {
-          sum(obs_count * (p_col - 1)^2 + (N - obs_count) * p_col^2)
-        })
-        brier_dist <- 0.5 * mean(brier_dist) / N
-      }
-      
-      # Store scores as a data frame but to a list
-      score_list[[length(score_list) + 1]] <- data.frame(
-        energy = es,
-        brier_point = brier_point,
-        brier_dist = brier_dist,
-        location = loc,
-        target_date = as.Date(day),
-        scored = scored
+    
+      df_samp <- subset(df_model_output,
+                      target_date == as.Date(day) &
+                        location == loc &
+                        output_type == "sample")
+
+    # Need the N for each loc/day from the validation data
+    N <- sum(subset(targets,
+                    location == loc & target_date == as.Date(day))$oracle_value)
+    # tests that clades are ordered identically
+    if(!all(rep(df_obs$clade, 100) == df_samp$clade)){
+      stop("Samples Issue: Clades in observed data do not match clades in sample model output.")
+    }
+    
+    # Pivot wider to get to MCMC format for scoring
+    df_samp_wide <- pivot_wider(df_samp,
+                                names_from = output_type_id,
+                                values_from = value)
+    df_spine <- df_samp_wide |>
+      select(nowcast_date, target_date, clade, location)
+    df_samp_wide <- subset(df_samp_wide,
+                           select = -c(nowcast_date, target_date,
+                                       clade, location, output_type))
+    
+    # Convert samples to matrix for scoringRules syntax
+    samp_matrix <- as.matrix(df_samp_wide)
+    
+    ## Implement Multinomial Sampling from the proportions
+    ## Score on counts
+    
+    # Matrix to store 100 multinomial samples generated from each of 100 sample props
+    samp_multinomial_counts <- do.call(cbind, 
+                                       lapply(1:ncol(samp_matrix), 
+                                              function(col) {
+      rmultinom(n = 100, 
+                size = N, 
+                prob = samp_matrix[, col])
+    }))
+    
+    df_sampled <- cbind(df_spine, samp_multinomial_counts)
+    df_sampled_long <- df_sampled |>
+      pivot_longer(
+        cols = 5:ncol(df_sampled),
+        names_to = "multinomial_sample",
+        values_to = "predicted_observation"
+      ) |>
+      left_join(df_obs,
+                by = c("location", "target_date", "nowcast_date",
+                       "clade")) |>
+      select(-"nowcast_date")
+    
+    df_to_score <-  df_sampled_long |>
+      scoringutils::as_forecast_sample(
+      forecast_unit = c(
+        "location",
+        "target_date", "clade",
+        "scored"
+      ),
+      predicted = "predicted_observation",
+      observed = "oracle_value",
+      sample_id = "multinomial_sample"
+    )
+    
+    forecast_quantile <- scoringutils::as_forecast_quantile(
+      data = df_to_score,
+      quantiles = desired_quantiles,
+      forecast_unit = c(
+        "location",
+        "target_date", "clade",
+        "scored"
       )
+    )
+    
+    coverage <- scoringutils::get_coverage(
+      forecast_quantile,
+      by = c(
+        "location", "target_date",
+        "scored", "clade"
+      )
+    )
+    
+    all_coverage <- bind_rows(all_coverage, coverage)
+    
     }
   }
-  # bind rows of data frames in scores_list (faster than appending)
-  return(dplyr::bind_rows(score_list))
+  
+  return(all_coverage)
 }
+
 #' Function to quickly get some summaries of the energy scores
 #' @param df_scores a data frame containing energy scores created by [calc_energy_scores]
 #'
