@@ -60,6 +60,7 @@ get_coverage <- function(
   require("readr")
   require("arrow")
   require("scoringRules")
+  require("scoringutils")
   
   # Extract the date from model_output_file for set.seed using regex
   date_str <- sub(".*?(\\d{4}-\\d{2}-\\d{2}).*", "\\1", model_output_file)
@@ -262,7 +263,7 @@ calc_energy_scores <- function(targets, df_model_output){
 #'
 #' @return Returns a data frame containing coverage by location, date, and clade
 calc_coverage <- function(targets, df_model_output,
-                          desired_quantiles = c(0.05, 0.25, 0.5, 0.75, 0.95)){
+                          desired_quantiles = c(0.5,0.95)){
   require("scoringutils")
   require("dplyr")
   
@@ -305,7 +306,7 @@ calc_coverage <- function(targets, df_model_output,
                            select = -c(nowcast_date, target_date,
                                        clade, location, output_type))
     
-    # Convert samples to matrix for scoringRules syntax
+    # Convert samples to matrix 
     samp_matrix <- as.matrix(df_samp_wide)
     
     ## Implement Multinomial Sampling from the proportions

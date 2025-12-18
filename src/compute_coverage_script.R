@@ -79,15 +79,11 @@ for(dir in dirs){
 #'
 #' @param hub_path character string, path to the root of the hub from the current working directory,
 #' defaults to assume that variant-nowcast-hub/src is the working directory
-#' @param score_type character string indicating whether to combine the brier/energy scores or coverage. 
-#' Defaults to scores
 #'
-#' @examples combine_scores_tsv()
-combine_scores_tsv <- function(hub_path = "../",
-                               score_type = "scores"){
-
+#' @examples combine_coverage_tsv()
+combine_coverage_tsv <- function(hub_path = "../"){
   # Define the root directory of your Hive-partitioned dataset
-  root_dir <- file.path(hub_path, "auxiliary-data", score_type)
+  root_dir <- file.path(hub_path, "auxiliary-data", "coverage")
 
   # Helper to extract team and nowcast_date from path
   extract_metadata <- function(path) {
@@ -101,7 +97,7 @@ combine_scores_tsv <- function(hub_path = "../",
   parquet_files <- dir_ls(root_dir, recurse = TRUE, type = "file", glob = "*.parquet")
 
   # Read and tag each parquet file
-  score_df <- map_dfr(parquet_files, function(file) {
+  coverage_df <- map_dfr(parquet_files, function(file) {
     meta <- extract_metadata(file)
     df <- read_parquet(file)
     bind_cols(meta, status = "success", df)
@@ -112,52 +108,41 @@ combine_scores_tsv <- function(hub_path = "../",
 
   # Create placeholder rows for errors
   meta <- extract_metadata(file)
-  if(score_type == "scores"){
-  error_df <- map_dfr(error_files, function(file) {
-    tibble(
-      team = meta$team,
-      nowcast_date = meta$nowcast_date,
-      status = "error",
-      energy = NA_real_,
-      brier_point = NA_real_,
-      brier_dist = NA_real_,
-      location = NA_character_,
-      target_date = NA,
-      scored = NA
-    )
-  })}else {
     error_df <- map_dfr(error_files, function(file) {
       tibble(
         team = meta$team,
         nowcast_date = meta$nowcast_date,
-        status = "error",
-        energy = NA_real_,
-        brier_point = NA_real_,
-        brier_dist = NA_real_,
         location = NA_character_,
         target_date = NA,
-        scored = NA
+        scored = NA,
+        clade = NA_character_,
+        quantile_level = NA_real_,
+        interval_coverage = NA_real_,
+        interval_coverage_devation = NA_real_,
+        quantile_coverage = NA_real_,
+        quantile_coverage_deviation = NA_real_,
+        status = "error"
       )
     })
-  }
 
   # Combine both
   final_df <- bind_rows(score_df, error_df)
 
   # Arrange columns
-  final_df <- final_df[, c("team",
-                           "nowcast_date",
-                           "target_date",
-                           "location",
-                           "brier_point",
-                           "brier_dist",
-                           "energy",
-                           "scored",
-                           "status"
-  )] |> rename(model_id = team)
-
-
+    final_df <- final_df[, c("team",
+                              "nowcast_date",
+                              "target_date",
+                              "location",
+                              "clade",
+                              "quantile_level",
+                             "interval_coverage",
+                             "interval_coverage_devation",
+                             "quantile_coverage",
+                             "quantile_coverage_deviation",
+                              "scored",
+                              "status"
+    )] |> rename(model_id = team)
 
   # Write to TSV
-  write_tsv(final_df, "../auxiliary-data/scores/scores.tsv")
+  write_tsv(final_df, glue::glue("../auxiliary-data/coverage/coverage.tsv"))
 }
