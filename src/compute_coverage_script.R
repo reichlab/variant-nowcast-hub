@@ -80,8 +80,8 @@ for(dir in dirs){
 #' @param hub_path character string, path to the root of the hub from the current working directory,
 #' defaults to assume that variant-nowcast-hub/src is the working directory
 #'
-#' @examples combine_coverage_tsv()
-combine_coverage_tsv <- function(hub_path = "../"){
+#' @examples combine_coverage_parquet()
+combine_coverage_parquet <- function(hub_path = "../"){
   # Define the root directory of your Hive-partitioned dataset
   root_dir <- file.path(hub_path, "auxiliary-data", "coverage")
 
@@ -107,8 +107,8 @@ combine_coverage_tsv <- function(hub_path = "../"){
   error_files <- dir_ls(root_dir, recurse = TRUE, type = "file", glob = "*.log")
 
   # Create placeholder rows for errors
-  meta <- extract_metadata(file)
     error_df <- map_dfr(error_files, function(file) {
+      meta <- extract_metadata(file)
       tibble(
         team = meta$team,
         nowcast_date = meta$nowcast_date,
@@ -126,7 +126,7 @@ combine_coverage_tsv <- function(hub_path = "../"){
     })
 
   # Combine both
-  final_df <- bind_rows(score_df, error_df)
+  final_df <- bind_rows(coverage_df, error_df)
 
   # Arrange columns
     final_df <- final_df[, c("team",
@@ -143,6 +143,6 @@ combine_coverage_tsv <- function(hub_path = "../"){
                               "status"
     )] |> rename(model_id = team)
 
-  # Write to TSV
-  write_tsv(final_df, glue::glue("../auxiliary-data/coverage/coverage.tsv"))
+  # Write to parquet
+  arrow::write_parquet(final_df, glue::glue("../auxiliary-data/coverage/coverage.parquet"))
 }
