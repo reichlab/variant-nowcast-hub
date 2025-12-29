@@ -259,11 +259,9 @@ calc_energy_scores <- function(targets, df_model_output){
 #'
 #' @param targets data frame, of target data
 #' @param df_model_output data frame, of model output
-#' @param desired_quantiles vector of the quantiles 
 #'
 #' @return Returns a data frame containing coverage by location, date, and clade
-calc_coverage <- function(targets, df_model_output,
-                          desired_quantiles = c(0.5,0.95)){
+calc_coverage <- function(targets, df_model_output){
   require("scoringutils")
   require("dplyr")
   
@@ -347,7 +345,6 @@ calc_coverage <- function(targets, df_model_output,
     
     forecast_quantile <- scoringutils::as_forecast_quantile(
       data = df_to_score,
-      quantiles = desired_quantiles,
       forecast_unit = c(
         "location",
         "target_date", "clade",
