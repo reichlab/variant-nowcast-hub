@@ -93,8 +93,8 @@ combine_coverage_parquet <- function(hub_path = "../"){
     )
   }
 
-  # Find all scored_nowcast.parquet files
-  parquet_files <- dir_ls(root_dir, recurse = TRUE, type = "file", glob = "*.parquet")
+  # Find all coverage_nowcast.parquet files
+  parquet_files <- dir_ls(root_dir, recurse = TRUE, type = "file", glob = "*_nowcast.parquet")
 
   # Read and tag each parquet file
   coverage_df <- map_dfr(parquet_files, function(file) {
@@ -110,13 +110,14 @@ combine_coverage_parquet <- function(hub_path = "../"){
     error_df <- map_dfr(error_files, function(file) {
       meta <- extract_metadata(file)
       tibble(
-        team = meta$team,
+        model_id = meta$team,
         nowcast_date = meta$nowcast_date,
         location = NA_character_,
         target_date = NA,
         scored = NA,
         clade = NA_character_,
         quantile_level = NA_real_,
+        interval_range = NA_real_,
         interval_coverage = NA_real_,
         interval_coverage_devation = NA_real_,
         quantile_coverage = NA_real_,
@@ -135,6 +136,7 @@ combine_coverage_parquet <- function(hub_path = "../"){
                               "location",
                               "clade",
                               "quantile_level",
+                             "interval_range",
                              "interval_coverage",
                              "interval_coverage_devation",
                              "quantile_coverage",
