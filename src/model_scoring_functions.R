@@ -39,6 +39,48 @@ get_energy_scores <- function(
   return(df_scores)
 }
 
+#' Functions to calculate coverage for model output files according to given reference date
+#'
+#' @param hub_path character string, path to the root of the hub from the current working directory,
+#' defaults to assume that variant-nowcast-hub/src is the working directory
+#' @param model_output_file character string, directory under variant-nowcast-hub/[team name]/[model output parquet file]
+#' @param ref_date character string, date corresponding to model submission deadline, also called nowcast date
+#'
+#' @examples
+#' source("model_scoring_functions.R")
+#' df_coverage <- get_coverage(hub_path = here::here(), model_output_file = "UMass-HMLR/2024-12-18-UMass-HMLR.parquet", ref_date = "2024-12-18")
+here::i_am("src/model_scoring_functions.R")
+get_coverage <- function(
+    hub_path = here::here(),
+    model_output_file = NULL,
+    ref_date = NULL
+){
+  require("tidyr")
+  require("dplyr")
+  require("readr")
+  require("arrow")
+  require("scoringRules")
+  require("scoringutils")
+  
+  # Extract the date from model_output_file for set.seed using regex
+  date_str <- sub(".*?(\\d{4}-\\d{2}-\\d{2}).*", "\\1", model_output_file)
+  
+  # Remove dashes to get a numeric sequence string
+  date_str <- gsub("-", "", date_str)
+  
+  # Set PRNG seed for reproducibility
+  set.seed(as.integer(date_str))
+  
+  data <- process_target_data(hub_path = hub_path,
+                              model_output_file = model_output_file,
+                              ref_date = as.Date(ref_date))
+  
+  df_coverage <- calc_coverage(targets = data[[1]],
+                                  df_model_output = data[[2]])
+  
+  return(df_coverage)
+}
+
 #' Support function to process target data and pass to scoring function.
 #'
 #' @param hub_path character string, path to the root of the hub from the current working directory,
@@ -211,6 +253,119 @@ calc_energy_scores <- function(targets, df_model_output){
   }
   # bind rows of data frames in scores_list (faster than appending)
   return(dplyr::bind_rows(score_list))
+}
+
+#' Support function for calculating coverage given target and model_output data
+#'
+#' @param targets data frame, of target data
+#' @param df_model_output data frame, of model output
+#'
+#' @return Returns a data frame containing coverage by location, date, and clade
+calc_coverage <- function(targets, df_model_output){
+  require("scoringutils")
+  require("dplyr")
+  
+  
+  locs <- sort(unique(targets$location))
+  dates <- sort(unique(targets$target_date))
+  if(!"sample" %in% unique(df_model_output$output_type)){
+    return(NULL)
+  }
+  # Loop over each day at each location
+  all_coverage <- c()
+  for(loc in locs){
+    for(day in dates){
+  
+      # Validated observed counts
+      df_obs <- targets |>
+        filter(target_date == as.Date(day), location == loc)
+      scored <- df_obs$scored[1] # To track scored date/loc pair for return
+    
+      df_samp <- subset(df_model_output,
+                      target_date == as.Date(day) &
+                        location == loc &
+                        output_type == "sample")
+
+    # Need the N for each loc/day from the validation data
+    N <- sum(subset(targets,
+                    location == loc & target_date == as.Date(day))$oracle_value)
+    # tests that clades are ordered identically
+    if(!all(rep(df_obs$clade, 100) == df_samp$clade)){
+      stop("Samples Issue: Clades in observed data do not match clades in sample model output.")
+    }
+    
+    # Pivot wider to get to MCMC format for scoring
+    df_samp_wide <- pivot_wider(df_samp,
+                                names_from = output_type_id,
+                                values_from = value)
+    df_spine <- df_samp_wide |>
+      select(nowcast_date, target_date, clade, location)
+    df_samp_wide <- subset(df_samp_wide,
+                           select = -c(nowcast_date, target_date,
+                                       clade, location, output_type))
+    
+    # Convert samples to matrix 
+    samp_matrix <- as.matrix(df_samp_wide)
+    
+    ## Implement Multinomial Sampling from the proportions
+    ## Score on counts
+    
+    # Matrix to store 100 multinomial samples generated from each of 100 sample props
+    samp_multinomial_counts <- do.call(cbind, 
+                                       lapply(1:ncol(samp_matrix), 
+                                              function(col) {
+      rmultinom(n = 100, 
+                size = N, 
+                prob = samp_matrix[, col])
+    }))
+    
+    df_sampled <- cbind(df_spine, samp_multinomial_counts)
+    df_sampled_long <- df_sampled |>
+      pivot_longer(
+        cols = 5:ncol(df_sampled),
+        names_to = "multinomial_sample",
+        values_to = "predicted_observation"
+      ) |>
+      left_join(df_obs,
+                by = c("location", "target_date", "nowcast_date",
+                       "clade")) |>
+      select(-"nowcast_date")
+    
+    df_to_score <-  df_sampled_long |>
+      scoringutils::as_forecast_sample(
+      forecast_unit = c(
+        "location",
+        "target_date", "clade",
+        "scored"
+      ),
+      predicted = "predicted_observation",
+      observed = "oracle_value",
+      sample_id = "multinomial_sample"
+    )
+    
+    forecast_quantile <- scoringutils::as_forecast_quantile(
+      data = df_to_score,
+      forecast_unit = c(
+        "location",
+        "target_date", "clade",
+        "scored"
+      )
+    )
+    
+    coverage <- scoringutils::get_coverage(
+      forecast_quantile,
+      by = c(
+        "location", "target_date",
+        "scored", "clade"
+      )
+    )
+    
+    all_coverage <- bind_rows(all_coverage, coverage)
+    
+    }
+  }
+  
+  return(all_coverage)
 }
 
 #' Function to quickly get some summaries of the energy scores
