@@ -1,0 +1,39 @@
+{
+    "clades": [
+        "25B",
+        "25C",
+        "25H",
+        "recombinant",
+        "other"
+    ],
+    "meta": {
+        "created_at": "2026-01-19T03:35:08+00:00",
+        "ncov": {
+            "schema_version": "v1",
+            "nextclade_version": "nextclade 3.18.1",
+            "nextclade_dataset_name": "SARS-CoV-2",
+            "nextclade_dataset_version": "2026-01-06--14-59-32Z",
+            "nextclade_tsv_sha256sum": "6efe4d785c7eb6b5b04fc0d7348f3a1d2f25ced20a5ec40fd286d72d64d05c35",
+            "metadata_tsv_sha256sum": "0240562b9f4bd840f3fab6fb76293e63f1fe84baa65188a5f0f2fed9c1da1321",
+            "nextclade_dataset_name_full": "nextstrain/sars-cov-2/wuhan-hu-1/orfs",
+            "nextclade_version_num": "3.18.1",
+            "metadata_version_url": "https://nextstrain-data.s3.amazonaws.com/files/ncov/open/metadata_version.json?versionId=08C5WoBGJvKCdD3gEWpLurQ15A3fq6Oy"
+        },
+        "sequence_counts": {
+            "total_sequences_last_3_weeks": 565,
+            "sequences_by_clade": {
+                "23B": 1,
+                "24H": 1,
+                "25A": 1,
+                "25B": 63,
+                "25C": 435,
+                "25D": 1,
+                "25E": 1,
+                "25F": 1,
+                "25H": 2,
+                "25I": 1,
+                "recombinant": 58
+            }
+        }
+    }
+}
