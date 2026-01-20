@@ -45,7 +45,7 @@ for(dir in dirs){
     # Directory path: auxiliary-data/coverage/team=.../nowcast_date=YYYY-MM-DD
     save_dir_path <- file.path(hub_path,
                                "auxiliary-data",
-                               "coverage",
+                               "scores",
                                paste0("team=", team),
                                paste0("nowcast_date=", date))
 
@@ -83,7 +83,7 @@ for(dir in dirs){
 #' @examples combine_coverage_parquet()
 combine_coverage_parquet <- function(hub_path = "../"){
   # Define the root directory of your Hive-partitioned dataset
-  root_dir <- file.path(hub_path, "auxiliary-data", "coverage")
+  root_dir <- file.path(hub_path, "auxiliary-data", "scores")
 
   # Helper to extract team and nowcast_date from path
   extract_metadata <- function(path) {
@@ -146,5 +146,5 @@ combine_coverage_parquet <- function(hub_path = "../"){
     )] |> rename(model_id = team)
 
   # Write to parquet
-  arrow::write_parquet(final_df, glue::glue("../auxiliary-data/coverage/coverage.parquet"))
+  arrow::write_parquet(final_df, glue::glue("../auxiliary-data/scores/coverage.parquet"))
 }
