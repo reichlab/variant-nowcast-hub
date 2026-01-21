@@ -199,7 +199,14 @@ One possible problem with this evaluation approach is that there is an element o
 One alternative would be to perform exact, or approximations to exact, energy score calculations, but this may be infeasible due to the size of the sample space.
 Another alternative could be to use the log-score to evaluate the predictive distribution, although preliminary simulations have shown that this may yield unstable score estimates when the number of specimens, $N$, is large.
 
-An additional alternative scoring option would be to compute Brier scores on each submitted sample using the draws from the multinomial observation model desscribed above. This would return a distribution of Brier scores that could be summarized across samples, locations, and dates.
+An additional alternative scoring option would be to compute Brier scores on each submitted sample using the draws from the multinomial observation model described above. This would return a distribution of Brier scores that could be summarized across samples, locations, and dates.
+
+### Coverage metrics
+
+Using the distribution of predicted observed proportion forecasts $\frac{\hat C^{(1)}, …, \hat C^{(100)}}{N}$ and the observed proportion $\frac{C}{N}$, prediction interval coverage will be calculated for each target date, location, and clade at each nowcast date where there are sequences collected. 
+Coverage measures the empirical frequency with which prediction intervals contain the observed value. 
+For example, 50% coverage means that 50% prediction intervals contained the true value 50% of the time across all predictions. 
+Well-calibrated forecasts should have empirical coverage matching nominal coverage across all levels.
 
 ### Score aggregation
 
