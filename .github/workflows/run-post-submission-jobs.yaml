@@ -103,7 +103,7 @@ jobs:
         working-directory: src
 
       - name: Upload target data 📤
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: target-data-${{ matrix.nowcast-date }}
           path: |
