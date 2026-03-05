@@ -95,7 +95,7 @@ combine_scores_tsv <- function(hub_path = "../"){
   }
 
   # Find all scored_nowcast.parquet files
-  parquet_files <- dir_ls(root_dir, recurse = TRUE, type = "file", glob = "*.parquet")
+  parquet_files <- dir_ls(root_dir, recurse = TRUE, type = "file", glob = "*scored_nowcast.parquet")
 
   # Read and tag each parquet file
   score_df <- map_dfr(parquet_files, function(file) {
