@@ -1,0 +1,98 @@
+name: Update scores weekly
+
+on:
+  schedule:
+    # Every Thursday at 12pm Eastern Time
+    # GitHub Actions doesn't support time zones, so we use two cron schedules:
+    - cron: "0 17 * 11-12,1-3 4" # 5pm UTC on Thurs (Nov-Dec, Jan-Mar) = 12pm EST
+    - cron: "0 16 * 4-10 4" # 4pm UTC on Thurs (Apr-Oct) = 12pm EDT
+  workflow_dispatch:
+    inputs:
+      lookback_days:
+        description: "Number of days to look back for scoreable nowcasts (default: 7)"
+        required: false
+        default: "7"
+      min_age_days:
+        description: "Minimum age in days for scoring (default: 90)"
+        required: false
+        default: "90"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-scores:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v5
+        with:
+          # Check out necessary directories
+          sparse-checkout: |
+            .github/
+            auxiliary-data/
+            hub-config/
+            model-output/
+            target-data/
+            src/
+
+      - name: Set up R 📊
+        uses: r-lib/actions/setup-r@bd49c52ffe281809afa6f0fecbf37483c5dd0b93  #v2.11.3
+        with:
+          r-version: 4.4.1
+          install-r: true
+          use-public-rspm: true
+          extra-repositories: 'https://hubverse-org.r-universe.dev'
+
+      - name: Set up renv 📦
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+        uses: r-lib/actions/setup-renv@bd49c52ffe281809afa6f0fecbf37483c5dd0b93  #v2.11.3
+        with:
+          working-directory: src
+
+      - name: Update weekly scores 📊
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          Rscript update_scores_weekly.R
+        working-directory: src
+
+      - name: Check for changes 🔍
+        id: check-changes
+        run: |
+          if git diff --quiet auxiliary-data/scores/scores.tsv; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "No changes detected in scores.tsv"
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in scores.tsv"
+          fi
+
+      - name: Get current date and time 🕰️
+        if: steps.check-changes.outputs.changes == 'true'
+        run: |
+          PR_DATETIME=$(date +'%Y-%m-%d_%H-%M-%S')
+          echo "PR_DATETIME=$PR_DATETIME" >> $GITHUB_ENV
+
+      - name: Create PR for updated scores 🚀
+        if: steps.check-changes.outputs.changes == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b update-scores_"$PR_DATETIME"
+          git add auxiliary-data/scores/scores.tsv
+          git commit -m "Update weekly scores for nowcasts ready to score ($PR_DATETIME)"
+          git push -u origin update-scores_"$PR_DATETIME"
+          gh pr create \
+            --base main \
+            --title "Update weekly scores $PR_DATETIME" \
+            --body "This PR updates scores.tsv with newly scored nowcasts that are 90+ days old. Created via GitHub Actions: update-scores-weekly.yaml."
+
+      - name: No changes to commit ℹ️
+        if: steps.check-changes.outputs.changes == 'false'
+        run: |
+          echo "No scores needed updating this week. This is expected if no nowcasts reached 90 days of age."

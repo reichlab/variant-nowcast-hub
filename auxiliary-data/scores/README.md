@@ -6,8 +6,10 @@ United States SARS-CoV-2 Variant Nowcast Hub, which launched on October 9, 2024.
 Please refer to [model evaluation](https://github.com/reichlab/variant-nowcast-hub?tab=readme-ov-file#model-evaluation)
 for additional context.
 
-The `scores.tsv` file contains all location/date scores for each model submission. 
-This file will be updated weekly as target data is available for scoring.
+The `scores.tsv` file contains all location/date scores for each model submission.
+This file is updated automatically via GitHub Actions every Thursday at 12:00 UTC
+(see `.github/workflows/update-scores-weekly.yaml`). The workflow scores nowcasts that
+are 90+ days old (when oracle target data becomes available) and appends the scores to this file.
 
 ### Column Values in `scores.tsv`
 
