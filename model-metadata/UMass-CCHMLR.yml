@@ -1,6 +1,6 @@
 team_name: "UMass Amherst"
 team_abbr: "UMass"
-model_name: "Cubic Correlated Hierarchical Multinomial Logistic Regression"
+model_name: "CC Hierarchical Multinomial Logistic Regression"
 model_abbr: "CCHMLR"
 model_version: "1.0"
 model_contributors: [
