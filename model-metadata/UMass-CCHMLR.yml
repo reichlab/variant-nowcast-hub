@@ -38,6 +38,7 @@ model_contributors: [
 license: "CC-BY-4.0"
 team_funding: "This work has been supported by the National Institutes of General Medical Sciences (R35GM119582) and the US Centers for Disease Control and Prevention’s Center for Forecasting and Outbreak Analytics (NU38FT000008). The content is solely the responsibility of the authors and does not necessarily represent the official views of NIGMS, the National Institutes of Health, or CDC."
 methods: "A Bayesian hierarchical Dirichlet-multinomial logistic regression (HMLR) model for nowcasting COVID variants. Regression coefficents are modeled hierarchically across variants and locations. Uses a Cubic function of time and parameters are corralated across variants"
+methods_url: "https://github.com/IsaacMacarthur/Umass-Virus_modeling-code/blob/main/Model%20Details.pdf"
 data_sources: "NextStrain"
 ensemble_of_models: false
 ensemble_of_hub_models: false
