@@ -109,10 +109,24 @@ identify_scoreable_nowcasts <- function(hub_path, lookback_days = 7, min_age_day
   # Filter to dates in our target range
   scoreable_dates <- file_dates[file_dates >= oldest_date & file_dates <= newest_date]
 
+  # Check for already scored nowcasts to avoid re-scoring
+  scores_path <- file.path(hub_path, "auxiliary-data", "scores", "scores.tsv")
+  already_scored <- character(0)
+  if (file.exists(scores_path)) {
+    existing_scores <- read_tsv(scores_path, show_col_types = FALSE)
+    already_scored <- unique(existing_scores$nowcast_date[!is.na(existing_scores$nowcast_date)])
+  }
+
   # Check that required data files exist (oracle and unscored locations)
   valid_dates <- character(0)
   # Convert to character before looping to avoid numeric conversion
   for (date_str in as.character(scoreable_dates)) {
+
+    # Skip if already scored
+    if (date_str %in% already_scored) {
+      message(sprintf("⏭️  Skipping %s: already scored", date_str))
+      next
+    }
 
     # Check for oracle data
     oracle_path <- file.path(
