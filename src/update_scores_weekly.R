@@ -15,15 +15,17 @@ library(lubridate)
 # Load scoring functions
 source("model_scoring_functions.R")
 
-# Path to Hub - go up one level from src/ to repo root
-hub_path <- dirname(here::here())
+# Path to Hub root
+# Note: here::here() returns the repo root because model_scoring_functions.R
+# calls here::i_am("src/model_scoring_functions.R")
+hub_path <- here::here()
 
 #' Main function to update scores for recently matured nowcast dates
 #'
-#' @param hub_path Path to hub root directory (defaults to parent of current directory)
+#' @param hub_path Path to hub root directory
 #' @param lookback_days How many days to look back for scoreable nowcasts (default 7)
 #' @param min_age_days Minimum age for scoring (default 90)
-update_weekly_scores <- function(hub_path = dirname(here::here()),
+update_weekly_scores <- function(hub_path = here::here(),
                                   lookback_days = 7,
                                   min_age_days = 90) {
 
