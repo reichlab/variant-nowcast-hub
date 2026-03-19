@@ -111,8 +111,8 @@ identify_scoreable_nowcasts <- function(hub_path, lookback_days = 7, min_age_day
 
   # Check that required data files exist (oracle and unscored locations)
   valid_dates <- character(0)
-  for (date in scoreable_dates) {
-    date_str <- as.character(date)
+  # Convert to character before looping to avoid numeric conversion
+  for (date_str in as.character(scoreable_dates)) {
 
     # Check for oracle data
     oracle_path <- file.path(
