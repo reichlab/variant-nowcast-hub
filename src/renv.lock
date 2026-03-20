@@ -67,6 +67,16 @@
       ],
       "Hash": "5122bb14d8736372411f955e1b16bc8a"
     },
+    "Metrics": {
+      "Package": "Metrics",
+      "Version": "0.1.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "d14cb2e8e3f5b1e1c152fa4b8795c7c7"
+    },
     "QuickJSR": {
       "Package": "QuickJSR",
       "Version": "1.4.0",
@@ -1839,6 +1849,25 @@
         "methods"
       ],
       "Hash": "5951fc1a3ebab0e2b386ae58d6a1853d"
+    },
+    "scoringutils": {
+      "Package": "scoringutils",
+      "Version": "2.1.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "checkmate",
+        "cli",
+        "data.table",
+        "ggplot2",
+        "Metrics",
+        "methods",
+        "purrr",
+        "scoringRules",
+        "stats"
+      ],
+      "Hash": "2cd21a2bcfa422357d9364f6ab3037e8"
     },
     "stringi": {
       "Package": "stringi",
