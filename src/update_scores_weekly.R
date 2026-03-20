@@ -202,7 +202,7 @@ score_nowcast_dates <- function(hub_path, nowcast_dates) {
         df_scores <- df_scores %>%
           mutate(
             model_id = model_id,
-            nowcast_date = nowcast_date,
+            nowcast_date = as.Date(nowcast_date),
             status = NA_character_
           ) %>%
           select(model_id, nowcast_date, target_date, location,
@@ -219,8 +219,8 @@ score_nowcast_dates <- function(hub_path, nowcast_dates) {
         # Create error placeholder row
         error_row <- tibble(
           model_id = model_id,
-          nowcast_date = nowcast_date,
-          target_date = NA,
+          nowcast_date = as.Date(nowcast_date),
+          target_date = as.Date(NA),
           location = NA_character_,
           brier_point = NA_real_,
           brier_dist = NA_real_,
