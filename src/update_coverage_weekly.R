@@ -162,11 +162,11 @@ calculate_coverage_for_dates <- function(hub_path, nowcast_dates) {
         }
 
         # Add model_id, nowcast_date, and status
-        # IMPORTANT: Convert nowcast_date to Date type for consistency
+        # IMPORTANT: Keep nowcast_date as character to match existing coverage.parquet
         df_coverage <- df_coverage %>%
           mutate(
             model_id = model_id,
-            nowcast_date = as.Date(nowcast_date),
+            nowcast_date = as.character(nowcast_date),
             status = NA_character_
           ) %>%
           select(model_id, nowcast_date, target_date, location, clade,
@@ -182,10 +182,10 @@ calculate_coverage_for_dates <- function(hub_path, nowcast_dates) {
         message(sprintf("      ✗ Error: %s", e$message))
 
         # Create error placeholder row
-        # IMPORTANT: Use Date types to match existing coverage.parquet
+        # IMPORTANT: Keep nowcast_date as character to match existing coverage.parquet
         error_row <- tibble(
           model_id = model_id,
-          nowcast_date = as.Date(nowcast_date),
+          nowcast_date = as.character(nowcast_date),
           target_date = as.Date(NA),
           location = NA_character_,
           clade = NA_character_,
@@ -228,10 +228,9 @@ update_coverage_parquet <- function(hub_path, new_coverage, nowcast_dates) {
 
     # Remove any existing coverage for the nowcast dates we're updating
     # This allows re-running the script to update coverage
-    # IMPORTANT: Convert nowcast_dates to Date for comparison
-    nowcast_dates_date <- as.Date(nowcast_dates)
+    # IMPORTANT: Keep as character for comparison (matches existing format)
     existing_coverage <- existing_coverage %>%
-      filter(!(nowcast_date %in% nowcast_dates_date))
+      filter(!(nowcast_date %in% nowcast_dates))
 
     message(sprintf("  After removing nowcast_dates being updated: %d rows", nrow(existing_coverage)))
 
