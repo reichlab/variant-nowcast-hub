@@ -15,7 +15,9 @@ library(lubridate)
 # Load scoring functions
 source("model_scoring_functions.R")
 
-# Path to Hub
+# Path to Hub root
+# Note: here::here() returns the repo root because model_scoring_functions.R
+# calls here::i_am("src/model_scoring_functions.R")
 hub_path <- here::here()
 
 #' Main function to update scores for recently matured nowcast dates
@@ -107,10 +109,24 @@ identify_scoreable_nowcasts <- function(hub_path, lookback_days = 7, min_age_day
   # Filter to dates in our target range
   scoreable_dates <- file_dates[file_dates >= oldest_date & file_dates <= newest_date]
 
+  # Check for already scored nowcasts to avoid re-scoring
+  scores_path <- file.path(hub_path, "auxiliary-data", "scores", "scores.tsv")
+  already_scored <- character(0)
+  if (file.exists(scores_path)) {
+    existing_scores <- read_tsv(scores_path, show_col_types = FALSE)
+    already_scored <- unique(existing_scores$nowcast_date[!is.na(existing_scores$nowcast_date)])
+  }
+
   # Check that required data files exist (oracle and unscored locations)
   valid_dates <- character(0)
-  for (date in scoreable_dates) {
-    date_str <- as.character(date)
+  # Convert to character before looping to avoid numeric conversion
+  for (date_str in as.character(scoreable_dates)) {
+
+    # Skip if already scored
+    if (date_str %in% already_scored) {
+      message(sprintf("⏭️  Skipping %s: already scored", date_str))
+      next
+    }
 
     # Check for oracle data
     oracle_path <- file.path(
@@ -186,7 +202,7 @@ score_nowcast_dates <- function(hub_path, nowcast_dates) {
         df_scores <- df_scores %>%
           mutate(
             model_id = model_id,
-            nowcast_date = nowcast_date,
+            nowcast_date = as.Date(nowcast_date),
             status = NA_character_
           ) %>%
           select(model_id, nowcast_date, target_date, location,
@@ -203,8 +219,8 @@ score_nowcast_dates <- function(hub_path, nowcast_dates) {
         # Create error placeholder row
         error_row <- tibble(
           model_id = model_id,
-          nowcast_date = nowcast_date,
-          target_date = NA,
+          nowcast_date = as.Date(nowcast_date),
+          target_date = as.Date(NA),
           location = NA_character_,
           brier_point = NA_real_,
           brier_dist = NA_real_,
