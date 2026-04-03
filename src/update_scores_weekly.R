@@ -203,7 +203,7 @@ score_nowcast_dates <- function(hub_path, nowcast_dates) {
           mutate(
             model_id = model_id,
             nowcast_date = as.Date(nowcast_date),
-            status = NA_character_
+            status = "success"
           ) %>%
           select(model_id, nowcast_date, target_date, location,
                  brier_point, brier_dist, energy, scored, status)
