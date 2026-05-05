@@ -23,7 +23,7 @@ jobs:
               src/
 
       - name: Set up R 📊
-        uses: r-lib/actions/setup-r@bd49c52ffe281809afa6f0fecbf37483c5dd0b93  #v2.11.3
+        uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e  #v2.12.0
         with:
           r-version: 4.4.1
           install-r: true
@@ -33,7 +33,7 @@ jobs:
       - name: Set up renv 📦
         env:
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-        uses: r-lib/actions/setup-renv@bd49c52ffe281809afa6f0fecbf37483c5dd0b93  #v2.11.3
+        uses: r-lib/actions/setup-renv@a51a8012b0aab7c32ef9d19bf54da93f3254335e  #v2.12.0
         with:
           working-directory: src
 
