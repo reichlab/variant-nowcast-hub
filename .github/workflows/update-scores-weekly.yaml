@@ -53,15 +53,11 @@ jobs:
           working-directory: src
 
       - name: Update weekly scores 📊
-        env:
-          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
         run: |
           Rscript update_scores_weekly.R
         working-directory: src
 
       - name: Update weekly coverage 📈
-        env:
-          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
         run: |
           Rscript update_coverage_weekly.R
         working-directory: src

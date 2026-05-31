@@ -44,8 +44,6 @@ jobs:
           working-directory: src
 
       - name: Create clade list and update tasks.json 🦠
-        env:
-          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
         run: |
           uv run --with-requirements requirements.txt get_clades_to_model.py
           Rscript make_round_config.R

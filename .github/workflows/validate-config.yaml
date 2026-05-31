@@ -16,7 +16,6 @@ jobs:
   validate-hub-config:
     runs-on: ubuntu-latest
     env:
-      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       PR_NUMBER: ${{ github.event.number }}
       HUB_PATH: ${{ github.workspace }}
 
@@ -34,6 +33,8 @@ jobs:
           sudo apt-get update
 
       - uses: r-lib/actions/setup-r-dependencies@bd49c52ffe281809afa6f0fecbf37483c5dd0b93  #v2.11.3
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
         with:
           cache: 'always'
           packages: |
