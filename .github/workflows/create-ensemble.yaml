@@ -38,8 +38,6 @@ jobs:
           working-directory: src
 
       - name: Create ensemble model 🦠
-        env:
-          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
         run: |
           Rscript ensemble_model.R
         working-directory: src
