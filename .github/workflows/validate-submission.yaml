@@ -29,7 +29,7 @@ jobs:
         run: |
           sudo apt-get update
 
-      - uses: r-lib/actions/setup-r-dependencies@bd49c52ffe281809afa6f0fecbf37483c5dd0b93  #v2.11.3
+      - uses: r-lib/actions/setup-r-dependencies@465b7d8e732ca3921382b1674c59bada9cbf3399  #v2.13.0
         env:
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
         with:
