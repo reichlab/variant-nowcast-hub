@@ -33,7 +33,7 @@ jobs:
       - name: Set up renv 📦
         env:
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-        uses: r-lib/actions/setup-renv@bd49c52ffe281809afa6f0fecbf37483c5dd0b93  #v2.11.3
+        uses: r-lib/actions/setup-renv@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05  #v2.14.0
         with:
           working-directory: src
 
