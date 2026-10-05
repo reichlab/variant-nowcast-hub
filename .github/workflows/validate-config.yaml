@@ -48,7 +48,7 @@ jobs:
       - name: "Comment on PR"
         id: comment-diff
         if: ${{ github.event_name != 'workflow_dispatch' }}
-        uses: carpentries/actions/comment-diff@2e20fd5ee53b691e27455ce7ca3b16ea885140e8  #v0.15.0
+        uses: carpentries/actions/comment-diff@a4a9f87adf0a229b1a039d06c33cb5f0a4422e42  #v1.0.1
         with:
           pr: ${{ env.PR_NUMBER }}
           path: ${{ runner.temp }}/diff.md
